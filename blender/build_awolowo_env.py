@@ -858,7 +858,7 @@ def _tapered_trunk(bm, height, r_base, r_top, sides, lean, mat_index=0):
     """A trunk built from stacked rings rather than one cone.
 
     Rings let the trunk lean and bow as it rises, which is most of what makes a
-    palm read as grown rather than extruded. A single cone cannot bend.
+    trunk read as grown rather than extruded. A single cone cannot bend.
     """
     rings = 5
     prev = None
@@ -881,60 +881,6 @@ def _tapered_trunk(bm, height, r_base, r_top, sides, lean, mat_index=0):
     return (lean + 0.10 * math.sin(math.pi), 0.0, height)
 
 
-def _frond(bm, origin, azimuth, reach, rise, droop, width, segs=5):
-    """One drooping palm frond with a ridged, V-shaped section.
-
-    The first version was a flat pentagon. Seen from the isometric camera —
-    which looks down at 58 degrees — a flat frond is edge-on to nothing and
-    face-on to the light, so a palm read as a green asterisk lying on the
-    pavement. Giving each frond a ridge and letting it fall away under its own
-    weight is what turns it back into a crown.
-    """
-    ox, oy, oz = origin
-    ca, sa = math.cos(azimuth), math.sin(azimuth)
-    ridge, left, right = [], [], []
-    for i in range(segs + 1):
-        t = i / segs
-        dist = reach * t
-        # Up first, then over: a parabola, not a straight ray.
-        z = oz + rise * math.sin(t * math.pi * 0.72) - droop * (t ** 2.2)
-        cx, cy = ox + ca * dist, oy + sa * dist
-        w = width * (1.0 - t) * (0.45 + 0.55 * math.sin(min(t * 2.4, 1.0) * math.pi / 2))
-        h = width * 0.55 * (1.0 - t)
-        ridge.append(bm.verts.new((cx, cy, z + h)))
-        left.append(bm.verts.new((cx - sa * w, cy + ca * w, z)))
-        right.append(bm.verts.new((cx + sa * w, cy - ca * w, z)))
-    for i in range(segs):
-        bm.faces.new((left[i], ridge[i], ridge[i + 1], left[i + 1]))
-        bm.faces.new((ridge[i], right[i], right[i + 1], ridge[i + 1]))
-
-
-def palm_prototype(name="Palm", fronds=11, height=6.5, seed=0):
-    """One palm, reused everywhere as a linked instance."""
-    bm = bmesh.new()
-    crown = _tapered_trunk(bm, height, r_base=0.21, r_top=0.13, sides=8,
-                           lean=0.34 + 0.10 * ((seed * 3) % 3))
-    # A small boss where the fronds spring from, so they do not appear to grow
-    # out of a point.
-    bmesh.ops.create_icosphere(
-        bm, subdivisions=1, radius=0.26,
-        matrix=Matrix.Translation((crown[0], crown[1], crown[2] - 0.05)))
-    for i in range(fronds):
-        a = (i / fronds) * math.tau + seed * 0.37
-        vary = 0.82 + 0.36 * ((i * 5 + seed) % 4) / 3.0
-        _frond(bm, (crown[0], crown[1], crown[2] - 0.10), a,
-               reach=2.5 * vary, rise=0.62, droop=1.55 * vary, width=0.30)
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-    me = bpy.data.meshes.new(f"{name}_src")
-    bm.to_mesh(me)
-    bm.free()
-    ob = bpy.data.objects.new(f"{name}_src", me)
-    ob.data.materials.append(MATS["ENV_Vegetation"])
-    link(ob, "ENV_Vegetation")
-    ob.hide_render = ob.hide_viewport = True
-    return ob
-
-
 def _rng(seed):
     """Deterministic noise. A tree that rebuilds differently every run makes the
     scene impossible to review against a previous render."""
@@ -952,8 +898,6 @@ def _leaf(bm, pos, size, yaw, pitch, roll):
     m = (Matrix.Translation(pos)
          @ Euler((pitch, roll, yaw), "XYZ").to_matrix().to_4x4())
     hw, hl = size * 0.46, size * 0.62
-    for p in ((-hw, -hl, 0.0), (hw, -hl, 0.0), (hw, hl, 0.0), (-hw, hl, 0.0)):
-        pass
     quad = [bm.verts.new(m @ Vector(p)) for p in
             ((-hw, -hl, 0.0), (hw, -hl, 0.0), (hw, hl, 0.0), (-hw, hl, 0.0))]
     bm.faces.new(quad)
@@ -1056,47 +1000,58 @@ def tree_pit_prototype():
 
 
 def build_vegetation():
-    palms = [palm_prototype("Palm_A", fronds=11, height=6.5, seed=0),
-             palm_prototype("Palm_B", fronds=9, height=5.6, seed=1),
-             palm_prototype("Palm_C", fronds=12, height=7.4, seed=2)]
-    palm = palms[0]
-    trees = [broadleaf_prototype("Tree_A", height=10.7, leaves=560, seed=0),
-             broadleaf_prototype("Tree_B", height=8.9, leaves=430, seed=1),
-             broadleaf_prototype("Tree_C", height=12.2, leaves=650, seed=2)]
-    tree = trees[0]
+    """Every tree in the scene is now the leaf-card type.
+
+    Five variants rather than three, because the palms they replace were on the
+    verge, the median and the plots — three assets stamped along 280 m of
+    boulevard would read as a repeating pattern where the palms, being wider
+    apart and more irregular, did not.
+
+    The median gets the two short variants. A 12 m crown on a 4.5 m median would
+    close over the carriageway and hide the traffic the scene exists to show.
+    """
+    trees = [
+        broadleaf_prototype("Tree_A", height=10.7, leaves=560, seed=0),
+        broadleaf_prototype("Tree_B", height=8.9, leaves=430, seed=1),
+        broadleaf_prototype("Tree_C", height=12.2, leaves=650, seed=2),
+        broadleaf_prototype("Tree_D", height=9.8, leaves=490, seed=3),
+        broadleaf_prototype("Tree_E", height=7.6, leaves=360, seed=4),
+    ]
+    short = [trees[4], trees[1]]
     shrub = shrub_prototype()
     pit = tree_pit_prototype()
     z = ROAD_T + KERB_H
     idx = 0
 
-    # Palms along both pavements and the median, spacing varied enough that the
-    # rhythm does not read as a stamped array.
+    # Street trees along both pavements, spacing varied enough that the rhythm
+    # does not read as a stamped array.
     for sign in (1, -1):
         y = sign * (KERB_Y + 2.6)
         x = -ROAD_LEN / 2 + 14
         while x < ROAD_LEN / 2 - 14:
-            instance(f"Palm_{idx}", palms[idx % 3], (x, y, z),
+            instance(f"Street_Tree_{idx}", trees[idx % 5], (x, y, z),
                      rot_z=(idx * 1.13) % math.tau, coll="ENV_Vegetation",
-                     scale=0.88 + 0.22 * ((idx * 7) % 5) / 5)
-            instance(f"Palm_Pit_{idx}", pit, (x, y, 0.0), coll="ENV_Vegetation")
+                     scale=0.92 + 0.16 * ((idx * 7) % 5) / 5)
+            instance(f"Street_Tree_Pit_{idx}", pit, (x, y, 0.0), coll="ENV_Vegetation")
             x += 17.0 + 4.0 * ((idx * 3) % 3)
             idx += 1
 
+    # Median planting, deliberately the small variants and cut back in scale.
     for i in range(14):
         x = -ROAD_LEN / 2 + 22 + i * 18.0
-        instance(f"Palm_Med_{i}", palms[(i + 1) % 3], (x, 0.0, ROAD_T + KERB_H + 0.5),
-                 rot_z=(i * 0.7) % math.tau, coll="ENV_Vegetation", scale=0.7)
+        instance(f"Median_Tree_{i}", short[i % 2], (x, 0.0, ROAD_T + KERB_H + 0.5),
+                 rot_z=(i * 0.7) % math.tau, coll="ENV_Vegetation", scale=0.62)
 
-    # Palms on the building plots, so planting is not confined to the kerb line.
+    # Trees on the building plots, so planting is not confined to the kerb line.
     for i, (name, cx, cy, w, d, _h, _s) in enumerate(SECONDARY):
         for k in range(3):
             px = cx - w / 2 - 3.5 + k * ((w + 7.0) / 2)
             py = cy + (d / 2 + 3.4) * (1 if cy < 0 else -1)
-            src = trees[(i + k) % 3] if (i + k) % 2 else palms[(i + k) % 3]
-            instance(f"Tree_Plot_{i}_{k}", src, (px, py, z),
+            instance(f"Plot_Tree_{i}_{k}", trees[(i * 3 + k) % 5], (px, py, z),
                      rot_z=(i * 0.9 + k) % math.tau, coll="ENV_Vegetation",
-                     scale=0.78 + 0.16 * (k % 2))
-            instance(f"Tree_Pit_{i}_{k}", pit, (px, py, 0.0), coll="ENV_Vegetation")
+                     scale=0.80 + 0.18 * (k % 2))
+            instance(f"Plot_Tree_Pit_{i}_{k}", pit, (px, py, 0.0),
+                     coll="ENV_Vegetation")
 
     for i in range(78):
         ang = (i * 2.399)
