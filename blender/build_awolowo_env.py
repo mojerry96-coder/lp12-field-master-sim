@@ -26,7 +26,7 @@ import sys
 
 import bmesh
 import bpy
-from mathutils import Matrix, Vector
+from mathutils import Euler, Matrix, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.abspath(os.path.join(HERE, ".."))
@@ -935,20 +935,83 @@ def palm_prototype(name="Palm", fronds=11, height=6.5, seed=0):
     return ob
 
 
-def broadleaf_prototype(name="Tree"):
-    """A round-crowned street tree. The reference has both kinds, and a verge
-    planted entirely with palms reads as a theme park."""
+def _rng(seed):
+    """Deterministic noise. A tree that rebuilds differently every run makes the
+    scene impossible to review against a previous render."""
+    state = seed * 2654435761 % 4294967296
+
+    def nxt():
+        nonlocal state
+        state = (state * 1664525 + 1013904223) % 4294967296
+        return state / 4294967296
+    return nxt
+
+
+def _leaf(bm, pos, size, yaw, pitch, roll):
+    """One flat leaf card."""
+    m = (Matrix.Translation(pos)
+         @ Euler((pitch, roll, yaw), "XYZ").to_matrix().to_4x4())
+    hw, hl = size * 0.46, size * 0.62
+    for p in ((-hw, -hl, 0.0), (hw, -hl, 0.0), (hw, hl, 0.0), (-hw, hl, 0.0)):
+        pass
+    quad = [bm.verts.new(m @ Vector(p)) for p in
+            ((-hw, -hl, 0.0), (hw, -hl, 0.0), (hw, hl, 0.0), (-hw, hl, 0.0))]
+    bm.faces.new(quad)
+
+
+def broadleaf_prototype(name="Tree", height=10.7, leaves=560, seed=0):
+    """A tall, narrow street tree whose canopy is built from scattered leaf cards.
+
+    The previous version stacked a few icospheres, which from any distance is a
+    green blob on a stick — it has a silhouette but no texture, and it cannot
+    catch light unevenly because every normal points outward from one centre.
+
+    Scattering flat cards fixes both at once. Each leaf faces its own way, so a
+    single directional light produces the light-and-dark mottling across the
+    canopy on its own, with no second material and no departure from the locked
+    palette. It also gives the crown a broken edge instead of a clean arc, which
+    is what stops a row of these reading as lollipops.
+
+    The form is deliberately columnar rather than round: a spreading crown over
+    a 26 m carriageway would swallow the road in the isometric, and the street
+    trees along a boulevard like this one are pruned upright anyway.
+    """
+    rnd = _rng(seed + 17)
     bm = bmesh.new()
-    crown = _tapered_trunk(bm, 3.1, r_base=0.17, r_top=0.12, sides=6, lean=0.12)
-    for dx, dy, dz, r in ((0.0, 0.0, 0.55, 1.42), (-0.72, 0.34, -0.10, 0.98),
-                          (0.66, -0.28, 0.02, 0.92), (0.10, 0.62, -0.28, 0.80)):
-        bmesh.ops.create_icosphere(
-            bm, subdivisions=1, radius=r,
-            matrix=Matrix.Translation((crown[0] + dx, crown[1] + dy, crown[2] + dz)))
-    # Flatten the canopy slightly — street trees are wider than they are tall.
-    for v in bm.verts:
-        if v.co.z > 2.6:
-            v.co.z = 2.6 + (v.co.z - 2.6) * 0.72
+
+    # Trunk carries on up through the canopy as a central leader rather than
+    # stopping where the leaves start — the reference shows it clearly.
+    _tapered_trunk(bm, height * 0.97, r_base=0.15, r_top=0.022, sides=7,
+                   lean=0.16 + 0.10 * rnd())
+
+    canopy_base = height * 0.33
+    canopy_top = height * 1.0
+    span = canopy_top - canopy_base
+    max_r = height * 0.128
+
+    for _ in range(leaves):
+        # Bias t toward the middle so the crown is dense at the waist and
+        # thins toward the tip, like the reference.
+        t = (rnd() + rnd() + rnd()) / 3.0
+        z = canopy_base + span * t
+        # Spindle: widest a little below halfway, tapering to a point.
+        prof = math.sin(math.pi * min(t ** 0.78, 1.0)) ** 0.85
+        r_here = max_r * prof
+        # Cluster toward the leader, with a few leaves flung out to break the
+        # silhouette.
+        rr = r_here * (rnd() ** 0.55) * (1.0 + 0.35 * (rnd() > 0.88))
+        a = rnd() * math.tau
+        pos = Vector((math.cos(a) * rr + 0.16 * (z / height) ** 1.5,
+                      math.sin(a) * rr,
+                      z + (rnd() - 0.5) * 0.25))
+        # Leaves hang outward and down rather than sitting at fully random
+        # angles: a canopy of evenly-random cards has no gravity in it.
+        _leaf(bm, pos,
+              size=0.20 + rnd() * 0.15,
+              yaw=rnd() * math.tau,
+              pitch=-0.55 + (rnd() - 0.5) * 1.9,
+              roll=(rnd() - 0.5) * 2.0)
+
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     me = bpy.data.meshes.new(f"{name}_src")
     bm.to_mesh(me)
@@ -997,7 +1060,10 @@ def build_vegetation():
              palm_prototype("Palm_B", fronds=9, height=5.6, seed=1),
              palm_prototype("Palm_C", fronds=12, height=7.4, seed=2)]
     palm = palms[0]
-    tree = broadleaf_prototype()
+    trees = [broadleaf_prototype("Tree_A", height=10.7, leaves=560, seed=0),
+             broadleaf_prototype("Tree_B", height=8.9, leaves=430, seed=1),
+             broadleaf_prototype("Tree_C", height=12.2, leaves=650, seed=2)]
+    tree = trees[0]
     shrub = shrub_prototype()
     pit = tree_pit_prototype()
     z = ROAD_T + KERB_H
@@ -1026,7 +1092,7 @@ def build_vegetation():
         for k in range(3):
             px = cx - w / 2 - 3.5 + k * ((w + 7.0) / 2)
             py = cy + (d / 2 + 3.4) * (1 if cy < 0 else -1)
-            src = tree if (i + k) % 2 else palms[(i + k) % 3]
+            src = trees[(i + k) % 3] if (i + k) % 2 else palms[(i + k) % 3]
             instance(f"Tree_Plot_{i}_{k}", src, (px, py, z),
                      rot_z=(i * 0.9 + k) % math.tau, coll="ENV_Vegetation",
                      scale=0.78 + 0.16 * (k % 2))
