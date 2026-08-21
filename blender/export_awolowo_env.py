@@ -70,6 +70,34 @@ def hide_prototypes():
     print(f"  removed {n} prototype objects")
 
 
+def recentre_on_anchor():
+    """Move the whole scene so LP12_INSTALL_ANCHOR is the origin.
+
+    The .blend keeps the site's own frame — the boulevard on y = 0, buildings
+    at real coordinates — because that is what makes the layout editable. The
+    GLB does not need any of that: its only consumer is the simulation, which
+    already has the LP12 standing at its own origin and wants the street built
+    around it.
+
+    Baking the offset here rather than applying it in the application is
+    deliberate. The alternative is to hand the app a translation and a rotation
+    and ask it to invert them across a Z-up to Y-up conversion, which is exactly
+    the kind of sign error that produces a city sitting a hundred metres from
+    the pole with nothing obviously wrong in the code.
+    """
+    anchor = bpy.data.objects.get("LP12_INSTALL_ANCHOR")
+    if anchor is None:
+        print("  no anchor found — exporting in site coordinates")
+        return
+    inv = anchor.matrix_world.inverted()
+    for ob in bpy.context.scene.objects:
+        if ob.parent is None:
+            ob.matrix_world = inv @ ob.matrix_world
+    bpy.context.view_layer.update()
+    print("  recentred on LP12_INSTALL_ANCHOR; anchor now at",
+          [round(v, 3) for v in anchor.matrix_world.translation])
+
+
 def export_glb():
     for name in REQUIRED_NODES:
         if name not in bpy.data.objects:
@@ -125,6 +153,7 @@ def main():
     print("export pass")
     render_set()
     hide_prototypes()
+    recentre_on_anchor()
     apply_transforms()
     purge_orphans()
     export_glb()

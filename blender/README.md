@@ -39,10 +39,19 @@ Treat `public/models/lp12_v2.glb` as the artefact of record for the antenna.
 
 ## The environment is not wired in yet
 
-`exports/awolowo_lowpoly_env.glb` (1.5 MB, Draco) is version-controlled here
+`exports/awolowo_lowpoly_env.glb` (2.9 MB, Draco) is version-controlled here
 rather than in `public/`, because everything under `public/` ships to the
 browser whether the app loads it or not. Move it into `public/models/` at the
 point something actually renders it.
+
+**The GLB is exported recentred on `LP12_INSTALL_ANCHOR`**, so it drops into the
+scene at position zero with no rotation and the street builds itself around an
+LP12 already standing at its own origin. The `.blend` keeps the site's own frame
+— boulevard on y = 0, buildings at real coordinates — because that is what makes
+the layout editable; only the export is rebased. Doing it here rather than in the
+application avoids inverting a translation and a rotation across a Z-up to Y-up
+conversion, which is the kind of sign error that puts the city a hundred metres
+from the pole with nothing obviously wrong in the code.
 
 It carries two named empties for the application to read:
 

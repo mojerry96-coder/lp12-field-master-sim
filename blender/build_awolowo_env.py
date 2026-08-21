@@ -488,6 +488,101 @@ def storey_windows(name, x0, x1, y_face, out, storeys, base_z, storey_h, coll,
             gy0, gy1 = sorted((y_face - out * 0.30, y_face - out * 0.14))
             box(f"{name}_Win_{s}_{b}", bx0 + 0.05, bx1 - 0.05, gy0, gy1,
                 z0 + 0.05, z1 - 0.05, mat, coll)
+            # A mullion splitting the bay, and a sill projecting from its foot.
+            # Both are what stop a window reading as a painted rectangle: the
+            # mullion gives the opening a scale to be read against, the sill
+            # catches a highlight and casts the small shadow that says the wall
+            # has thickness.
+            my0, my1 = sorted((y_face - out * 0.32, y_face - out * 0.06))
+            box(f"{name}_Mull_{s}_{b}", cx - 0.045, cx + 0.045, my0, my1,
+                z0 + 0.05, z1 - 0.05, "ENV_Building_Hi", coll)
+            sy0, sy1 = sorted((y_face - out * 0.34, y_face + out * 0.10))
+            box(f"{name}_Sill_{s}_{b}", bx0 - 0.08, bx1 + 0.08, sy0, sy1,
+                z0 - 0.10, z0 + 0.02, "ENV_Building_Hi", coll)
+
+
+def floor_bands(name, x0, x1, y0, y1, storeys, base_z, storey_h, coll):
+    """Slab bands expressed on the facade between window rows.
+
+    Horizontal expression is half of how a building is read at distance; with
+    only vertical bays the mass looks like a punched card. The band projects a
+    few centimetres so it carries its own shadow line.
+    """
+    for s in range(1, storeys):
+        z = base_z + s * storey_h
+        box(f"{name}_Band_{s}", x0 - 0.12, x1 + 0.12, y0 - 0.12, y1 + 0.12,
+            z - 0.16, z + 0.10, "ENV_Building_Hi", coll, bevel=0.03)
+
+
+def roofscape(name, cx, cy, w, d, roof_z, coll, cores=1, tanks=2, railing=True):
+    """What actually sits on a flat roof: a stair core, water tanks, a railing
+    and an aerial. Modelled because from a 58-degree camera the roof is one of
+    the largest visible surfaces on every building in the scene."""
+    x0, x1 = cx - w / 2, cx + w / 2
+    y0, y1 = cy - d / 2, cy + d / 2
+
+    if railing:
+        # Four thin rails set in from the parapet.
+        r_in = 1.1
+        for tag, (rx0, rx1, ry0, ry1) in (
+                ("N", (x0 + r_in, x1 - r_in, y1 - r_in - 0.08, y1 - r_in)),
+                ("S", (x0 + r_in, x1 - r_in, y0 + r_in, y0 + r_in + 0.08)),
+                ("E", (x1 - r_in - 0.08, x1 - r_in, y0 + r_in, y1 - r_in)),
+                ("W", (x0 + r_in, x0 + r_in + 0.08, y0 + r_in, y1 - r_in))):
+            box(f"{name}_Rail_{tag}", rx0, rx1, ry0, ry1,
+                roof_z + 0.95, roof_z + 1.05, "ENV_Metal", coll)
+
+    for c in range(cores):
+        sx = cx - w / 4 + c * (w / 2)
+        box(f"{name}_Core_{c}", sx - 2.6, sx + 2.6, cy - 2.2, cy + 2.2,
+            roof_z, roof_z + 3.0, "ENV_Building", coll, bevel=0.05)
+        box(f"{name}_Core_Cap_{c}", sx - 2.9, sx + 2.9, cy - 2.5, cy + 2.5,
+            roof_z + 3.0, roof_z + 3.25, "ENV_Building_Hi", coll, bevel=0.04)
+
+    for t in range(tanks):
+        tx = x0 + w * (0.22 + 0.42 * t)
+        ty = y1 - d * 0.26
+        # Tank on a short cradle, so it stands off the roof deck.
+        for i in (-1, 1):
+            box(f"{name}_Tank_Leg_{t}_{i}", tx + i * 0.75 - 0.10, tx + i * 0.75 + 0.10,
+                ty - 0.10, ty + 0.10, roof_z, roof_z + 0.75, "ENV_Metal", coll)
+        box(f"{name}_Tank_{t}", tx - 1.0, tx + 1.0, ty - 0.85, ty + 0.85,
+            roof_z + 0.75, roof_z + 2.05, "ENV_Building_Hi", coll, bevel=0.12)
+
+    # Aerial mast with two cross-arms.
+    ax, ay = x1 - w * 0.14, y0 + d * 0.24
+    box(f"{name}_Mast", ax - 0.06, ax + 0.06, ay - 0.06, ay + 0.06,
+        roof_z, roof_z + 4.2, "ENV_Metal", coll)
+    for k, zz in enumerate((roof_z + 3.1, roof_z + 3.7)):
+        arm = 0.85 - k * 0.25
+        box(f"{name}_Mast_Arm_{k}", ax - arm, ax + arm, ay - 0.05, ay + 0.05,
+            zz, zz + 0.08, "ENV_Metal", coll)
+
+
+def shopfront(name, x0, x1, y_face, out, coll, head=3.6, recess=0.9):
+    """A recessed ground floor with a canopy over it.
+
+    A flat box stuck on the wall is not an entrance. Pulling the glass back and
+    oversailing it with a canopy gives the base of the building a shadow, which
+    is what separates it from the pavement it stands on.
+    """
+    gy = y_face - out * recess
+    gy0, gy1 = sorted((gy, gy + out * 0.18))
+    box(f"{name}_Shop_Glass", x0, x1, gy0, gy1, 0.15, head, "ENV_Glass_Dark", coll)
+    # Reveal walls at each end of the recess.
+    for i, ex in enumerate((x0, x1)):
+        ry0, ry1 = sorted((y_face, gy))
+        box(f"{name}_Shop_Reveal_{i}", ex - 0.18, ex + 0.18, ry0, ry1,
+            0.0, head + 0.25, "ENV_Building", coll)
+    cy0, cy1 = sorted((y_face + out * 1.05, gy))
+    box(f"{name}_Shop_Canopy", x0 - 0.5, x1 + 0.5, cy0, cy1,
+        head, head + 0.26, "ENV_Building_Hi", coll, bevel=0.05)
+    for k in range(max(2, int((x1 - x0) / 5.0))):
+        px = x0 + 0.6 + k * ((x1 - x0 - 1.2) / max(1, int((x1 - x0) / 5.0) - 1)) \
+            if int((x1 - x0) / 5.0) > 1 else (x0 + x1) / 2
+        py0, py1 = sorted((y_face + out * 0.95, y_face + out * 0.85))
+        box(f"{name}_Shop_Post_{k}", px - 0.09, px + 0.09, py0, py1,
+            0.0, head, "ENV_Building_Hi", coll)
 
 
 def build_bank_of_industry():
@@ -537,11 +632,23 @@ def build_bank_of_industry():
                 "ENV_Building_Hi", "ENV_Buildings_Main", bevel=0.04)
     box("BOI_Base_Course", x0 - 0.5, x1 + 0.5, y0 - 0.5, y1 + 0.5, 0.0, 1.2,
         "ENV_Building_Shadow", "ENV_Buildings_Main", bevel=0.05)
-    # Roof plant, so the skyline is not a clean rectangle.
-    for i, (dx, dw, dd) in enumerate(((-22, 9, 8), (-6, 6, 7), (12, 11, 9), (28, 7, 6))):
-        box(f"BOI_Roof_Plant_{i}", cx + dx - dw / 2, cx + dx + dw / 2,
-            cy - dd / 2, cy + dd / 2, h + 1.1, h + 1.1 + 1.6 + (i % 2) * 0.9,
-            "ENV_Building_Shadow", "ENV_Buildings_Main", bevel=0.05)
+    floor_bands("BOI", x0, x1, y0, y1, storeys, 0.0, storey_h, "ENV_Buildings_Main")
+
+    # Stepped upper mass. A seven-storey slab of one section is the single
+    # biggest reason a block reads as an extrusion; setting the top floors back
+    # gives the landmark a profile from every direction.
+    sb = 3.2
+    step_z = storey_h * 5
+    box("BOI_Upper_Mass", x0 + sb, x1 - sb, y0 + sb, y1 - sb, step_z, h + 2.6,
+        "ENV_Building", "ENV_Buildings_Main", bevel=0.08)
+    box("BOI_Upper_Coping", x0 + sb - 0.4, x1 - sb + 0.4, y0 + sb - 0.4, y1 - sb + 0.4,
+        h + 2.6, h + 3.0, "ENV_Building_Hi", "ENV_Buildings_Main", bevel=0.05)
+    storey_windows("BOI_Up", x0 + sb + 2, x1 - sb - 2, y0 + sb, -1.0, 2,
+                   step_z, storey_h, "ENV_Buildings_Main")
+
+    roofscape("BOI", cx, cy, w, d, h + 1.1, "ENV_Buildings_Main", cores=2, tanks=3)
+    roofscape("BOI_Up", cx, cy, w - 2 * sb, d - 2 * sb, h + 3.0,
+              "ENV_Buildings_Main", cores=0, tanks=1, railing=False)
 
     box("BOI_Forecourt", x0 - 4, x1 + 4, KERB_Y + PAVE_W, y0, 0.0, ROAD_T + KERB_H,
         "ENV_Pavement", "ENV_Pavements", bevel=0.04)
@@ -587,14 +694,8 @@ def build_native_supply():
     # building a blank slab in the hero shot. Glazing both faces is also simply
     # true of a commercial unit with frontage and a service yard.
     for tag, fy, out in (("Front", y1, 1.0), ("Rear", y0, -1.0)):
-        box(f"NS_Storefront_{tag}", x0 + 2.5, x1 - 2.5,
-            fy - 0.30 * out, fy + 0.02 * out, 0.4, 6.4,
-            "ENV_Glass_Dark", "ENV_Buildings_Main")
-        for i in range(7):
-            x = x0 + 3.5 + i * 5.2
-            box(f"NS_Mullion_{tag}_{i}", x - 0.12, x + 0.12,
-                fy - 0.32 * out, fy + 0.10 * out, 0.4, 6.6,
-                "ENV_Building_Hi", "ENV_Buildings_Main")
+        shopfront(f"NS_{tag}", x0 + 2.5, x1 - 2.5, fy, out,
+                  "ENV_Buildings_Main", head=5.4, recess=1.3)
         storey_windows(f"NS_Upper_{tag}", x0 + 3, x1 - 3, fy, out, 1, 7.0, 3.4,
                        "ENV_Buildings_Main")
         # Blank sign panel — kept untextured so the application supplies the
@@ -602,6 +703,9 @@ def build_native_supply():
         box(f"NS_Sign_Panel_{tag}", cx - 12, cx + 12,
             fy + 0.06 * out, fy + 0.22 * out, 7.6, 9.0,
             "ENV_Building_Hi", "ENV_Buildings_Main", bevel=0.03)
+
+    floor_bands("NS", x0, x1, y0, y1, 3, 0.0, h / 3.0, "ENV_Buildings_Main")
+    roofscape("NS", cx, cy, w, d, h + 0.9, "ENV_Buildings_Main", cores=1, tanks=2)
     box("NS_Base_Course", x0 - 0.3, x1 + 0.3, y0 - 0.3, y1 + 0.3, 0.0, 0.9,
         "ENV_Building_Shadow", "ENV_Buildings_Main", bevel=0.04)
 
@@ -718,6 +822,20 @@ def build_secondary():
         box(f"{name}_Base", x0 - 0.25, x1 + 0.25, y0 - 0.25, y1 + 0.25, 0.0, 0.9,
             "ENV_Building_Shadow", "ENV_Buildings_Secondary", bevel=0.04)
         face_y = y0 if cy > 0 else y1
+        floor_bands(name, x0, x1, y0, y1, storeys, 0.0, h / max(storeys, 1),
+                    "ENV_Buildings_Secondary")
+        if storeys >= 3:
+            sb = 2.2
+            box(f"{name}_Upper", x0 + sb, x1 - sb, y0 + sb, y1 - sb,
+                h * 0.62, h + 1.9, "ENV_Building", "ENV_Buildings_Secondary",
+                bevel=0.06)
+        roofscape(name, cx, cy, w, d, h + 0.8, "ENV_Buildings_Secondary",
+                  cores=1 if storeys >= 3 else 0, tanks=1 + (storeys >= 3),
+                  railing=storeys >= 2)
+        front_y, front_out = (y0, -1.0) if cy > 0 else (y1, 1.0)
+        shopfront(name, x0 + 2.0, x1 - 2.0, front_y, front_out,
+                  "ENV_Buildings_Secondary", head=3.4, recess=0.85)
+
         # Parapet coping and rooftop plant, so the skyline is not a row of
         # identical clean rectangles.
         box(f"{name}_Coping", x0 - 0.45, x1 + 0.45, y0 - 0.45, y1 + 0.45,
@@ -731,98 +849,157 @@ def build_secondary():
                 cy - 3.2, cy + 2.6, h + 1.0, h + 1.0 + 1.3 + (k % 2) * 0.7,
                 "ENV_Building_Hi", "ENV_Buildings_Secondary", bevel=0.05)
 
-        box(f"{name}_Entrance", cx - 2.2, cx + 2.2,
-            face_y - 1.6 if cy > 0 else face_y - 0.1,
-            face_y + 0.1 if cy > 0 else face_y + 1.6,
-            0.0, 3.2, "ENV_Building_Shadow", "ENV_Buildings_Secondary", bevel=0.04)
+
 
 
 # -------------------------------------------------------------- vegetation
 
-def palm_prototype():
-    """One palm, reused everywhere as a linked instance.
+def _tapered_trunk(bm, height, r_base, r_top, sides, lean, mat_index=0):
+    """A trunk built from stacked rings rather than one cone.
 
-    Two material slots on a single mesh rather than two parented objects: the
-    trunk is not the same colour as the foliage, and a palm rendered entirely in
-    leaf-green reads as a green post. One mesh keeps the instance a single
-    object, which matters when there are eighty of them.
-
-    The crown is a dozen narrow, steeply arching fronds in two tiers. The first
-    version used eight wide, near-horizontal blades and read as a flat star from
-    the steep isometric this scene is actually viewed from.
+    Rings let the trunk lean and bow as it rises, which is most of what makes a
+    palm read as grown rather than extruded. A single cone cannot bend.
     """
+    rings = 5
+    prev = None
+    for i in range(rings + 1):
+        t = i / rings
+        z = height * t
+        r = r_base + (r_top - r_base) * t
+        # Bow out then back, plus a steady lean, so no two rings share an axis.
+        off_x = lean * (t ** 1.5) + 0.10 * math.sin(t * math.pi)
+        ring = []
+        for k in range(sides):
+            a = (k / sides) * math.tau
+            ring.append(bm.verts.new((off_x + r * math.cos(a), r * math.sin(a), z)))
+        if prev:
+            for k in range(sides):
+                bm.faces.new((prev[k], prev[(k + 1) % sides],
+                              ring[(k + 1) % sides], ring[k]))
+        prev = ring
+    bm.faces.new(prev)                       # cap the crown
+    return (lean + 0.10 * math.sin(math.pi), 0.0, height)
+
+
+def _frond(bm, origin, azimuth, reach, rise, droop, width, segs=5):
+    """One drooping palm frond with a ridged, V-shaped section.
+
+    The first version was a flat pentagon. Seen from the isometric camera —
+    which looks down at 58 degrees — a flat frond is edge-on to nothing and
+    face-on to the light, so a palm read as a green asterisk lying on the
+    pavement. Giving each frond a ridge and letting it fall away under its own
+    weight is what turns it back into a crown.
+    """
+    ox, oy, oz = origin
+    ca, sa = math.cos(azimuth), math.sin(azimuth)
+    ridge, left, right = [], [], []
+    for i in range(segs + 1):
+        t = i / segs
+        dist = reach * t
+        # Up first, then over: a parabola, not a straight ray.
+        z = oz + rise * math.sin(t * math.pi * 0.72) - droop * (t ** 2.2)
+        cx, cy = ox + ca * dist, oy + sa * dist
+        w = width * (1.0 - t) * (0.45 + 0.55 * math.sin(min(t * 2.4, 1.0) * math.pi / 2))
+        h = width * 0.55 * (1.0 - t)
+        ridge.append(bm.verts.new((cx, cy, z + h)))
+        left.append(bm.verts.new((cx - sa * w, cy + ca * w, z)))
+        right.append(bm.verts.new((cx + sa * w, cy - ca * w, z)))
+    for i in range(segs):
+        bm.faces.new((left[i], ridge[i], ridge[i + 1], left[i + 1]))
+        bm.faces.new((ridge[i], right[i], right[i + 1], ridge[i + 1]))
+
+
+def palm_prototype(name="Palm", fronds=11, height=6.5, seed=0):
+    """One palm, reused everywhere as a linked instance."""
     bm = bmesh.new()
-
-    # Tapered trunk, 8 sides.
-    trunk_h = 6.2
-    ret = bmesh.ops.create_cone(bm, cap_ends=True, segments=8,
-                                radius1=0.21, radius2=0.13, depth=trunk_h)
-    bmesh.ops.translate(bm, vec=Vector((0, 0, trunk_h / 2)), verts=bm.verts)
-    trunk_faces = set(f.index for f in bm.faces)
-
-    # Crown boss, so the fronds spring from a mass rather than a point.
+    crown = _tapered_trunk(bm, height, r_base=0.21, r_top=0.13, sides=8,
+                           lean=0.34 + 0.10 * ((seed * 3) % 3))
+    # A small boss where the fronds spring from, so they do not appear to grow
+    # out of a point.
     bmesh.ops.create_icosphere(
-        bm, subdivisions=1, radius=0.30,
-        matrix=Matrix.Translation((0, 0, trunk_h + 0.05)))
-
-    for tier, (count, reach, lift, droop, phase, half_w) in enumerate((
-            (7, 2.55, 0.05, 1.75, 0.00, 0.19),
-            (5, 1.65, 0.62, 0.95, 0.45, 0.15))):
-        for i in range(count):
-            a = (i / count) * math.tau + phase
-            ca, sa = math.cos(a), math.sin(a)
-            root = Vector((ca * 0.22, sa * 0.22, trunk_h + lift))
-            tip = Vector((ca * reach, sa * reach, trunk_h + lift - droop))
-            side = Vector((-sa * half_w, ca * half_w, 0))
-            # Arch: the midpoint rides above the straight root-to-tip chord.
-            mid = (root + tip) / 2 + Vector((0, 0, 0.46))
-            spine = Vector((0, 0, 0.13))
-            r_c, m_c, t_c = (bm.verts.new(root + spine * 0.3),
-                             bm.verts.new(mid + spine),
-                             bm.verts.new(tip))
-            r_l, m_l = bm.verts.new(root + side * 0.45), bm.verts.new(mid + side)
-            r_r, m_r = bm.verts.new(root - side * 0.45), bm.verts.new(mid - side)
-            bm.faces.new((r_c, m_c, m_l, r_l))
-            bm.faces.new((m_c, t_c, m_l))
-            bm.faces.new((r_r, m_r, m_c, r_c))
-            bm.faces.new((m_r, t_c, m_c))
-
-    bm.normal_update()
-    me = bpy.data.meshes.new("Palm_src")
+        bm, subdivisions=1, radius=0.26,
+        matrix=Matrix.Translation((crown[0], crown[1], crown[2] - 0.05)))
+    for i in range(fronds):
+        a = (i / fronds) * math.tau + seed * 0.37
+        vary = 0.82 + 0.36 * ((i * 5 + seed) % 4) / 3.0
+        _frond(bm, (crown[0], crown[1], crown[2] - 0.10), a,
+               reach=2.5 * vary, rise=0.62, droop=1.55 * vary, width=0.30)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    me = bpy.data.meshes.new(f"{name}_src")
     bm.to_mesh(me)
     bm.free()
-
-    me.materials.append(MATS["ENV_Building_Shadow"])   # slot 0: trunk
-    me.materials.append(MATS["ENV_Vegetation"])        # slot 1: fronds
-    for poly in me.polygons:
-        poly.material_index = 0 if poly.index in trunk_faces else 1
-
-    ob = bpy.data.objects.new("Palm_src", me)
+    ob = bpy.data.objects.new(f"{name}_src", me)
+    ob.data.materials.append(MATS["ENV_Vegetation"])
     link(ob, "ENV_Vegetation")
-    ob.hide_render = True
-    ob.hide_viewport = True
+    ob.hide_render = ob.hide_viewport = True
+    return ob
+
+
+def broadleaf_prototype(name="Tree"):
+    """A round-crowned street tree. The reference has both kinds, and a verge
+    planted entirely with palms reads as a theme park."""
+    bm = bmesh.new()
+    crown = _tapered_trunk(bm, 3.1, r_base=0.17, r_top=0.12, sides=6, lean=0.12)
+    for dx, dy, dz, r in ((0.0, 0.0, 0.55, 1.42), (-0.72, 0.34, -0.10, 0.98),
+                          (0.66, -0.28, 0.02, 0.92), (0.10, 0.62, -0.28, 0.80)):
+        bmesh.ops.create_icosphere(
+            bm, subdivisions=1, radius=r,
+            matrix=Matrix.Translation((crown[0] + dx, crown[1] + dy, crown[2] + dz)))
+    # Flatten the canopy slightly — street trees are wider than they are tall.
+    for v in bm.verts:
+        if v.co.z > 2.6:
+            v.co.z = 2.6 + (v.co.z - 2.6) * 0.72
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    me = bpy.data.meshes.new(f"{name}_src")
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new(f"{name}_src", me)
+    ob.data.materials.append(MATS["ENV_Vegetation"])
+    link(ob, "ENV_Vegetation")
+    ob.hide_render = ob.hide_viewport = True
     return ob
 
 
 def shrub_prototype():
+    """Three overlapping lobes, not one squashed sphere — a shrub has a
+    silhouette, and a single ellipsoid reads as a pebble."""
     bm = bmesh.new()
-    bmesh.ops.create_icosphere(bm, subdivisions=1, radius=0.9)
+    for dx, dy, dz, r in ((0.0, 0.0, 0.0, 0.88), (0.62, 0.22, -0.16, 0.62),
+                          (-0.48, -0.34, -0.20, 0.55)):
+        bmesh.ops.create_icosphere(
+            bm, subdivisions=1, radius=r,
+            matrix=Matrix.Translation((dx, dy, dz)))
     for v in bm.verts:
-        v.co.z = max(v.co.z * 0.62, -0.1)
+        v.co.z = max(v.co.z * 0.62, -0.05)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     me = bpy.data.meshes.new("Shrub_src")
     bm.to_mesh(me)
     bm.free()
     ob = bpy.data.objects.new("Shrub_src", me)
     ob.data.materials.append(MATS["ENV_Vegetation"])
     link(ob, "ENV_Vegetation")
-    ob.hide_render = True
-    ob.hide_viewport = True
+    ob.hide_render = ob.hide_viewport = True
+    return ob
+
+
+def tree_pit_prototype():
+    """The square grate a street tree stands in. Small, but without it every
+    trunk pierces the paving with no transition."""
+    z = ROAD_T + KERB_H
+    ob = box("Tree_Pit_src", -0.85, 0.85, -0.85, 0.85, z - 0.06, z + 0.02,
+             "ENV_Building_Shadow", "ENV_Vegetation", bevel=0.03)
+    ob.hide_render = ob.hide_viewport = True
     return ob
 
 
 def build_vegetation():
-    palm = palm_prototype()
+    palms = [palm_prototype("Palm_A", fronds=11, height=6.5, seed=0),
+             palm_prototype("Palm_B", fronds=9, height=5.6, seed=1),
+             palm_prototype("Palm_C", fronds=12, height=7.4, seed=2)]
+    palm = palms[0]
+    tree = broadleaf_prototype()
     shrub = shrub_prototype()
+    pit = tree_pit_prototype()
     z = ROAD_T + KERB_H
     idx = 0
 
@@ -832,14 +1009,16 @@ def build_vegetation():
         y = sign * (KERB_Y + 2.6)
         x = -ROAD_LEN / 2 + 14
         while x < ROAD_LEN / 2 - 14:
-            instance(f"Palm_{idx}", palm, (x, y, z), rot_z=(idx * 1.13) % math.tau,
-                     coll="ENV_Vegetation", scale=0.88 + 0.22 * ((idx * 7) % 5) / 5)
+            instance(f"Palm_{idx}", palms[idx % 3], (x, y, z),
+                     rot_z=(idx * 1.13) % math.tau, coll="ENV_Vegetation",
+                     scale=0.88 + 0.22 * ((idx * 7) % 5) / 5)
+            instance(f"Palm_Pit_{idx}", pit, (x, y, 0.0), coll="ENV_Vegetation")
             x += 17.0 + 4.0 * ((idx * 3) % 3)
             idx += 1
 
     for i in range(14):
         x = -ROAD_LEN / 2 + 22 + i * 18.0
-        instance(f"Palm_Med_{i}", palm, (x, 0.0, ROAD_T + KERB_H + 0.5),
+        instance(f"Palm_Med_{i}", palms[(i + 1) % 3], (x, 0.0, ROAD_T + KERB_H + 0.5),
                  rot_z=(i * 0.7) % math.tau, coll="ENV_Vegetation", scale=0.7)
 
     # Palms on the building plots, so planting is not confined to the kerb line.
@@ -847,9 +1026,11 @@ def build_vegetation():
         for k in range(3):
             px = cx - w / 2 - 3.5 + k * ((w + 7.0) / 2)
             py = cy + (d / 2 + 3.4) * (1 if cy < 0 else -1)
-            instance(f"Palm_Plot_{i}_{k}", palm, (px, py, z),
+            src = tree if (i + k) % 2 else palms[(i + k) % 3]
+            instance(f"Tree_Plot_{i}_{k}", src, (px, py, z),
                      rot_z=(i * 0.9 + k) % math.tau, coll="ENV_Vegetation",
-                     scale=0.78 + 0.12 * (k % 2))
+                     scale=0.78 + 0.16 * (k % 2))
+            instance(f"Tree_Pit_{i}_{k}", pit, (px, py, 0.0), coll="ENV_Vegetation")
 
     for i in range(78):
         ang = (i * 2.399)
