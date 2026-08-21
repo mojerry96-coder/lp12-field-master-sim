@@ -40,6 +40,7 @@ npm run preview    # serve that bundle
 | `src/components/` | 3D canvas, studio lighting, coverage dome, hotspot, background plate |
 | `src/tuning/` | The tablet tuning scene, self-contained |
 | `public/models/lp12_v2.glb` | The LP12 model and its six assembly clips |
+| `blender/` | The headless Blender scripts that produce the 3D assets — see its own README |
 
 ### A few things that are load-bearing
 
