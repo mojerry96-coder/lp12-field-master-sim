@@ -1039,6 +1039,10 @@ def build_vegetation():
     # Median planting, deliberately the small variants and cut back in scale.
     for i in range(14):
         x = -ROAD_LEN / 2 + 22 + i * 18.0
+        # Keep clear of the LP12 host pole and its reserved bay: a tree growing
+        # through the antenna is not something the isometric would forgive.
+        if abs(x - LP12_ANCHOR_X) < 12.0:
+            continue
         instance(f"Median_Tree_{i}", short[i % 2], (x, 0.0, ROAD_T + KERB_H + 0.5),
                  rot_z=(i * 0.7) % math.tau, coll="ENV_Vegetation", scale=0.62)
 
@@ -1092,6 +1096,46 @@ def streetlight_prototype():
     return ob, arm, head
 
 
+LP12_ANCHOR_X = 18.0          # along the boulevard, opposite the BOI entrance
+MEDIAN_COLUMN_H = 12.5        # matches the LP12 host pole at 12.755 m
+
+
+def median_column_prototype():
+    """The tall twin-arm lighting column that runs down the central median.
+
+    This is the pole the LP12 is mounted on in background.png: planted in the
+    median hedge, one lamp reaching out over each carriageway. The kerbside
+    lights stay at 8 m, which gives the corridor a lighting hierarchy — and
+    more to the point, an 8 m kerbside lamp was the tallest pole in the scene,
+    so the 12.755 m LP12 stood a head and shoulders above everything around it
+    and read as the wrong scale.
+    """
+    bm = bmesh.new()
+    _tapered_trunk(bm, MEDIAN_COLUMN_H, r_base=0.22, r_top=0.11, sides=8, lean=0.0)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    me = bpy.data.meshes.new("Median_Column_src")
+    bm.to_mesh(me)
+    bm.free()
+    ob = bpy.data.objects.new("Median_Column_src", me)
+    ob.data.materials.append(MATS["ENV_Metal"])
+    link(ob, "ENV_StreetFurniture")
+
+    # Two arms and two heads, one over each carriageway.
+    parts = []
+    for i, sign in enumerate((1, -1)):
+        arm = box(f"Median_Arm_{i}_src", -0.07, 0.07, min(0, sign * 2.6),
+                  max(0, sign * 2.6), MEDIAN_COLUMN_H - 0.55, MEDIAN_COLUMN_H - 0.41,
+                  "ENV_Metal", "ENV_StreetFurniture")
+        head = box(f"Median_Head_{i}_src", -0.22, 0.22,
+                   min(sign * 2.35, sign * 3.15), max(sign * 2.35, sign * 3.15),
+                   MEDIAN_COLUMN_H - 0.72, MEDIAN_COLUMN_H - 0.50,
+                   "ENV_Building_Hi", "ENV_StreetFurniture", bevel=0.03)
+        parts += [arm, head]
+    for o in [ob] + parts:
+        o.hide_render = o.hide_viewport = True
+    return ob, parts
+
+
 def build_street_furniture():
     pole, arm, head = streetlight_prototype()
     z = ROAD_T + KERB_H
@@ -1105,6 +1149,21 @@ def build_street_furniture():
                 child = instance(f"Streetlight_{tag}_{i}_{sign}", src, (0, 0, 0))
                 child.parent = lamp
                 child.matrix_parent_inverse = lamp.matrix_world.inverted()
+
+    # Twin-arm columns down the median. One position is deliberately left empty:
+    # the LP12 is mounted on the column that would stand there, and two poles in
+    # the same spot is the sort of thing nobody notices until it is rendered.
+    col, col_parts = median_column_prototype()
+    med_z = ROAD_T + KERB_H
+    for i in range(9):
+        x = -ROAD_LEN / 2 + 26 + i * 32.0
+        if abs(x - LP12_ANCHOR_X) < 16.0:
+            continue                       # reserved for the LP12 host pole
+        base = instance(f"Median_Column_{i}", col, (x, 0.0, med_z))
+        for j, src in enumerate(col_parts):
+            child = instance(f"Median_Column_{i}_p{j}", src, (0, 0, 0))
+            child.parent = base
+            child.matrix_parent_inverse = base.matrix_world.inverted()
 
     # Bollards along the Bank of Industry frontage.
     bollard = box("Bollard_src", -0.09, 0.09, -0.09, 0.09, 0, 0.95,
@@ -1385,8 +1444,12 @@ def build_anchors():
     anchor = bpy.data.objects.new("LP12_INSTALL_ANCHOR", None)
     anchor.empty_display_type = "ARROWS"
     anchor.empty_display_size = 3.0
-    # On the pavement in front of the Bank of Industry, clear of the fence line.
-    anchor.location = (18.0, KERB_Y + 2.2, ROAD_T + KERB_H)
+    # On the central median, in the planted strip — which is where the host pole
+    # actually stands in background.png. The written brief said "on the
+    # pavement", but the photograph it points at shows a twin-arm column planted
+    # in the median hedge with a lamp over each carriageway, and the photograph
+    # is what the layout has to match.
+    anchor.location = (LP12_ANCHOR_X, 0.0, ROAD_T + KERB_H)
     # +Y is the antenna's intended front: it faces across the carriageway,
     # which is the direction the coverage has to reach.
     anchor.rotation_euler = (0.0, 0.0, math.pi)
@@ -1397,7 +1460,7 @@ def build_anchors():
     dome.empty_display_size = 6.0
     # At the antenna's working height, so the application can centre a sphere
     # on it directly. Never a cone.
-    dome.location = (18.0, KERB_Y + 2.2, ROAD_T + KERB_H + 7.5)
+    dome.location = (LP12_ANCHOR_X, 0.0, ROAD_T + KERB_H + 7.5)
     link(dome, "ENV_LP12_Anchor")
     return anchor, dome
 

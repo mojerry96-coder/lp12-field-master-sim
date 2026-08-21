@@ -55,8 +55,10 @@ from the pole with nothing obviously wrong in the code.
 
 It carries two named empties for the application to read:
 
-- `LP12_INSTALL_ANCHOR` — on the pavement outside the institutional building,
-  +Y facing across the carriageway.
+- `LP12_INSTALL_ANCHOR` — planted in the central median, where background.png
+  shows the twin-arm lighting column the LP12 is mounted on. The written brief
+  said "on the pavement"; the photograph it points at does not, and the
+  photograph is what the layout has to match.
 - `NETWORK_DOME_ORIGIN` — 7.5 m above it, for centring the spherical coverage
   volume. Spherical, never a cone.
 
