@@ -84,6 +84,9 @@ ROAD_T = 0.16               # road slab thickness, per the brief
 KERB_H = 0.30
 MARK_Z = 0.008              # markings float above the slab, never z-fight
 
+LP12_ANCHOR_X = 18.0        # along the boulevard, opposite the BOI entrance
+MEDIAN_COLUMN_H = 12.5      # matches the LP12 host pole at 12.755 m
+
 COLLECTIONS = [
     "ENV_Ground", "ENV_Roads", "ENV_Buildings_Main", "ENV_Buildings_Secondary",
     "ENV_Pavements", "ENV_StreetFurniture", "ENV_Vegetation", "ENV_Vehicles",
@@ -732,7 +735,7 @@ SECONDARY = [
     # the slip road, which is exactly what happened to the first layout.
     ("Sec_SW_C",  -48.0, -34.0, 26.0, 16.0, 7.0, 2),
     ("Sec_SW_D",  -46.0, -64.0, 30.0, 20.0, 10.0, 3),
-    ("Sec_S_E",    12.0, -36.0, 24.0, 15.0, 6.5, 2),
+    ("Sec_S_E",     4.0, -58.0, 24.0, 15.0, 6.5, 2),
     ("Sec_S_F",    22.0, -66.0, 32.0, 24.0, 12.0, 3),
     ("Sec_S_G",    72.0, -40.0, 36.0, 22.0, 9.5, 2),
     ("Sec_S_H",    64.0, -76.0, 30.0, 20.0, 11.0, 3),
@@ -744,6 +747,91 @@ SECONDARY = [
     ("Sec_NW_L", -152.0,  62.0, 26.0, 20.0, 9.5, 2),
     ("Sec_NW_M",  -66.0,  44.0, 24.0, 18.0, 7.5, 2),
 ]
+
+
+# The studio camera anchors, expressed in this scene's frame. CAM_01 and CAM_09
+# stand 30 and 33 m out from the median — past the 20.2 m pavement edge and into
+# the plots — so a building placed on the frontage there ends up with the camera
+# inside its parapet, which renders as a flat grey wall and nothing else.
+#
+# The anchors are not negotiable: they are authored in Blender and the
+# simulation's camera moves are built on them. The buildings move instead.
+CAMERA_ANCHORS_XY = [
+    (6.8, -29.8),      # CAM_01_FULL_POLE
+    (5.6, -33.0),      # CAM_09_COMPLETE
+]
+POLE_XY = (LP12_ANCHOR_X, 0.0)
+CAMERA_CLEARANCE = 9.0
+
+
+def _segment_hits_rect(p0, p1, rect, pad):
+    """Does the sight line from camera to pole cross this footprint?"""
+    x0, x1, y0, y1 = rect[0] - pad, rect[1] + pad, rect[2] - pad, rect[3] + pad
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
+    t0, t1 = 0.0, 1.0
+    for p, q in ((-dx, p0[0] - x0), (dx, x1 - p0[0]),
+                 (-dy, p0[1] - y0), (dy, y1 - p0[1])):
+        if p == 0:
+            if q < 0:
+                return False
+            continue
+        r = q / p
+        if p < 0:
+            if r > t1:
+                return False
+            t0 = max(t0, r)
+        else:
+            if r < t0:
+                return False
+            t1 = min(t1, r)
+    return t0 <= t1
+
+
+def _dist_point_segment(px, py, a, b):
+    ax, ay = a
+    bx, by = b
+    dx, dy = bx - ax, by - ay
+    if dx == 0 and dy == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+
+def blocks_camera(x, y, pad):
+    """Would something standing here get between a wide anchor and the pole?
+
+    The buildings were the obvious offenders, but a 10 m street tree on the
+    verge sits squarely across the CAM_01 sight line and hides the very pole the
+    learner is being shown. Anything tall enough to matter has to ask this
+    before it is placed.
+    """
+    for cam in CAMERA_ANCHORS_XY:
+        if _dist_point_segment(x, y, cam, POLE_XY) < pad:
+            return True
+    return False
+
+
+def check_camera_sightlines():
+    """Fail the build if a building stands in a camera or blocks its view.
+
+    This is a guard, not a fix. Moving one block by hand solves it today; the
+    next time the plot table is edited nobody will remember that two of the ten
+    anchors sit outside the road corridor, and the failure mode is silent — the
+    simulation just renders a flat grey wall.
+    """
+    problems = []
+    for name, cx, cy, w, d, _h, _s in SECONDARY:
+        rect = (cx - w / 2, cx + w / 2, cy - d / 2, cy + d / 2)
+        for i, cam in enumerate(CAMERA_ANCHORS_XY):
+            inside = (rect[0] - CAMERA_CLEARANCE <= cam[0] <= rect[1] + CAMERA_CLEARANCE
+                      and rect[2] - CAMERA_CLEARANCE <= cam[1] <= rect[3] + CAMERA_CLEARANCE)
+            if inside:
+                problems.append(f"{name} contains camera anchor {i}")
+            elif _segment_hits_rect(cam, POLE_XY, rect, 1.0):
+                problems.append(f"{name} blocks the view from camera anchor {i}")
+    if problems:
+        raise SystemExit("camera sight-line check failed:\n  " + "\n  ".join(problems))
+    print(f"  camera sight-lines clear for {len(CAMERA_ANCHORS_XY)} wide anchors")
 
 
 def build_plots():
@@ -1032,10 +1120,13 @@ def build_vegetation():
         y = sign * (KERB_Y + 2.6)
         x = -ROAD_LEN / 2 + 14
         while x < ROAD_LEN / 2 - 14:
-            instance(f"Street_Tree_{idx}", trees[idx % 5], (x, y, z),
-                     rot_z=(idx * 1.13) % math.tau, coll="ENV_Vegetation",
-                     scale=0.92 + 0.16 * ((idx * 7) % 5) / 5)
-            instance(f"Street_Tree_Pit_{idx}", pit, (x, y, 0.0), coll="ENV_Vegetation")
+            # A canopy this size across the CAM_01 sight line hides the pole.
+            if not blocks_camera(x, y, 6.0):
+                instance(f"Street_Tree_{idx}", trees[idx % 5], (x, y, z),
+                         rot_z=(idx * 1.13) % math.tau, coll="ENV_Vegetation",
+                         scale=0.92 + 0.16 * ((idx * 7) % 5) / 5)
+                instance(f"Street_Tree_Pit_{idx}", pit, (x, y, 0.0),
+                         coll="ENV_Vegetation")
             x += 17.0 + 4.0 * ((idx * 3) % 3)
             idx += 1
 
@@ -1054,6 +1145,8 @@ def build_vegetation():
         for k in range(3):
             px = cx - w / 2 - 3.5 + k * ((w + 7.0) / 2)
             py = cy + (d / 2 + 3.4) * (1 if cy < 0 else -1)
+            if blocks_camera(px, py, 6.0):
+                continue
             instance(f"Plot_Tree_{i}_{k}", trees[(i * 3 + k) % 5], (px, py, z),
                      rot_z=(i * 0.9 + k) % math.tau, coll="ENV_Vegetation",
                      scale=0.80 + 0.18 * (k % 2))
@@ -1069,6 +1162,8 @@ def build_vegetation():
             continue
         if TRENCH_X[0] - 3 < x < TRENCH_X[1] + 3 and TRENCH_Y[0] < y < TRENCH_Y[1]:
             continue                       # never scatter into the cutting
+        if blocks_camera(x, y, 3.0):
+            continue
         instance(f"Shrub_{i}", shrub, (x, y, z), rot_z=ang,
                  coll="ENV_Vegetation", scale=0.8 + (i % 4) * 0.25)
 
@@ -1097,10 +1192,6 @@ def streetlight_prototype():
         o.hide_render = True
         o.hide_viewport = True
     return ob, arm, head
-
-
-LP12_ANCHOR_X = 18.0          # along the boulevard, opposite the BOI entrance
-MEDIAN_COLUMN_H = 12.5        # matches the LP12 host pole at 12.755 m
 
 
 def median_column_prototype():
@@ -1145,6 +1236,8 @@ def build_street_furniture():
     for i in range(16):
         x = -ROAD_LEN / 2 + 18 + i * 17.5
         for sign in (1, -1):
+            if blocks_camera(x, sign * (KERB_Y + 1.2), 3.0):
+                continue
             lamp = instance(f"Streetlight_{i}_{sign}", pole,
                             (x, sign * (KERB_Y + 1.2), z),
                             rot_z=0 if sign > 0 else math.pi)
@@ -1173,8 +1266,10 @@ def build_street_furniture():
                   "ENV_Metal", "ENV_StreetFurniture")
     bollard.hide_render = bollard.hide_viewport = True
     for i in range(22):
-        instance(f"Bollard_{i}", bollard,
-                 (-30 + i * 4.0, KERB_Y + 1.0, z))
+        bx_, by_ = -30 + i * 4.0, KERB_Y + 1.0
+        if blocks_camera(bx_, by_, 1.6):
+            continue
+        instance(f"Bollard_{i}", bollard, (bx_, by_, z))
 
     # Bus shelter on the south pavement.
     sx, sy = -78.0, -(KERB_Y + 3.2)
@@ -1200,6 +1295,8 @@ def build_street_furniture():
     for ci, cx in enumerate((-62.0, 4.0, 70.0)):
         for sign in (1, -1):
             for dx in (-4.6, 4.6):
+                if blocks_camera(cx + dx, sign * (KERB_Y + 0.9), 2.6):
+                    continue
                 base = instance(f"Signal_{ci}_{sign}_{dx:+.0f}", sig_pole,
                                 (cx + dx, sign * (KERB_Y + 0.9), z),
                                 rot_z=0.0 if sign > 0 else math.pi)
@@ -1708,6 +1805,7 @@ def main():
     build_bank_of_industry()
     build_native_supply()
     build_secondary()
+    check_camera_sightlines()
     build_plots()
     build_vegetation()
     build_street_furniture()

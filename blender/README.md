@@ -37,12 +37,33 @@ scripted here. `build_lp12_v2.py` will abort rather than run without them —
 target, which is what stops a silently under-graded model reaching the browser.
 Treat `public/models/lp12_v2.glb` as the artefact of record for the antenna.
 
-## The environment is not wired in yet
+## The environment in the app
 
-`exports/awolowo_lowpoly_env.glb` (2.9 MB, Draco) is version-controlled here
-rather than in `public/`, because everything under `public/` ships to the
-browser whether the app loads it or not. Move it into `public/models/` at the
-point something actually renders it.
+`exports/awolowo_lowpoly_env.glb` is the reference copy; the app loads the same
+file from `public/models/`. `src/components/SiteEnvironment.jsx` mounts it in
+the build canvas.
+
+**The export merges geometry per collection before writing the GLB.** The scene
+is authored as ~3,900 individual objects, which is the only sane way to lay a
+city out parametrically, but every object is its own draw call and 3,900 of them
+alongside the LP12 lost the WebGL context outright the first time it was loaded
+in a browser. Merging takes it to 9 meshes — one per collection, split by the
+exporter into one primitive per material — which is a ~435x cut in draw calls
+and, as a side effect, took the file from 2.91 MB to 0.78 MB.
+
+What that costs is per-object addressing: no picking one car out of the traffic.
+Nothing in the simulation does that, the collection-level grouping the brief asks
+for still works because the collections are still the nodes, and the `.blend`
+keeps every object for editing.
+
+The environment also has to keep out of the studio camera anchors.
+`check_camera_sightlines()` fails the build if a secondary building contains or
+occludes one, and `blocks_camera()` keeps trees, shrubs, lamps, bollards and
+signals out of the corridor between the two wide anchors and the pole. Two of
+the ten anchors — CAM_01 and CAM_09 — stand 30 and 33 m out from the median,
+past the 20.2 m pavement edge and into the plots, so this is not hypothetical:
+the first build put a building parapet 0.9 m in front of CAM_01 and the
+simulation rendered a flat grey wall.
 
 **The GLB is exported recentred on `LP12_INSTALL_ANCHOR`**, so it drops into the
 scene at position zero with no rotation and the street builds itself around an

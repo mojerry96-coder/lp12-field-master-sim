@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import * as THREE from 'three'
 import StudioEnvironment from './StudioEnvironment'
+import SiteEnvironment from './SiteEnvironment'
 import ComponentHighlight from './ComponentHighlight'
 import { STAGE_TO_VIEW } from '../lib/nodeAliases'
 import { STAGE_CONFIG, REQUIRED_NODES } from '../lib/stageConfig'
@@ -424,6 +425,15 @@ export default function LP12BuildCanvas(props) {
             suspend as often as it likes without stopping the assembly. */}
         <Suspense fallback={null}>
           <StudioEnvironment />
+        </Suspense>
+        {/* The site around the pole. Its own Suspense boundary for the same
+            reason the others have one: a 2.9 MB GLB suspending must never tear
+            down the assembly's effects and freeze the animation mixer. */}
+        {/* The site around the pole. Its own Suspense boundary for the same
+            reason the others have one: a GLB suspending must never tear down
+            the assembly's effects and freeze the animation mixer. */}
+        <Suspense fallback={null}>
+          <SiteEnvironment />
         </Suspense>
         <Suspense fallback={null}>
           <LP12Assembly {...props} />

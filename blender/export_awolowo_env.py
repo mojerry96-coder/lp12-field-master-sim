@@ -13,6 +13,12 @@ import os
 
 import bpy
 
+COLLECTION_ORDER = [
+    "ENV_Ground", "ENV_Roads", "ENV_Buildings_Main", "ENV_Buildings_Secondary",
+    "ENV_Pavements", "ENV_StreetFurniture", "ENV_Vegetation", "ENV_Vehicles",
+    "ENV_Pedestrians",
+]
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.abspath(os.path.join(HERE, ".."))
 BLEND_PATH = os.path.join(OUT, "awolowo_lowpoly_env.blend")
@@ -68,6 +74,58 @@ def hide_prototypes():
             bpy.data.objects.remove(ob, do_unlink=True)
             n += 1
     print(f"  removed {n} prototype objects")
+
+
+def merge_for_realtime():
+    """Collapse each collection into a single mesh before export.
+
+    The scene is authored as ~4,000 individual objects because that is the only
+    sane way to lay a city out parametrically. Shipping them that way is a
+    different matter: every object is its own draw call, and 4,000 of them
+    alongside the LP12 is enough to lose the WebGL context outright — which is
+    exactly what happened the first time this GLB was loaded in the browser.
+
+    Joining within each collection takes it to one mesh per collection, split by
+    the exporter into one primitive per material. Draw calls drop by two orders
+    of magnitude and the grouping the brief asks for survives, because the
+    collections are still the nodes: roads, buildings, vegetation and vehicles
+    can each still be shown, hidden or highlighted.
+
+    What is lost is per-object addressing — no picking one car out of the
+    traffic. Nothing in the simulation does that, and the .blend keeps every
+    object for anyone who needs to edit the layout.
+    """
+    deps = bpy.context.evaluated_depsgraph_get()
+    total_before = total_after = 0
+
+    for name in list(COLLECTION_ORDER):
+        coll = bpy.data.collections.get(name)
+        if coll is None:
+            continue
+        meshes = [o for o in coll.objects if o.type == "MESH" and not o.hide_render]
+        total_before += len(meshes)
+        if len(meshes) < 2:
+            total_after += len(meshes)
+            continue
+
+        # Modifiers have to be real geometry before the join: joining objects
+        # with different modifier stacks silently drops all but the target's.
+        for ob in meshes:
+            if not ob.modifiers:
+                continue
+            ev = ob.evaluated_get(deps)
+            ob.data = bpy.data.meshes.new_from_object(ev)
+            ob.modifiers.clear()
+
+        target = meshes[0]
+        with bpy.context.temp_override(active_object=target,
+                                       selected_editable_objects=meshes):
+            bpy.ops.object.join()
+        target.name = f"{name}_merged"
+        total_after += 1
+
+    print(f"  merged {total_before} meshes into {total_after} "
+          f"({total_before / max(total_after, 1):.0f}x fewer draw calls)")
 
 
 def drop_lp12():
@@ -173,6 +231,7 @@ def main():
     render_set()
     hide_prototypes()
     drop_lp12()
+    merge_for_realtime()
     recentre_on_anchor()
     apply_transforms()
     purge_orphans()
