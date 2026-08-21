@@ -70,6 +70,25 @@ def hide_prototypes():
     print(f"  removed {n} prototype objects")
 
 
+def drop_lp12():
+    """Strip the LP12 out before export.
+
+    It belongs in the .blend — the brief asks for it in its own collection, and
+    the scene is unreadable without it — but the application loads lp12_v2.glb
+    itself. Exporting it inside the environment too would stand two poles in the
+    same spot, and the app could no longer show, hide or replace the antenna
+    independently, which is the whole reason they are separate assets.
+    """
+    coll = bpy.data.collections.get("LP12_POLE")
+    if coll is None:
+        return
+    n = len(coll.objects)
+    for ob in list(coll.objects):
+        bpy.data.objects.remove(ob, do_unlink=True)
+    bpy.data.collections.remove(coll)
+    print(f"  dropped {n} LP12 objects (the app loads that model itself)")
+
+
 def recentre_on_anchor():
     """Move the whole scene so LP12_INSTALL_ANCHOR is the origin.
 
@@ -153,6 +172,7 @@ def main():
     print("export pass")
     render_set()
     hide_prototypes()
+    drop_lp12()
     recentre_on_anchor()
     apply_transforms()
     purge_orphans()

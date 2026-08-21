@@ -33,6 +33,8 @@ OUT = os.path.abspath(os.path.join(HERE, ".."))
 BLEND_PATH = os.path.join(OUT, "awolowo_lowpoly_env.blend")
 GLB_PATH = os.path.join(OUT, "awolowo_lowpoly_env.glb")
 RENDER_DIR = os.path.join(OUT, "env_lowpoly_renders")
+LP12_GLB = os.path.abspath(os.path.join(
+    HERE, "..", "..", "field-master-sim", "public", "models", "lp12_v2.glb"))
 
 # --------------------------------------------------------------- palette
 
@@ -86,6 +88,7 @@ COLLECTIONS = [
     "ENV_Ground", "ENV_Roads", "ENV_Buildings_Main", "ENV_Buildings_Secondary",
     "ENV_Pavements", "ENV_StreetFurniture", "ENV_Vegetation", "ENV_Vehicles",
     "ENV_Pedestrians", "ENV_LP12_Anchor", "ENV_Lighting", "ENV_Cameras",
+    "LP12_POLE",
 ]
 
 
@@ -1467,6 +1470,53 @@ def build_anchors():
 
 # ----------------------------------------------------------------- cameras
 
+def place_lp12(anchor):
+    """Bring the LP12 into the scene, in its own collection, standing at the anchor.
+
+    The brief says not to merge the LP12 into the environment — and also to keep
+    it in its own collection, which only makes sense if it is present. It is
+    imported, never joined: nothing is parented to the road, the median or a
+    building, so the collection can be hidden, isolated or swapped for a
+    different antenna without touching anything else.
+
+    It is NOT written into the exported GLB. The application already loads
+    lp12_v2.glb on its own, and shipping a second copy inside the environment
+    would put two poles in the same place.
+
+    No clips are evaluated on import. The GLB's rest pose already IS the
+    assembled pose — the install wrappers sit at identity and the six clips
+    animate them FROM an offset back to it — so "snapping the clips" drives
+    parts away from where they belong rather than into place.
+    """
+    if not os.path.exists(LP12_GLB):
+        print(f"  LP12 not found at {LP12_GLB} — anchor left empty")
+        return None
+
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=LP12_GLB)
+    imported = [o for o in bpy.data.objects if o not in before]
+    if not imported:
+        return None
+
+    for ob in imported:
+        for coll in list(ob.users_collection):
+            coll.objects.unlink(ob)
+        COLL["LP12_POLE"].objects.link(ob)
+
+    roots = [o for o in imported if o.parent is None]
+    for root in roots:
+        root.matrix_world = anchor.matrix_world.copy()
+
+    # The importer leaves its own empty collection behind.
+    for coll in list(bpy.data.collections):
+        if not coll.objects and not coll.children and coll.name not in COLLECTIONS:
+            bpy.data.collections.remove(coll)
+
+    print(f"  LP12 placed: {len(imported)} objects at "
+          f"{[round(v, 2) for v in anchor.matrix_world.translation]}")
+    return roots[0] if roots else None
+
+
 def build_cameras(dome_origin):
     cam_data = bpy.data.cameras.new("CAM_ENV_ISOMETRIC")
     cam_data.type = "ORTHO"
@@ -1663,7 +1713,8 @@ def main():
     build_street_furniture()
     build_vehicles()
     build_pedestrians()
-    _, dome = build_anchors()
+    anchor, dome = build_anchors()
+    place_lp12(anchor)
     build_cameras(dome)
     build_lighting()
     configure_render()

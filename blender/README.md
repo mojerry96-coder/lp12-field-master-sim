@@ -62,6 +62,16 @@ It carries two named empties for the application to read:
 - `NETWORK_DOME_ORIGIN` — 7.5 m above it, for centring the spherical coverage
   volume. Spherical, never a cone.
 
+`build_awolowo_env.py` imports `lp12_v2.glb` into an `LP12_POLE` collection
+standing at the anchor, so the .blend shows the whole picture. It is never
+joined to anything, and `export_awolowo_env.py` strips it before writing the
+GLB — the application loads that model itself, and shipping a second copy would
+stand two poles in the same place.
+
+Do not "assemble" the LP12 on import. Its rest pose already IS the assembled
+pose: the install wrappers sit at identity and the six clips animate them FROM
+an offset back to it. Unmuting the NLA drives parts away from where they belong.
+
 Collections survive the export as parent nodes (`ENV_Roads`, `ENV_Buildings_Main`,
 `ENV_Vegetation`, `ENV_Vehicles`, `ENV_StreetFurniture`, …), so groups can be
 shown, hidden or highlighted independently.
