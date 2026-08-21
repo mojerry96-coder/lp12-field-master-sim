@@ -960,70 +960,184 @@ def build_street_furniture():
 
 # ----------------------------------------------------------------- vehicles
 
-def car_prototype(name, length, width, height, body_mat, accent_mat=None,
-                  accent_from=0.05, accent_to=0.48):
-    """Bodies stay off-white and blue appears only as an accent panel, which is
-    how the style references read: blue is a functional highlight on a white
-    world, not a second body colour. Solid blue vehicles punch holes in the
-    road at this scale."""
-    body = box(f"{name}_src", -length / 2, length / 2, -width / 2, width / 2,
-               0.32, height, body_mat, "ENV_Vehicles", bevel=0.10)
-    cabin = box(f"{name}_Cabin_src", -length * 0.20, length * 0.30,
-                -width * 0.44, width * 0.44, height, height + 0.62,
-                "ENV_Glass", "ENV_Vehicles", bevel=0.08)
-    cabin.parent = body
-    parts = [body, cabin]
-    if accent_mat:
-        acc = box(f"{name}_Accent_src",
-                  -length / 2 + length * accent_from, -length / 2 + length * accent_to,
-                  -width / 2 - 0.02, width / 2 + 0.02, 0.42, height + 0.5,
-                  accent_mat, "ENV_Vehicles", bevel=0.09)
-        acc.parent = body
-        parts.append(acc)
-    for o in parts:
-        o.hide_render = True
-        o.hide_viewport = True
-    return body, cabin, (parts[2] if accent_mat else None)
+# --- vehicles -------------------------------------------------------------
+#
+# Everything below builds ONE mesh per vehicle type with four material slots,
+# rather than a parented pile of boxes. That matters twice over: the wheels and
+# glass come along for free on every instance, and each vehicle in the scene is
+# a single object instead of three or four.
+
+VEH_BODY, VEH_GLASS, VEH_TYRE, VEH_ACCENT = 0, 1, 2, 3
+
+
+def _prism_y(bm, profile_xz, y0, y1, mat_index):
+    """Extrude an X-Z silhouette along Y and tag every face it creates."""
+    verts = [bm.verts.new((x, y0, z)) for x, z in profile_xz]
+    face = bm.faces.new(verts)
+    bm.normal_update()
+    ret = bmesh.ops.extrude_face_region(bm, geom=[face])
+    moved = [e for e in ret["geom"] if isinstance(e, bmesh.types.BMVert)]
+    bmesh.ops.translate(bm, vec=Vector((0.0, y1 - y0, 0.0)), verts=moved)
+    for f in bm.faces:
+        if f.material_index == 0 and f not in ():
+            pass
+    made = [e for e in ret["geom"] if isinstance(e, bmesh.types.BMFace)] + [face]
+    for f in made:
+        f.material_index = mat_index
+    return made
+
+
+def _wheel(bm, x, y, r, w, segments=10):
+    before = set(bm.faces)
+    bmesh.ops.create_cone(
+        bm, cap_ends=True, segments=segments, radius1=r, radius2=r, depth=w,
+        matrix=Matrix.Translation((x, y, r)) @ Matrix.Rotation(math.radians(90), 4, "X"))
+    for f in set(bm.faces) - before:
+        f.material_index = VEH_TYRE
+
+
+def _taper(verts, z_above, factor):
+    """Pull the upper section in along Y so the roof is narrower than the sills.
+
+    A car whose body is the same width top and bottom reads as an extruded
+    rectangle from any angle. This is the cheapest possible fix — no extra
+    geometry, and it is what gives the silhouette its shoulder.
+    """
+    for v in verts:
+        if v.co.z > z_above:
+            v.co.y *= factor
+
+
+def vehicle_prototype(name, half_w, sections, wheel_x, wheel_r=0.36,
+                      wheel_w=0.26, body_mat="ENV_Building_Hi"):
+    """Build one vehicle mesh from a stack of extruded side profiles.
+
+    Each section carries its own X extent, width fraction, material and taper,
+    which is what lets a van be a white cab with a blue cargo box, and a bus be
+    a skirt, a window band and a solid roof, without any of them becoming a
+    separate object. One mesh per vehicle type; every instance in the scene is
+    a single object that already has its wheels and glazing.
+    """
+    bm = bmesh.new()
+    for profile, width_frac, mat_index, taper_above, taper_factor in sections:
+        hw = half_w * width_frac
+        faces = _prism_y(bm, profile, -hw, hw, mat_index)
+        if taper_factor < 1.0:
+            _taper({v for f in faces for v in f.verts}, taper_above, taper_factor)
+
+    # Tuck the wheels under the bodywork. Centring them on the body edge leaves
+    # half of each wheel sticking out past the flank, which reads as a fault
+    # rather than a wheel.
+    inset = half_w - wheel_w / 2 - 0.03
+    for wx in wheel_x:
+        for wy in (-inset, inset):
+            _wheel(bm, wx, wy, wheel_r, wheel_w)
+
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    me = bpy.data.meshes.new(f"{name}_src")
+    bm.to_mesh(me)
+    bm.free()
+
+    for slot in (body_mat, "ENV_Glass", "ENV_Glass_Dark", "ENV_Accent_Blue"):
+        me.materials.append(MATS[slot])
+
+    ob = bpy.data.objects.new(f"{name}_src", me)
+    link(ob, "ENV_Vehicles")
+    ob.hide_render = True
+    ob.hide_viewport = True
+    return ob
+
+
+def car_sections(length):
+    """Saloon: dropped nose and tail, raked screens, roof over the middle."""
+    hl = length / 2
+    belt, roof = 0.94, 1.44
+    lower = [
+        (hl - 0.26, 0.42), (hl - 0.02, 0.60), (hl, belt - 0.14),
+        (hl - 0.62, belt), (-hl + 0.66, belt), (-hl + 0.02, belt - 0.10),
+        (-hl + 0.02, 0.58), (-hl + 0.28, 0.42),
+    ]
+    green = [
+        (hl - 1.24, belt - 0.02), (hl - 1.78, roof),
+        (-hl + 1.46, roof), (-hl + 1.00, belt - 0.02),
+    ]
+    return [(lower, 1.00, VEH_BODY, 0.78, 0.93),
+            (green, 0.87, VEH_GLASS, 1.24, 0.90)]
+
+
+def van_sections(length):
+    """Panel van: white cab with a glazed screen, blue cargo box behind it."""
+    hl = length / 2
+    deck = 1.12
+    skirt = [
+        (hl - 0.24, 0.46), (hl, 0.68), (hl, deck),
+        (-hl + 0.02, deck), (-hl + 0.02, 0.66), (-hl + 0.26, 0.46),
+    ]
+    cab = [(hl - 0.10, deck), (hl - 0.62, 1.98), (hl - 1.55, 1.98), (hl - 1.45, deck)]
+    cargo = [(hl - 1.62, deck), (hl - 1.62, 2.24),
+             (-hl + 0.06, 2.24), (-hl + 0.06, deck)]
+    return [(skirt, 1.00, VEH_BODY, 0.80, 0.94),
+            (cab, 0.92, VEH_GLASS, 1.60, 0.92),
+            (cargo, 0.98, VEH_ACCENT, 2.00, 0.97)]
+
+
+def bus_sections(length):
+    """Bus: skirt, a continuous window band, then a solid roof.
+
+    Glazing the whole upper body — which the first pass did — turns it into a
+    wedge of glass with a sliver of paint underneath. Real buses read as a band.
+    """
+    hl = length / 2
+    sill, head, roof = 1.18, 2.14, 2.62
+    skirt = [
+        (hl - 0.30, 0.46), (hl, 0.74), (hl, sill),
+        (-hl + 0.02, sill), (-hl + 0.02, 0.72), (-hl + 0.32, 0.46),
+    ]
+    band = [(hl - 0.04, sill), (hl - 0.34, head),
+            (-hl + 0.28, head), (-hl + 0.04, sill)]
+    top = [(hl - 0.36, head), (hl - 0.86, roof),
+           (-hl + 0.78, roof), (-hl + 0.30, head)]
+    # Blue on the skirt, white above. An all-white bus of this size is a loaf —
+    # at hero scale the window band alone is too close in value to the body to
+    # separate it, and the accent is what makes it read as a vehicle in traffic.
+    return [(skirt, 1.00, VEH_ACCENT, 0.80, 0.94),
+            (band, 1.01, VEH_GLASS, 3.00, 1.0),
+            (top, 0.96, VEH_BODY, 3.00, 1.0)]
 
 
 def build_vehicles():
-    car, car_cab, _ = car_prototype("Car", 4.4, 1.85, 1.18, "ENV_Building_Hi")
-    van, van_cab, van_acc = car_prototype(
-        "Van", 5.8, 2.10, 2.10, "ENV_Building_Hi", "ENV_Accent_Blue", 0.30, 0.98)
-    bus, bus_cab, bus_acc = car_prototype(
-        "Bus", 10.5, 2.5, 2.55, "ENV_Building_Hi", "ENV_Accent_Blue", 0.34, 0.99)
+    car_l, van_l, bus_l = 4.5, 5.9, 10.6
+    car = vehicle_prototype("Car", 0.90, car_sections(car_l),
+                            wheel_x=(car_l / 2 - 1.05, -car_l / 2 + 1.05))
+    van = vehicle_prototype("Van", 1.05, van_sections(van_l),
+                            wheel_x=(van_l / 2 - 1.20, -van_l / 2 + 1.40),
+                            wheel_r=0.42, wheel_w=0.30)
+    bus = vehicle_prototype("Bus", 1.26, bus_sections(bus_l),
+                            wheel_x=(bus_l / 2 - 1.7, -bus_l / 2 + 2.5),
+                            wheel_r=0.50, wheel_w=0.34)
 
     z = ROAD_T
     placements = []
-    # Lane centres, alternating direction per carriageway.
     for sign in (1, -1):
         for lane_i in range(LANES):
             y = sign * (MEDIAN_HW + LANE * (lane_i + 0.5))
             for k in range(9):
                 x = -128 + k * 27 + lane_i * 9 + (0 if sign > 0 else 13)
-                placements.append((x, y, 0.0 if sign > 0 else math.pi, lane_i))
+                placements.append((x, y, 0.0 if sign > 0 else math.pi))
 
-    protos = [(car, car_cab, None), (car, car_cab, None), (van, van_cab, van_acc),
-              (car, car_cab, None), (bus, bus_cab, bus_acc), (car, car_cab, None)]
-    for i, (x, y, rz, lane_i) in enumerate(placements):
-        src, cab, acc = protos[i % len(protos)]
-        body = instance(f"Vehicle_{i}", src, (x, y, z), rot_z=rz, coll="ENV_Vehicles")
-        for part, tag in ((cab, "Cabin"), (acc, "Accent")):
-            if part is None:
-                continue
-            child = instance(f"Vehicle_{i}_{tag}", part, (0, 0, 0), coll="ENV_Vehicles")
-            child.parent = body
-            child.matrix_parent_inverse = body.matrix_world.inverted()
+    car_blue = vehicle_prototype("CarBlue", 0.90, car_sections(car_l),
+                                 wheel_x=(car_l / 2 - 1.05, -car_l / 2 + 1.05),
+                                 body_mat="ENV_Accent_Blue")
 
-    # Parked rank on the Native Supply plaza.
+    protos = [car, car, van, car_blue, car, bus, car, car_blue]
+    for i, (x, y, rz) in enumerate(placements):
+        instance(f"Vehicle_{i}", protos[i % len(protos)], (x, y, z),
+                 rot_z=rz, coll="ENV_Vehicles")
+
     for i in range(8):
-        body = instance(f"Vehicle_Parked_{i}", car,
-                        (-70 + i * 4.6, -(KERB_Y + PAVE_W + 4.0), ROAD_T + KERB_H),
-                        rot_z=math.pi / 2, coll="ENV_Vehicles")
-        glass = instance(f"Vehicle_Parked_{i}_Cabin", car_cab, (0, 0, 0),
-                         coll="ENV_Vehicles")
-        glass.parent = body
-        glass.matrix_parent_inverse = body.matrix_world.inverted()
+        instance(f"Vehicle_Parked_{i}", car,
+                 (-70 + i * 4.6, -(KERB_Y + PAVE_W + 4.0), ROAD_T + KERB_H),
+                 rot_z=math.pi / 2, coll="ENV_Vehicles")
 
 
 # -------------------------------------------------------------- pedestrians
