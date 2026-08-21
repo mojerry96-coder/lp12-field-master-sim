@@ -1,0 +1,170 @@
+:root{--ink:#e8eef7;--dim:#8ea0b8;--amber:#f0a63c;--cyan:#35e0d0;--ok:#3ee08a;--warn:#e0a13e;--panel:rgba(10,15,26,.82);--line:rgba(255,255,255,.1)}
+*{box-sizing:border-box}
+html,body,#root{height:100%;margin:0}
+body{font:14px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:#070b16;overflow:hidden}
+.app{position:fixed;inset:0}
+canvas{display:block}
+
+.topbar{position:absolute;top:0;left:0;right:0;height:52px;display:flex;align-items:center;gap:18px;padding:0 18px;background:linear-gradient(180deg,rgba(6,10,20,.92),rgba(6,10,20,0));z-index:5;pointer-events:none}
+.topbar>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.14em;font-size:12px}
+.brand .mark{color:var(--cyan)}
+.objective{flex:1;text-align:center;font-size:13px;color:var(--dim)}
+.objective .label{letter-spacing:.1em;font-size:11px;margin-right:6px}
+.right{display:flex;align-items:center;gap:12px}
+.flowcount{font-size:11px;letter-spacing:.1em;color:var(--dim)}
+.dots{display:flex;gap:5px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}
+.dots i.on{background:var(--cyan)}
+
+.dock{position:absolute;left:0;right:0;bottom:0;padding:14px 18px 18px;z-index:5;pointer-events:none;background:linear-gradient(0deg,rgba(6,10,20,.9),rgba(6,10,20,0))}
+.dockinner{pointer-events:auto;margin:0 auto;max-width:1100px;min-height:56px;display:flex;align-items:center;gap:16px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;backdrop-filter:blur(10px)}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);transition:.15s}
+button:disabled{opacity:.35;cursor:not-allowed}
+.primary{margin-left:auto;background:var(--amber);color:#1a1206;border-color:transparent;font-weight:650;padding:10px 18px}
+.primary:hover:not(:disabled){filter:brightness(1.08)}
+.ghost{background:rgba(255,255,255,.06);color:var(--ink);padding:9px 14px}
+.ghost:hover:not(:disabled){background:rgba(255,255,255,.12)}
+
+.control{display:flex;align-items:center;gap:12px}
+.control label{font-size:11px;letter-spacing:.1em;color:var(--dim)}
+.control input[type=range]{width:230px;accent-color:var(--amber)}
+.control b{min-width:58px;font-size:16px}
+.control .hint{font-size:11px;color:var(--dim)}
+.ok{color:var(--ok)}.warn{color:var(--warn)}
+.seg{display:flex;gap:4px}
+.seg button{background:rgba(255,255,255,.05);color:var(--dim);padding:8px 13px}
+.seg button.on{background:var(--cyan);color:#05201d;border-color:transparent;font-weight:650}
+.verdict{display:flex;align-items:center;gap:14px;font-size:13px}
+
+.hotspot{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:74px;height:74px;background:none;border:none;z-index:4}
+.hotspot .pulse{position:absolute;inset:0;border-radius:50%;border:2px solid var(--amber);animation:p 1.9s ease-out infinite}
+.hotspot .tag{position:absolute;left:50%;top:-24px;transform:translateX(-50%);font-size:11px;letter-spacing:.12em;color:var(--amber)}
+@keyframes p{0%{transform:scale(.55);opacity:1}100%{transform:scale(1.35);opacity:0}}
+
+.probe{display:flex;flex-direction:column;align-items:center;padding:5px 9px;border-radius:7px;background:rgba(8,14,24,.86);border:1px solid var(--line);white-space:nowrap}
+.probe span{font-size:8px;letter-spacing:.12em;color:var(--dim)}
+.probe b{font-size:12px}
+.probe.ok b{color:var(--ok)}.probe.weak b{color:var(--warn)}
+
+/* ========== hybrid shell: image environment + LP12-only canvas ========== */
+.hybrid-simulation{position:relative;width:100%;height:100dvh;min-height:100%;overflow:hidden;isolation:isolate;background:#d9dee0}
+/* pointer-events:none matters as much as the paint. The layer is aria-hidden
+   decoration holding one image, and in build/complete it is opacity:0 - but an
+   invisible full-bleed div still hit-tests, and this one was swallowing every
+   click on the installation panel behind it. The img child was already
+   inert; the container has to be too. */
+.background-image-layer{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;transform:translateZ(0)}
+.background-image-layer img,.background-image-layer video{width:100%;height:100%;display:block;object-fit:cover;object-position:50% 50%;user-select:none;pointer-events:none;filter:blur(0) saturate(1) brightness(1);transform:scale(1);transition:filter 420ms cubic-bezier(.22,1,.36,1),transform 700ms cubic-bezier(.22,1,.36,1);will-change:filter,transform}
+.background-image-layer.is-focused img,.background-image-layer.is-focused video{filter:blur(7px) saturate(.82) brightness(.72);transform:scale(1.025)}
+.background-focus-overlay{position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(4,10,20,0);transition:background-color 380ms ease}
+.mode-opening .background-focus-overlay,.mode-build .background-focus-overlay,.mode-complete .background-focus-overlay{background:rgba(4,10,20,.14)}
+
+.lp12-canvas-layer{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;transition:opacity 320ms ease}
+.mode-opening .lp12-canvas-layer,.mode-build .lp12-canvas-layer,.mode-complete .lp12-canvas-layer{opacity:1}
+.mode-build .lp12-canvas-layer,.mode-complete .lp12-canvas-layer{pointer-events:auto}
+
+.hotspot-layer{position:absolute;inset:0;z-index:3;pointer-events:none}
+/* Coverage footprint sits just under the hotspot marker: same stacking
+   context, one level down, so the LP12 pin always reads on top of its own
+   coverage. pointer-events:none throughout - it is a readout, not a target. */
+.coverage-dome-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.coverage-dome-layer canvas{display:block;pointer-events:none}
+.lp12-image-hotspot{position:absolute;width:56px;height:56px;min-width:44px;min-height:44px;padding:0;border:0;border-radius:999px;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;background:transparent;color:#39d8ff}
+.lp12-image-hotspot__ring{position:absolute;inset:8px;border:2px solid currentColor;border-radius:999px;background:rgba(5,20,30,.14);box-shadow:0 0 0 7px rgba(57,216,255,.12),0 0 22px rgba(57,216,255,.34);animation:lp12-hotspot-pulse 1.9s ease-in-out infinite}
+.lp12-image-hotspot__ring::after{content:'';position:absolute;width:8px;height:8px;left:50%;top:50%;border-radius:999px;transform:translate(-50%,-50%);background:#d9fbff}
+.lp12-image-hotspot__label{position:absolute;left:50%;bottom:calc(100% + 7px);transform:translateX(-50%);padding:4px 7px;color:#d9fbff;background:rgba(4,14,25,.78);border:1px solid rgba(57,216,255,.35);font:600 12px/1.1 inherit;letter-spacing:.06em;white-space:nowrap;border-radius:4px}
+.lp12-image-hotspot.is-complete{color:#3ee08a}
+.lp12-image-hotspot:hover,.lp12-image-hotspot:focus-visible{color:#82ecff}
+.lp12-image-hotspot:focus-visible{outline:3px solid #fff;outline-offset:4px}
+.lp12-image-hotspot:disabled{cursor:default;opacity:.5}
+@keyframes lp12-hotspot-pulse{0%,100%{transform:scale(.95);opacity:.78}50%{transform:scale(1.08);opacity:1}}
+
+.topbar,.dock{z-index:4}
+.topbar.locate .site{font-size:11px;letter-spacing:.1em;color:var(--dim)}
+.dockinner{border:1px solid var(--line);margin:0 auto}
+fieldset.dockinner{min-inline-size:0}
+fieldset.dockinner[disabled]{opacity:.55}
+.primary.alt{margin-left:0}
+.sr-live{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.error-panel{position:absolute;z-index:6;left:50%;top:50%;transform:translate(-50%,-50%);max-width:460px;padding:18px 20px;background:var(--panel);border:1px solid #a33;border-radius:12px}
+.error-panel p{color:var(--dim);font-size:12px;word-break:break-word}
+
+@media (prefers-reduced-motion:reduce){
+  .background-image-layer img,.background-image-layer video,.background-focus-overlay{transition-duration:80ms}
+  .background-image-layer.is-focused img,.background-image-layer.is-focused video{transform:none}
+  .lp12-image-hotspot__ring{animation:none}
+}
+
+/* navy focus dim: above canvas (z2), below UI (z4) — never blurs the UI */
+.canvas-dim-layer{position:absolute;inset:0;z-index:3;pointer-events:none;background:#040a14;opacity:0;transition:opacity 350ms ease}
+@media (prefers-reduced-motion:reduce){.canvas-dim-layer{transition-duration:80ms}}
+
+/* --- TargetCursor integration ------------------------------------------- */
+/* hideDefaultCursor sets `cursor:none` on <body>, but any element with its own
+   cursor rule opts back in — which would show a pointer on top of the custom
+   cursor. Suppress it on the targets. */
+.cursor-target{cursor:none}
+/* Restore a real cursor where precision matters: dragging the height slider
+   without one is measurably worse, and the canvas needs a normal pointer. */
+.dockinner input[type=range]{cursor:grab}
+.dockinner input[type=range]:active{cursor:grabbing}
+.lp12-canvas-layer{cursor:default}
+@media (prefers-reduced-motion:reduce){.cursor-target{cursor:pointer}}
+
+/* --- white studio takes over once the model opens ----------------------- */
+/* The photo stays for locate (that is where LP12 is found); build and complete
+   hand over to the studio, so the backdrop and blur are retired there. */
+.mode-build, .mode-complete { background: #edece9; }  /* = studio backdrop */
+.mode-build .background-image-layer,
+.mode-complete .background-image-layer { opacity: 0; transition: opacity 420ms ease; }
+.mode-build .background-focus-overlay,
+.mode-complete .background-focus-overlay { background: rgba(4,10,20,0); }
+.mode-build .canvas-dim-layer,
+.mode-complete .canvas-dim-layer { opacity: 0 !important; }
+/* dark-on-light HUD for the studio */
+.mode-build .dockinner, .mode-complete .dockinner {
+  background: rgba(255,255,255,.86); border-color: rgba(10,20,35,.12);
+  color: #0d1b2a; box-shadow: 0 6px 26px rgba(20,30,50,.12);
+}
+.mode-build .dockinner .ghost, .mode-complete .dockinner .ghost {
+  background: rgba(10,20,35,.06); color: #0d1b2a;
+}
+.mode-build .topbar, .mode-complete .topbar {
+  background: linear-gradient(180deg, rgba(247,248,250,.95), rgba(247,248,250,0));
+  color: #0d1b2a;
+}
+.mode-build .objective, .mode-complete .objective { color: #46566b; }
+.mode-build .flowcount, .mode-complete .flowcount { color: #6b7a8d; }
+.mode-build .dots i, .mode-complete .dots i { background: rgba(10,20,35,.18); }
+
+/* --- HUD fit: the dock and topbar overflowed on narrow/tall viewports ---- */
+.brand{white-space:nowrap;flex:0 0 auto}
+.objective{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.right{flex:0 0 auto}
+.dockinner{flex-wrap:wrap;row-gap:10px}
+.dockinner .control{flex:1 1 260px;min-width:0}
+.dockinner .control input[type=range]{flex:1 1 120px;min-width:90px;width:auto}
+.dockinner .control .hint{flex:0 0 auto;white-space:nowrap}
+.dockinner .verdict{flex:1 1 100%;min-width:0}
+.dockinner .primary{flex:0 0 auto;margin-left:auto}
+
+@media (max-width: 900px){
+  .topbar{gap:10px;padding:0 12px}
+  .objective{font-size:12px}
+  .flowcount{display:none}
+  .dock{padding:10px 12px 12px}
+  .dockinner{gap:10px;padding:10px}
+  .dockinner .control label{display:none}
+  .dockinner .control .hint{display:none}
+}
+@media (max-width: 620px){
+  .brand span:not(.mark){display:none}
+  .dots{display:none}
+  .dockinner .seg button{padding:8px 10px}
+}
+/* very tall/narrow panes: let the dock scroll rather than clip its controls */
+@media (max-height: 620px){
+  .dock{padding:8px 12px 10px}
+  .dockinner{max-height:38vh;overflow-y:auto}
+}

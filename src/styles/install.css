@@ -1,0 +1,119 @@
+/* LP12 installation shell — spec sections 3-11 */
+.installation-shell{
+  --tool-rail-width:96px;
+  --information-panel-width:clamp(360px,24vw,420px);
+  /* Matched to the 3D studio backdrop (MAT_Studio_Background, #EDECE9).
+     The canvas fills this column, so any difference between the two shows
+     as a hard seam where the render meets the page. Not a restyle - the
+     workspace is meant to read as one continuous studio. */
+  --workspace-background:#edece9;
+  --lp12-blue:#075cff;
+  --lp12-blue-mid:#2972ff;
+  --lp12-periwinkle:#6f8eff;
+  --rail-divider:#e4e8ef;
+  display:grid;
+  grid-template-columns:var(--tool-rail-width) var(--information-panel-width) minmax(0,1fr);
+  width:100vw;height:100dvh;overflow:hidden;
+  background:var(--workspace-background);
+  font-family:"Helvetica Neue",Manrope,Inter,system-ui,-apple-system,sans-serif;
+  color:#0d1b2a;
+}
+.tool-rail{background:#fff;border-right:1px solid var(--rail-divider);
+  padding:24px 14px;display:flex;flex-direction:column;justify-content:space-between;align-items:center}
+.rail-group{display:flex;flex-direction:column;gap:16px}
+.rail-btn{width:56px;height:56px;border-radius:8px;border:1.5px solid var(--lp12-blue);
+  background:#fff;color:var(--lp12-blue);display:grid;place-items:center;cursor:pointer;
+  transition:background .15s,color .15s}
+.rail-btn.is-active{background:var(--lp12-blue);color:#fff}
+.rail-btn:disabled{opacity:.55;cursor:default}
+
+.info-panel{background:linear-gradient(162deg,#075cff 0%,#266eff 46%,#6f8eff 100%);
+  color:#fff;padding:28px 30px 24px;display:flex;flex-direction:column;gap:14px;
+  overflow-y:auto;overscroll-behavior:contain}
+.panel-back{background:none;border:0;color:#fff;font-size:16px;font-weight:450;
+  display:flex;align-items:center;gap:6px;padding:0;cursor:pointer;align-self:flex-start}
+.panel-eyebrow{margin:0;font-size:15px;font-weight:400;opacity:.92}
+.panel-title{margin:0;font-size:clamp(26px,2.1vw,34px);font-weight:640;line-height:1.12;letter-spacing:-.01em}
+.panel-hero{width:100%;max-height:150px;object-fit:contain;margin:2px 0 0}
+.panel-status{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.panel-status .dot{width:11px;height:11px;border-radius:50%;border:1.5px solid #fff;display:inline-block}
+.panel-cta{width:100%;height:56px;border:0;border-radius:8px;background:#fff;color:var(--lp12-blue);
+  font-size:17px;font-weight:560;cursor:pointer;box-shadow:0 6px 18px rgba(7,42,120,.18)}
+.panel-cta:disabled{opacity:.72;cursor:default}
+.panel-secondary{width:100%;height:52px;border-radius:8px;display:grid;place-items:center;
+  background:rgba(255,255,255,.18);color:#fff;font-size:15px;font-weight:450;text-align:center;padding:0 12px}
+.panel-secondary.is-warning{background:rgba(255,86,86,.28);box-shadow:inset 0 0 0 1px rgba(255,150,150,.6)}
+
+/* --- rig controls (mount height / downtilt) ------------------------------- */
+.panel-control{width:100%;margin:2px 0 10px;display:grid;gap:8px}
+.panel-control > label{font:600 11px/1 inherit;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.72)}
+.panel-control input[type=range]{width:100%;height:26px;background:transparent;cursor:grab}
+.panel-control input[type=range]:active{cursor:grabbing}
+.panel-control input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:999px;
+  background:rgba(255,255,255,.28)}
+.panel-control input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:18px;height:18px;margin-top:-7px;border-radius:999px;background:#fff;
+  box-shadow:0 1px 4px rgba(4,14,40,.4)}
+.panel-control input[type=range]:disabled{opacity:.5;cursor:default}
+.tilt-steps{display:grid;grid-auto-flow:column;gap:6px}
+.tilt-steps button{height:38px;border:0;border-radius:7px;font:600 13px/1 inherit;cursor:pointer;
+  background:rgba(255,255,255,.16);color:#fff}
+.tilt-steps button.is-on{background:#fff;color:var(--lp12-blue)}
+.tilt-steps button:disabled{opacity:.5;cursor:default}
+.panel-control-readout{display:flex;align-items:baseline;gap:8px;font:500 12px/1.2 inherit;
+  color:rgba(255,255,255,.78)}
+.panel-control-readout b{font:700 16px/1 inherit}
+.panel-control-readout b.is-ok{color:#8ef5c8}
+.panel-control-readout b.is-warn{color:#ffd28a}
+.panel-wire{width:100%;aspect-ratio:16/8.5;border:1px solid rgba(255,255,255,.42);
+  border-radius:8px;background:rgba(150,175,255,.22);display:grid;place-items:center;overflow:hidden}
+.panel-wire img{width:100%;height:100%;object-fit:contain}
+.panel-location{margin:0;font-size:15px;opacity:.95}
+.panel-section{margin:2px 0 0;font-size:18px;font-weight:520}
+
+.parts-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.part-card{position:relative;flex:0 0 auto;min-width:110px;height:132px;border-radius:7px;
+  border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  cursor:pointer;padding:8px}
+.part-card img{width:66px;height:66px;object-fit:contain}
+.part-card span{font-size:13px;font-weight:450;text-align:center;line-height:1.2}
+.part-card.is-selected{border-color:#fff;border-width:1.5px;background:rgba(255,255,255,.2)}
+.part-card.is-done{opacity:.62}
+.part-tick{position:absolute;top:6px;right:8px;font-style:normal;font-size:13px}
+.part-card.is-shake{animation:lp12-shake .42s ease}
+@keyframes lp12-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}
+  40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+.complete-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;font-size:15px}
+.complete-list i{font-style:normal;margin-right:8px}
+
+.viewport{position:relative;min-width:0;background:var(--workspace-background)}
+.viewport canvas{display:block}
+.position-tracker{position:absolute;top:22px;right:28px;width:126px;height:188px;z-index:20;
+  border-radius:8px;border:1px solid #dfe4ec;background:rgba(255,255,255,.72);
+  box-shadow:0 2px 10px rgba(20,32,56,.08);overflow:hidden}
+.tracker-pole{width:100%;height:100%;object-fit:contain;filter:invert(1) opacity(.62)}
+.tracker-window{position:absolute;left:12%;width:76%;border:2px solid var(--lp12-blue);
+  border-radius:2px;background:rgba(7,92,255,.08);
+  transition:top 850ms cubic-bezier(.22,1,.36,1),height 850ms cubic-bezier(.22,1,.36,1)}
+.view-toggle{position:absolute;top:228px;right:28px;z-index:20;display:grid;
+  grid-template-columns:1fr 1fr;width:126px;height:38px;border:1px solid #dfe4ec;
+  border-radius:7px;overflow:hidden;background:#fff}
+.view-toggle button{border:0;background:transparent;color:var(--lp12-blue);
+  font-size:13px;font-weight:500;cursor:pointer}
+.view-toggle button.is-active{background:var(--lp12-blue);color:#fff}
+.view-toggle button:disabled{opacity:.5;cursor:default}
+.stage-counter{position:absolute;left:28px;bottom:22px;z-index:20;font-size:13px;
+  letter-spacing:.06em;color:#6b7a8d;text-transform:uppercase}
+
+@media (max-width:1180px){
+  .installation-shell{--tool-rail-width:76px;--information-panel-width:clamp(320px,26vw,350px)}
+  .rail-btn{width:48px;height:48px}
+  .info-panel{padding:22px 22px 18px;gap:12px}
+  .panel-hero{max-height:112px}
+}
+@media (prefers-reduced-motion:reduce){
+  .tracker-window{transition-duration:80ms}
+  .part-card.is-shake{animation:none}
+}

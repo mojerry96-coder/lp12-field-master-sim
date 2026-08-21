@@ -1,0 +1,199 @@
+{
+  "studio": {
+    "world": "#F7F8FA",
+    "floor": "#F1F3F5",
+    "floorRoughness": 0.75
+  },
+  "transition": {
+    "durationSeconds": 1.0,
+    "easing": "easeInOut",
+    "holdBeforeAssemblySeconds": 0.25
+  },
+  "targetNode": "CAM_TARGET",
+  "stageCamera": {
+    "inspectPole": "CAM_01_FULL_POLE",
+    "attachBands": "CAM_02_BANDS",
+    "attachRail": "CAM_04_RAIL",
+    "attachPivot": "CAM_05_PIVOT",
+    "mountAntenna": "CAM_06_ANTENNA",
+    "secureAntenna": "CAM_07_FASTENERS",
+    "attachConnectors": "CAM_08_CONNECTORS",
+    "height": "CAM_01_FULL_POLE",
+    "downtilt": "CAM_05_PIVOT",
+    "coverage": "CAM_10_COVERAGE",
+    "handover": "CAM_10_COVERAGE",
+    "complete": "CAM_09_COMPLETE"
+  },
+  "cameras": {
+    "CAM_01_FULL_POLE": {
+      "position": [
+        11.2,
+        29.8,
+        6.85
+      ],
+      "target": [
+        -2.4,
+        0.0,
+        6.55
+      ],
+      "lensMM": 52.0,
+      "fovDegreesHorizontal": 38.187,
+      "sensorWidthMM": 36.0,
+      "note": "Full pole base to top; pole sits left of centre for the component tray",
+      "subjectBias": 0.0
+    },
+    "CAM_02_BANDS": {
+      "position": [
+        2.3,
+        4.6,
+        7.95
+      ],
+      "target": [
+        0.05,
+        0.1,
+        7.5
+      ],
+      "lensMM": 55.0,
+      "fovDegreesHorizontal": 36.244,
+      "sensorWidthMM": 36.0,
+      "note": "Both band locations together",
+      "subjectBias": 0.08
+    },
+    "CAM_03_WRONG_DROP": {
+      "position": [
+        3.1,
+        6.2,
+        8.3
+      ],
+      "target": [
+        0.2,
+        0.35,
+        7.55
+      ],
+      "lensMM": 48.0,
+      "fovDegreesHorizontal": 41.112,
+      "sensorWidthMM": 36.0,
+      "note": "Invalid pole target and mis-dragged antenna in one frame",
+      "subjectBias": 0.08
+    },
+    "CAM_04_RAIL": {
+      "position": [
+        2.45,
+        5.1,
+        7.95
+      ],
+      "target": [
+        0.05,
+        0.22,
+        7.5
+      ],
+      "lensMM": 52.0,
+      "fovDegreesHorizontal": 38.187,
+      "sensorWidthMM": 36.0,
+      "note": "Both bands plus the whole vertical rail",
+      "subjectBias": 0.08
+    },
+    "CAM_05_PIVOT": {
+      "position": [
+        2.2,
+        4.3,
+        7.85
+      ],
+      "target": [
+        0.21,
+        0.62,
+        7.52
+      ],
+      "lensMM": 50.0,
+      "fovDegreesHorizontal": 39.598,
+      "sensorWidthMM": 36.0,
+      "note": "Middle rail section and pivot bracket connection",
+      "subjectBias": 0.08
+    },
+    "CAM_06_ANTENNA": {
+      "position": [
+        2.9,
+        4.3,
+        7.9
+      ],
+      "target": [
+        0.05,
+        0.62,
+        7.52
+      ],
+      "lensMM": 50.0,
+      "fovDegreesHorizontal": 39.598,
+      "sensorWidthMM": 36.0,
+      "note": "Complete antenna moving onto the pivot bracket",
+      "subjectBias": 0.08
+    },
+    "CAM_07_FASTENERS": {
+      "position": [
+        1.75,
+        3.15,
+        7.8
+      ],
+      "target": [
+        0.04,
+        0.68,
+        7.54
+      ],
+      "lensMM": 64.0,
+      "fovDegreesHorizontal": 31.417,
+      "sensorWidthMM": 36.0,
+      "note": "Bolts, washers and their fixing points",
+      "subjectBias": 0.08
+    },
+    "CAM_08_CONNECTORS": {
+      "position": [
+        1.95,
+        3.55,
+        6.98
+      ],
+      "target": [
+        0.05,
+        0.74,
+        6.78
+      ],
+      "lensMM": 58.0,
+      "fovDegreesHorizontal": 34.483,
+      "sensorWidthMM": 36.0,
+      "note": "Antenna underside ports and the three cables",
+      "subjectBias": 0.08
+    },
+    "CAM_09_COMPLETE": {
+      "position": [
+        12.4,
+        33.0,
+        6.9
+      ],
+      "target": [
+        -1.8,
+        0.2,
+        6.6
+      ],
+      "lensMM": 54.0,
+      "fovDegreesHorizontal": 36.87,
+      "sensorWidthMM": 36.0,
+      "note": "Pull back to the complete installed LP12",
+      "subjectBias": 0.0
+    },
+    "CAM_10_COVERAGE": {
+      "position": [
+        183.0,
+        183.0,
+        150.0
+      ],
+      "target": [
+        0.0,
+        0.0,
+        40.0
+      ],
+      "lensMM": 35.0,
+      "fovDegreesHorizontal": 54.432,
+      "sensorWidthMM": 36.0,
+      "note": "Network coverage dome around the site",
+      "subjectBias": 0.08
+    }
+  }
+}

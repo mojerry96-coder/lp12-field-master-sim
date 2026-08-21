@@ -1,0 +1,68 @@
+{
+  "model": "awolowo_environment.glb",
+  "lod1": "awolowo_environment_lod1.glb",
+  "timeOfDay": "day",
+  "lighting": {
+    "preset": "day",
+    "sun": "KEY_Sun",
+    "sunEnergy": 3.8,
+    "worldStrength": 0.42,
+    "emissiveStrength": 0.0,
+    "realtimePracticals": false,
+    "exposure": 0.0,
+    "_note": "Spec section 10 and all eight flow references specify a night/dusk corridor; 'day' was requested as an additional preset and is the default build."
+  },
+  "coordinateSystem": {
+    "authoringUp": "Z",
+    "roadAxis": "+X",
+    "coverageAxis": "+Y",
+    "originNode": "LP12_Anchor",
+    "_runtimeNote": "glTF export converts to Y-up: authoring +Z becomes runtime +Y and authoring +Y (coverage) becomes runtime -Z."
+  },
+  "lp12": {
+    "separateAsset": "lp12_interactive_assembly.glb",
+    "placeNode": "LP12_ROOT",
+    "atAnchor": "LP12_Anchor",
+    "anchorWorld": [
+      0.0,
+      0.0,
+      0.14
+    ]
+  },
+  "anchors": {
+    "LP12_Anchor": [
+      0.0,
+      0.0,
+      0.14
+    ],
+    "ShadowZone_Anchor": [
+      34.0,
+      23.15,
+      0.02
+    ],
+    "CoverageSurface_Anchor": [
+      0.0,
+      15.8,
+      0.015
+    ],
+    "HandoverBoundary_Anchor": [
+      -38.0,
+      15.8,
+      0.02
+    ],
+    "Coverage_Target": [
+      2.0,
+      26.9,
+      0.0
+    ]
+  },
+  "routes": [
+    "PedestrianRoute",
+    "VehicleRoute"
+  ],
+  "performance": {
+    "trianglesLOD0": 88494,
+    "trianglesLOD1": 40916,
+    "drawCallEstimate": 28
+  }
+}

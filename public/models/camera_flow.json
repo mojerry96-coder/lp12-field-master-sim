@@ -1,0 +1,227 @@
+{
+  "coordinateSystem": {
+    "authoringUp": "Z",
+    "roadAxis": "+X",
+    "coverageAxis": "+Y",
+    "originNode": "LP12_Anchor"
+  },
+  "timeOfDay": "day",
+  "transition": {
+    "durationSeconds": 1.25,
+    "easing": "easeInOut",
+    "reducedMotion": "instantWithShortFade"
+  },
+  "framing": {
+    "aspect": "16:9",
+    "safeTop": 0.07,
+    "safeBottom": 0.16
+  },
+  "order": [
+    "overview",
+    "locate",
+    "inspect",
+    "install",
+    "height",
+    "downtilt",
+    "coverage",
+    "complete"
+  ],
+  "views": {
+    "overview": {
+      "camera": "CAM_Overview",
+      "target": "TARGET_Overview",
+      "controls": "limitedOrbitZoom",
+      "position": [
+        -88.0,
+        -26.0,
+        80.0
+      ],
+      "quaternion": [
+        0.373337,
+        -0.244168,
+        -0.48987,
+        0.749018
+      ],
+      "targetPosition": [
+        8.0,
+        16.0,
+        1.0
+      ],
+      "lensMM": 50.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 39.598,
+      "near": 0.1,
+      "far": 600.0
+    },
+    "locate": {
+      "camera": "CAM_Locate",
+      "target": "TARGET_LP12",
+      "controls": "hotspotAndZoom",
+      "position": [
+        -40.0,
+        -17.0,
+        27.0
+      ],
+      "quaternion": [
+        0.477956,
+        -0.262863,
+        -0.403896,
+        0.73439
+      ],
+      "targetPosition": [
+        1.0,
+        9.0,
+        5.5
+      ],
+      "lensMM": 55.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 36.244,
+      "near": 0.1,
+      "far": 600.0
+    },
+    "inspect": {
+      "camera": "CAM_Inspect",
+      "target": "TARGET_Mount",
+      "controls": "limitedOrbitZoom",
+      "position": [
+        2.4,
+        2.9,
+        8.05
+      ],
+      "targetPosition": [
+        0.0,
+        0.42,
+        7.55
+      ],
+      "lensMM": 52.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 38.187,
+      "near": 0.1,
+      "far": 600.0
+    },
+    "install": {
+      "camera": "CAM_Install",
+      "target": "TARGET_Antenna",
+      "controls": "lockedDuringDrag",
+      "position": [
+        3.0,
+        3.7,
+        7.95
+      ],
+      "targetPosition": [
+        0.0,
+        0.5,
+        7.5
+      ],
+      "lensMM": 46.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 42.741,
+      "near": 0.1,
+      "far": 600.0
+    },
+    "height": {
+      "camera": "CAM_Height",
+      "target": "TARGET_Height",
+      "controls": "lockedDuringHeightAdjustment",
+      "position": [
+        20.5,
+        -3.0,
+        8.2
+      ],
+      "quaternion": [
+        0.537601,
+        0.451419,
+        0.457973,
+        0.545405
+      ],
+      "targetPosition": [
+        0.0,
+        0.6,
+        7.9
+      ],
+      "lensMM": 40.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 48.455,
+      "near": 0.1,
+      "far": 600.0
+    },
+    "downtilt": {
+      "camera": "CAM_Downtilt",
+      "target": "TARGET_Pivot",
+      "controls": "lockedDuringAngleAdjustment",
+      "position": [
+        6.2,
+        0.1,
+        7.7
+      ],
+      "quaternion": [
+        0.511289,
+        0.471716,
+        0.487127,
+        0.527993
+      ],
+      "targetPosition": [
+        0.0,
+        0.6,
+        7.5
+      ],
+      "lensMM": 72.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 28.072,
+      "near": 0.1,
+      "far": 600.0
+    },
+    "coverage": {
+      "camera": "CAM_Coverage",
+      "target": "TARGET_Coverage",
+      "controls": "observeReplaySwitchView",
+      "position": [
+        14.0,
+        -6.0,
+        6.0
+      ],
+      "quaternion": [
+        0.593005,
+        0.257176,
+        0.30359,
+        0.700028
+      ],
+      "targetPosition": [
+        -7.9,
+        14.5,
+        1.0
+      ],
+      "lensMM": 35.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 54.432,
+      "near": 0.1,
+      "far": 600.0
+    },
+    "complete": {
+      "camera": "CAM_Complete",
+      "target": "TARGET_Complete",
+      "controls": "restrainedOverview",
+      "position": [
+        -62.0,
+        -20.0,
+        58.0
+      ],
+      "quaternion": [
+        0.38294,
+        -0.233587,
+        -0.46542,
+        0.763006
+      ],
+      "targetPosition": [
+        6.0,
+        15.0,
+        1.0
+      ],
+      "lensMM": 55.0,
+      "sensorWidthMM": 36.0,
+      "fovDegreesHorizontal": 36.244,
+      "near": 0.1,
+      "far": 600.0
+    }
+  }
+}
