@@ -29,6 +29,10 @@ import bpy
 from mathutils import Euler, Matrix, Vector
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+# Blender runs a --python script without its directory on sys.path, so a
+# sibling module is not importable until we put it there.
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
 OUT = os.path.abspath(os.path.join(HERE, ".."))
 BLEND_PATH = os.path.join(OUT, "awolowo_lowpoly_env.blend")
 GLB_PATH = os.path.join(OUT, "awolowo_lowpoly_env.glb")
@@ -91,7 +95,7 @@ COLLECTIONS = [
     "ENV_Ground", "ENV_Roads", "ENV_Buildings_Main", "ENV_Buildings_Secondary",
     "ENV_Pavements", "ENV_StreetFurniture", "ENV_Vegetation", "ENV_Vehicles",
     "ENV_Pedestrians", "ENV_LP12_Anchor", "ENV_Lighting", "ENV_Cameras",
-    "LP12_POLE",
+    "LP12_POLE", "VEHICLE_LIBRARY",
 ]
 
 
@@ -171,6 +175,14 @@ def build_materials():
     material("ENV_Vegetation", PALETTE["vegetation"], 0.80, 0.18)
     material("ENV_Accent_Blue", PALETTE["accent_blue"], 0.60, 0.30)
     material("ENV_Network_Green", PALETTE["network_green"], 0.62, 0.28)
+
+    # The vehicle library brings its own palette. Deliberately separate from the
+    # environment's: vehicles need brake reds, indicator ambers and a metallic
+    # hub that have no business being available to a building.
+    import build_vehicles as BV
+    for name, (hexc, rough, metal) in BV.VEHICLE_COLOURS.items():
+        m = material(name, hexc, rough, 0.30)
+        m.node_tree.nodes["Principled BSDF"].inputs["Metallic"].default_value = metal
 
 
 # ---------------------------------------------------------------- helpers
@@ -1320,185 +1332,121 @@ def build_street_furniture():
 
 
 # ----------------------------------------------------------------- vehicles
-
-# --- vehicles -------------------------------------------------------------
 #
-# Everything below builds ONE mesh per vehicle type with four material slots,
-# rather than a parented pile of boxes. That matters twice over: the wheels and
-# glass come along for free on every instance, and each vehicle in the scene is
-# a single object instead of three or four.
+# The vehicles themselves live in build_vehicles.py: ten of them, composed from
+# a shared part library, at 6k-19k triangles each. This module only decides
+# which ones appear, where they stand and which way they face.
+#
+# Vehicles are authored +Y forward. The boulevard runs along X, so a vehicle
+# travelling +X is rotated -90 degrees about Z and one travelling -X by +90.
 
-VEH_BODY, VEH_GLASS, VEH_TYRE, VEH_ACCENT = 0, 1, 2, 3
+VEH_ROT_EAST = -math.pi / 2      # local +Y ends up pointing along world +X
+VEH_ROT_WEST = math.pi / 2
 
+# Traffic mix, from the brief: several cars, a couple of vans, one bus, one box
+# or panel truck, restrained two-wheelers, and the semi only where its length
+# and turning space are believable.
+#
+# (builder key, lane index 0..2, x position, carriageway sign)
+TRAFFIC = [
+    # --- north carriageway, travelling east ---
+    ("sedan",   0, -104.0,  1), ("compact", 1,  -88.0,  1), ("van",     2,  -72.0,  1),
+    ("coupe",   0,  -58.0,  1), ("bus",     2,  -44.0,  1), ("sedan",   1,  -30.0,  1),
+    ("compact", 0,   -8.0,  1), ("coupe",   1,   10.0,  1), ("sedan",   0,   26.0,  1),
+    ("compact", 1,   44.0,  1), ("panel",   2,   62.0,  1), ("sedan",   0,   80.0,  1),
+    ("coupe",   1,   98.0,  1),
+    # --- south carriageway, travelling west ---
+    ("compact", 0, -110.0, -1), ("sedan",   1,  -94.0, -1), ("box",     2,  -76.0, -1),
+    ("coupe",   0,  -60.0, -1), ("sedan",   1,  -42.0, -1), ("van",     2,  -24.0, -1),
+    ("compact", 0,   -6.0, -1), ("sedan",   1,   14.0, -1), ("coupe",   0,   32.0, -1),
+    ("compact", 1,   50.0, -1), ("van",     2,   68.0, -1), ("sedan",   0,   86.0, -1),
+    ("semi",    2,  112.0, -1),
+]
 
-def _prism_y(bm, profile_xz, y0, y1, mat_index):
-    """Extrude an X-Z silhouette along Y and tag every face it creates."""
-    verts = [bm.verts.new((x, y0, z)) for x, z in profile_xz]
-    face = bm.faces.new(verts)
-    bm.normal_update()
-    ret = bmesh.ops.extrude_face_region(bm, geom=[face])
-    moved = [e for e in ret["geom"] if isinstance(e, bmesh.types.BMVert)]
-    bmesh.ops.translate(bm, vec=Vector((0.0, y1 - y0, 0.0)), verts=moved)
-    for f in bm.faces:
-        if f.material_index == 0 and f not in ():
-            pass
-    made = [e for e in ret["geom"] if isinstance(e, bmesh.types.BMFace)] + [face]
-    for f in made:
-        f.material_index = mat_index
-    return made
+TWO_WHEELERS = [
+    ("scooter",  -54.0,  KERB_Y - 1.9,   1),
+    ("scooter",   34.0, -(KERB_Y - 1.9), -1),
+    ("escooter", -18.0,  KERB_Y + 3.4,   1),
+    ("escooter",  56.0, -(KERB_Y + 3.4), -1),
+]
 
+LP12_CLEAR_TALL = 22.0     # nothing tall inside this radius of the pole
+TALL = {"bus", "semi", "box", "panel"}
 
-def _wheel(bm, x, y, r, w, segments=10):
-    before = set(bm.faces)
-    bmesh.ops.create_cone(
-        bm, cap_ends=True, segments=segments, radius1=r, radius2=r, depth=w,
-        matrix=Matrix.Translation((x, y, r)) @ Matrix.Rotation(math.radians(90), 4, "X"))
-    for f in set(bm.faces) - before:
-        f.material_index = VEH_TYRE
-
-
-def _taper(verts, z_above, factor):
-    """Pull the upper section in along Y so the roof is narrower than the sills.
-
-    A car whose body is the same width top and bottom reads as an extruded
-    rectangle from any angle. This is the cheapest possible fix — no extra
-    geometry, and it is what gives the silhouette its shoulder.
-    """
-    for v in verts:
-        if v.co.z > z_above:
-            v.co.y *= factor
-
-
-def vehicle_prototype(name, half_w, sections, wheel_x, wheel_r=0.36,
-                      wheel_w=0.26, body_mat="ENV_Building_Hi"):
-    """Build one vehicle mesh from a stack of extruded side profiles.
-
-    Each section carries its own X extent, width fraction, material and taper,
-    which is what lets a van be a white cab with a blue cargo box, and a bus be
-    a skirt, a window band and a solid roof, without any of them becoming a
-    separate object. One mesh per vehicle type; every instance in the scene is
-    a single object that already has its wheels and glazing.
-    """
-    bm = bmesh.new()
-    for profile, width_frac, mat_index, taper_above, taper_factor in sections:
-        hw = half_w * width_frac
-        faces = _prism_y(bm, profile, -hw, hw, mat_index)
-        if taper_factor < 1.0:
-            _taper({v for f in faces for v in f.verts}, taper_above, taper_factor)
-
-    # Tuck the wheels under the bodywork. Centring them on the body edge leaves
-    # half of each wheel sticking out past the flank, which reads as a fault
-    # rather than a wheel.
-    inset = half_w - wheel_w / 2 - 0.03
-    for wx in wheel_x:
-        for wy in (-inset, inset):
-            _wheel(bm, wx, wy, wheel_r, wheel_w)
-
-    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
-    me = bpy.data.meshes.new(f"{name}_src")
-    bm.to_mesh(me)
-    bm.free()
-
-    for slot in (body_mat, "ENV_Glass", "ENV_Glass_Dark", "ENV_Accent_Blue"):
-        me.materials.append(MATS[slot])
-
-    ob = bpy.data.objects.new(f"{name}_src", me)
-    link(ob, "ENV_Vehicles")
-    ob.hide_render = True
-    ob.hide_viewport = True
-    return ob
+VEHICLE_BUILDERS = {
+    "semi":     ("VEH_TRUCK_SEMI_01",  "build_semi",        0.035),
+    "bus":      ("VEH_BUS_CITY_01",    "build_bus",         0.050),
+    "box":      ("VEH_TRUCK_BOX_01",   "build_box_truck",   0.045),
+    "panel":    ("VEH_TRUCK_PANEL_01", "build_panel_truck", 0.045),
+    "van":      ("VEH_VAN_CARGO_01",   "build_cargo_van",   0.038),
+    "sedan":    ("VEH_CAR_SEDAN_01",   "build_sedan",       0.030),
+    "compact":  ("VEH_CAR_COMPACT_01", "build_compact",     0.030),
+    "coupe":    ("VEH_CAR_COUPE_01",   "build_coupe",       0.030),
+    "scooter":  ("VEH_SCOOTER_01",     "build_scooter",     0.014),
+    "escooter": ("VEH_E_SCOOTER_01",   "build_e_scooter",   0.010),
+}
 
 
-def car_sections(length):
-    """Saloon: dropped nose and tail, raked screens, roof over the middle."""
-    hl = length / 2
-    belt, roof = 0.94, 1.44
-    lower = [
-        (hl - 0.26, 0.42), (hl - 0.02, 0.60), (hl, belt - 0.14),
-        (hl - 0.62, belt), (-hl + 0.66, belt), (-hl + 0.02, belt - 0.10),
-        (-hl + 0.02, 0.58), (-hl + 0.28, 0.42),
-    ]
-    green = [
-        (hl - 1.24, belt - 0.02), (hl - 1.78, roof),
-        (-hl + 1.46, roof), (-hl + 1.00, belt - 0.02),
-    ]
-    return [(lower, 1.00, VEH_BODY, 0.78, 0.93),
-            (green, 0.87, VEH_GLASS, 1.24, 0.90)]
-
-
-def van_sections(length):
-    """Panel van: white cab with a glazed screen, blue cargo box behind it."""
-    hl = length / 2
-    deck = 1.12
-    skirt = [
-        (hl - 0.24, 0.46), (hl, 0.68), (hl, deck),
-        (-hl + 0.02, deck), (-hl + 0.02, 0.66), (-hl + 0.26, 0.46),
-    ]
-    cab = [(hl - 0.10, deck), (hl - 0.62, 1.98), (hl - 1.55, 1.98), (hl - 1.45, deck)]
-    cargo = [(hl - 1.62, deck), (hl - 1.62, 2.24),
-             (-hl + 0.06, 2.24), (-hl + 0.06, deck)]
-    return [(skirt, 1.00, VEH_BODY, 0.80, 0.94),
-            (cab, 0.92, VEH_GLASS, 1.60, 0.92),
-            (cargo, 0.98, VEH_ACCENT, 2.00, 0.97)]
-
-
-def bus_sections(length):
-    """Bus: skirt, a continuous window band, then a solid roof.
-
-    Glazing the whole upper body — which the first pass did — turns it into a
-    wedge of glass with a sliver of paint underneath. Real buses read as a band.
-    """
-    hl = length / 2
-    sill, head, roof = 1.18, 2.14, 2.62
-    skirt = [
-        (hl - 0.30, 0.46), (hl, 0.74), (hl, sill),
-        (-hl + 0.02, sill), (-hl + 0.02, 0.72), (-hl + 0.32, 0.46),
-    ]
-    band = [(hl - 0.04, sill), (hl - 0.34, head),
-            (-hl + 0.28, head), (-hl + 0.04, sill)]
-    top = [(hl - 0.36, head), (hl - 0.86, roof),
-           (-hl + 0.78, roof), (-hl + 0.30, head)]
-    # Blue on the skirt, white above. An all-white bus of this size is a loaf —
-    # at hero scale the window band alone is too close in value to the body to
-    # separate it, and the accent is what makes it read as a vehicle in traffic.
-    return [(skirt, 1.00, VEH_ACCENT, 0.80, 0.94),
-            (band, 1.01, VEH_GLASS, 3.00, 1.0),
-            (top, 0.96, VEH_BODY, 3.00, 1.0)]
+def build_vehicle_library():
+    """Build one master mesh per vehicle type, hidden, ready to instance."""
+    import build_vehicles as BV
+    lib = {}
+    for key, (name, fn_name, bev) in VEHICLE_BUILDERS.items():
+        bm = bmesh.new()
+        getattr(BV, fn_name)(bm)
+        ob = BV.to_object(bpy, bm, name + "_ROOT", MATS,
+                          lambda o: COLL["VEHICLE_LIBRARY"].objects.link(o))
+        BV.add_bevel(ob, bev, 2)
+        # Bake the bevel into the mesh data. Instances share DATA, not the
+        # modifier stack, so leaving it as a modifier gives the prototype
+        # rounded edges and every vehicle actually in the scene sharp ones —
+        # silently, because the prototype is the thing you inspect.
+        deps = bpy.context.evaluated_depsgraph_get()
+        ob.data = bpy.data.meshes.new_from_object(ob.evaluated_get(deps))
+        ob.modifiers.clear()
+        BV.seat_on_ground(bpy, ob)
+        ob.hide_render = ob.hide_viewport = True
+        lib[key] = ob
+    return lib
 
 
 def build_vehicles():
-    car_l, van_l, bus_l = 4.5, 5.9, 10.6
-    car = vehicle_prototype("Car", 0.90, car_sections(car_l),
-                            wheel_x=(car_l / 2 - 1.05, -car_l / 2 + 1.05))
-    van = vehicle_prototype("Van", 1.05, van_sections(van_l),
-                            wheel_x=(van_l / 2 - 1.20, -van_l / 2 + 1.40),
-                            wheel_r=0.42, wheel_w=0.30)
-    bus = vehicle_prototype("Bus", 1.26, bus_sections(bus_l),
-                            wheel_x=(bus_l / 2 - 1.7, -bus_l / 2 + 2.5),
-                            wheel_r=0.50, wheel_w=0.34)
-
+    lib = build_vehicle_library()
     z = ROAD_T
-    placements = []
-    for sign in (1, -1):
-        for lane_i in range(LANES):
-            y = sign * (MEDIAN_HW + LANE * (lane_i + 0.5))
-            for k in range(9):
-                x = -128 + k * 27 + lane_i * 9 + (0 if sign > 0 else 13)
-                placements.append((x, y, 0.0 if sign > 0 else math.pi))
 
-    car_blue = vehicle_prototype("CarBlue", 0.90, car_sections(car_l),
-                                 wheel_x=(car_l / 2 - 1.05, -car_l / 2 + 1.05),
-                                 body_mat="ENV_Accent_Blue")
+    def lane_y(idx, sign):
+        return sign * (MEDIAN_HW + LANE * (idx + 0.5))
 
-    protos = [car, car, van, car_blue, car, bus, car, car_blue]
-    for i, (x, y, rz) in enumerate(placements):
-        instance(f"Vehicle_{i}", protos[i % len(protos)], (x, y, z),
-                 rot_z=rz, coll="ENV_Vehicles")
+    placed = skipped = 0
+    for i, (key, lane, x, sign) in enumerate(TRAFFIC):
+        # Staging rule, enforced rather than eyeballed: keep the LP12's
+        # silhouette and the space its coverage dome needs clear of anything
+        # tall. A bus alongside the pole is the one thing that would undo the
+        # whole point of the scene.
+        if key in TALL and abs(x - LP12_ANCHOR_X) < LP12_CLEAR_TALL:
+            skipped += 1
+            continue
+        rot = VEH_ROT_EAST if sign > 0 else VEH_ROT_WEST
+        instance(f"Traffic_{i:02d}_{key}", lib[key], (x, lane_y(lane, sign), z),
+                 rot_z=rot, coll="ENV_Vehicles")
+        placed += 1
 
-    for i in range(8):
-        instance(f"Vehicle_Parked_{i}", car,
-                 (-70 + i * 4.6, -(KERB_Y + PAVE_W + 4.0), ROAD_T + KERB_H),
-                 rot_z=math.pi / 2, coll="ENV_Vehicles")
+    for i, (key, x, y, sign) in enumerate(TWO_WHEELERS):
+        rot = VEH_ROT_EAST if sign > 0 else VEH_ROT_WEST
+        zz = z if abs(y) < KERB_Y else ROAD_T + KERB_H
+        instance(f"TwoWheeler_{i}_{key}", lib[key], (x, y, zz),
+                 rot_z=rot, coll="ENV_Vehicles")
+        placed += 1
+
+    # A parked rank on the Native Supply plaza, nose-in to the building.
+    for i, key in enumerate(("sedan", "compact", "sedan", "coupe", "compact", "sedan")):
+        instance(f"Parked_{i}_{key}", lib[key],
+                 (-70 + i * 3.1, -(KERB_Y + PAVE_W + 4.2), ROAD_T + KERB_H),
+                 rot_z=0.0, coll="ENV_Vehicles")
+        placed += 1
+
+    print(f"  vehicles placed: {placed} "
+          f"({skipped} tall ones skipped for LP12 clearance)")
 
 
 # -------------------------------------------------------------- pedestrians
