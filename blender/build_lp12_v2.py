@@ -30,9 +30,17 @@ FPS = 30
 CFG = {
     "band_width": 0.075, "band_thickness": 0.006, "band_segments": 96,
     "mount_z": 7.5, "band_spread": 0.70,
-    "pole_dia_at_mount": 0.58, "pole_taper": 0.12, "pole_height": 12.5,
+    # 260 mm at the mount, not 580. Measured against the reference photo:
+    # the shaft is appreciably narrower than the radio enclosure bolted to
+    # it, where at 580 the two were the same width and the pole read as a
+    # concrete column rather than a galvanised street pole. Every part that
+    # touches the shaft is placed through pole_radius_at(), so the bands,
+    # rail, pivot, cabling and fittings all follow it in.
+    "pole_dia_at_mount": 0.26, "pole_taper": 0.055, "pole_height": 12.5,
     "kerb": 0.0,
 }
+
+CFG_DOWNTILT = 5.0   # mirrors build_lp12.py CFG["downtilt_correct"]
 
 CLIPS = {
     "ANIM_01_Bands_Attach":      75,
@@ -41,6 +49,13 @@ CLIPS = {
     "ANIM_04_Antenna_Mount":     81,
     "ANIM_05_Antenna_Secure":    54,
     "ANIM_06_Connectors_Attach": 60,
+    # The install does not end when the last connector is torqued. The antenna
+    # still has to be pointed, and pointing is two separate adjustments made
+    # against two separate scales — the azimuth ring at the bands and the tilt
+    # quadrant at the bracket. Both are pure TRS on rigs that already exist,
+    # which is the only kind of animation glTF carries reliably.
+    "ANIM_07_Azimuth_Set":       54,
+    "ANIM_08_Downtilt_Set":      48,
 }
 
 
@@ -72,6 +87,7 @@ def link(obj, coll="MODEL"):
 # part reads as its material instead of as a slice of somebody else's bake.
 ATLAS_PATCH = {
     "MAT_Steel_Brushed":     (0.619, 0.194, 0.139),
+    "MAT_Pole_Galvanised":   (0.619, 0.194, 0.139),
     "MAT_Steel_Dark":        (0.002, 0.540, 0.451),
     "MAT_Connector_Steel":   (0.004, 0.603, 0.394),
     "MAT_Connector_Brass":   (0.008, 0.604, 0.389),
@@ -179,6 +195,443 @@ def bm_cyl(bm, c, r, d, seg=16, axis='Z', mi=0):
             f.material_index = mi
 
 
+def make_pole_metal(mats):
+    """Swap the pole from cast concrete to galvanised steel.
+
+    The reference is a steel tube — a spun, tapered, hot-dip galvanised column,
+    not a cast concrete post. Only Pole_Shaft and Pole_Base ever carried
+    MAT_Concrete_Pole, so this is a two-object change.
+
+    The UVs have to be rebuilt, not just the material swapped. box_uv() remaps
+    every loop into the atlas patch belonging to a specific material NAME; the
+    shaft's existing UVs point at the concrete patch, so leaving them would
+    sample the steel atlas at concrete coordinates and pull in whatever happens
+    to sit there.
+    """
+    src = mats.get("MAT_Steel_Brushed")
+    if not src:
+        return
+    steel = bpy.data.materials.get("MAT_Pole_Galvanised")
+    if steel is None:
+        steel = src.copy()
+        steel.name = "MAT_Pole_Galvanised"
+        bsdf = next((n for n in steel.node_tree.nodes
+                     if n.type == 'BSDF_PRINCIPLED'), None)
+        if bsdf:
+            # Brushed steel is authored at metallic 0.92, and a near-perfect
+            # mirror in a scene with no reflection probes and a flat world has
+            # nothing to reflect: the pole rendered essentially black, which is
+            # the opposite of the galvanised column in the reference. Half
+            # metallic keeps the sheen while letting the albedo carry the tone.
+            bsdf.inputs["Metallic"].default_value = 0.30
+            bsdf.inputs["Roughness"].default_value = 0.45
+            # Flat albedo, texture unlinked. At 0.30 metallic the base colour
+            # is what carries the tone, and the brushed-steel bake is a dark
+            # 0.46 grey — with the sky above and unlit tarmac below, the shaft
+            # rendered light at the top and black from about 2.5 m down. A
+            # galvanised column is one even tone the whole way up.
+            for l in [l for l in steel.node_tree.links
+                      if l.to_socket == bsdf.inputs["Base Color"]]:
+                steel.node_tree.links.remove(l)
+            bsdf.inputs["Base Color"].default_value = (0.545, 0.556, 0.572, 1.0)
+    for name in ("Pole_Shaft", "Pole_Base"):
+        ob = bpy.data.objects.get(name)
+        if not ob or ob.type != 'MESH':
+            continue
+        ob.data.materials.clear()
+        ob.data.materials.append(steel)
+        while ob.data.uv_layers:
+            ob.data.uv_layers.remove(ob.data.uv_layers[0])
+        box_uv(ob, steel.name)
+    print("[v2] pole reskinned: concrete -> galvanised steel")
+
+
+def detail_antenna(mats):
+    """Modelling detail on the radome, section 25.
+
+    The antenna was a plain rounded slab: correct in proportion, empty in
+    silhouette. Real panel antennas break up along their edges — a proud cap
+    at each end where the radome is bonded to its extrusion, a moulding seam
+    down both flanks, ribs across the back, and the small hardware an installer
+    actually looks for: a grounding lug, a rating plate, and a tilt scale at
+    the bracket so the downtilt can be read off the pole.
+
+    Everything is parented to Antenna_Body, so it inherits the mount rigs and
+    the install clips without a single extra keyframe.
+    """
+    body = bpy.data.objects.get("Antenna_Body")
+    if not body:
+        return
+    shell = mats.get("MAT_Antenna_OffWhite")
+    dark = mats.get("MAT_Steel_Dark") or mats.get("MAT_Connector_Steel")
+    steel = mats.get("MAT_Connector_Steel") or dark
+
+    vs = [body.matrix_world @ v.co for v in body.data.vertices]
+    x0, x1 = min(v.x for v in vs), max(v.x for v in vs)
+    y0, y1 = min(v.y for v in vs), max(v.y for v in vs)
+    z0, z1 = min(v.z for v in vs), max(v.z for v in vs)
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    w, d = x1 - x0, y1 - y0
+    made = []
+
+    # end caps, a touch proud of the radome so they catch a highlight
+    bm = bmesh.new()
+    for z in (z0 + 0.011, z1 - 0.011):
+        bm_box(bm, (cx, cy, z), (w * 1.015, d * 1.02, 0.022))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radome_End_Caps", bm, shell))
+
+    # moulding seam down both flanks
+    bm = bmesh.new()
+    for sx in (x0 + 0.004, x1 - 0.004):
+        bm_box(bm, (sx, cy, (z0 + z1) / 2), (0.008, d * 0.97, (z1 - z0) - 0.05))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radome_Seams", bm, shell))
+
+    # stiffening ribs across the back
+    bm = bmesh.new()
+    for k in range(5):
+        z = z0 + 0.14 + k * ((z1 - z0) - 0.28) / 4.0
+        bm_box(bm, (cx, y0 + 0.006, z), (w * 0.90, 0.012, 0.016))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radome_Ribs", bm, shell))
+
+    # grounding lug, low on the back, with its bolt
+    bm = bmesh.new()
+    bm_box(bm, (x0 + 0.055, y0 - 0.012, z0 + 0.10), (0.046, 0.030, 0.034))
+    bm_cyl(bm, (x0 + 0.055, y0 - 0.030, z0 + 0.10), 0.007, 0.020, seg=10, axis='Y')
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Antenna_Ground_Lug", bm, steel))
+
+    # Rating plate on the FLANK, not the back.
+    #
+    # y0 is the face toward the pole. Hardware belongs there on a real antenna,
+    # and that is where the ribs and the earth lug stay — but a plate nobody
+    # can see is decoration that costs triangles and returns nothing. Every
+    # camera in this scene looks at the radome face or the profile, so the
+    # plate goes on the profile.
+    bm = bmesh.new()
+    bm_box(bm, (x1 - 0.003, cy - 0.02, z1 - 0.22), (0.008, 0.135, 0.070))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Antenna_Rating_Plate", bm, steel))
+
+    # Bezel around the radiating face: the radome is bonded into a frame, and
+    # the frame is the one piece of relief the front of a panel antenna has.
+    # Without it the visible side is a blank white slab from every angle.
+    bm = bmesh.new()
+    fy = y1 - 0.004
+    bm_box(bm, (cx, fy, z1 - 0.030), (w * 0.94, 0.014, 0.026))      # head
+    bm_box(bm, (cx, fy, z0 + 0.030), (w * 0.94, 0.014, 0.026))      # sill
+    for sx in (cx - w * 0.457, cx + w * 0.457):
+        bm_box(bm, (sx, fy, (z0 + z1) / 2), (0.026, 0.014, (z1 - z0) - 0.052))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radome_Bezel", bm, shell))
+
+    # Vent boss on the underside, where a real radome breathes.
+    bm = bmesh.new()
+    bm_cyl(bm, (cx + w * 0.22, cy, z0 - 0.006), 0.018, 0.018, seg=12, axis='Z')
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radome_Vent", bm, steel))
+
+    # tilt scale at the bracket: a quadrant plate with degree ticks
+    bm = bmesh.new()
+    zc = z0 + 0.30
+    bm_cyl(bm, (x0 - 0.010, cy, zc), 0.062, 0.008, seg=24, axis='X')
+    for k in range(7):
+        a = math.radians(-42 + k * 14)
+        bm_box(bm, (x0 - 0.015,
+                    cy + math.sin(a) * 0.050,
+                    zc + math.cos(a) * 0.050), (0.006, 0.005, 0.016))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Antenna_Tilt_Scale", bm, dark))
+
+    # No per-object smoothing here: shade_smooth_all() runs over the whole
+    # scene at the end of the build and would only redo it.
+    for ob in made:
+        reparent(ob, body)
+    print(f"[v2] antenna detailed: {len(made)} parts")
+
+
+def detail_pole_hardware(mats):
+    """Service hardware on the shaft, section 25.
+
+    A pole in the field is not a bare tube. It has a cast access hatch where
+    the feeder enters, an earth boss with a strap to the electrode, a warning
+    plate at eye height, cable cleats up the run, and nuts and washers on its
+    holding-down bolts. None of it is decorative — it is the hardware an
+    installer is told to check.
+
+    Everything hugs the shaft through pole_radius_at(z) rather than a constant
+    radius. The shaft is tapered, so a fixed offset floats the fittings clear
+    at the base and buries them at the top.
+    """
+    steel = mats.get("MAT_Connector_Steel") or mats.get("MAT_Steel_Brushed")
+    dark = mats.get("MAT_Steel_Dark") or steel
+    made = []
+
+    # Access hatch: recessed frame, proud door, two captive fasteners.
+    zc = 1.25
+    r = pole_radius_at(zc)
+    bm = bmesh.new()
+    bm_box(bm, (0, r + 0.004, zc), (0.145, 0.014, 0.360))          # frame
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Pole_Hatch_Frame", bm, dark))
+    bm = bmesh.new()
+    bm_box(bm, (0, r + 0.013, zc), (0.118, 0.010, 0.330))          # door
+    for dz in (-0.125, 0.125):
+        bm_cyl(bm, (0, r + 0.021, zc + dz), 0.010, 0.010, seg=8, axis='Y')
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Pole_Hatch_Door", bm, steel))
+
+    # Earth boss and strap, base of the shaft down to the electrode.
+    bm = bmesh.new()
+    zb = 0.42
+    rb = pole_radius_at(zb)
+    bm_cyl(bm, (0.0, -(rb + 0.016), zb), 0.017, 0.032, seg=10, axis='Y')
+    bm_box(bm, (0.0, -(rb + 0.030), zb - 0.16), (0.026, 0.005, 0.330))
+    bm_box(bm, (0.0, -(rb + 0.030), zb - 0.325), (0.026, 0.048, 0.006))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Pole_Earth_Strap", bm, steel))
+
+    # Warning / asset plate at eye height, banded round the shaft.
+    bm = bmesh.new()
+    zp = 1.72
+    rp = pole_radius_at(zp)
+    bm_box(bm, (0, rp + 0.006, zp), (0.150, 0.008, 0.092))
+    for sx in (-1, 1):
+        bm_box(bm, (sx * 0.082, rp - 0.010, zp), (0.030, 0.030, 0.088))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Pole_Asset_Plate", bm, dark))
+
+    # Feeder cleats up the shaft, on the same face the cable run uses.
+    bm = bmesh.new()
+    for k in range(9):
+        z = 2.35 + k * 0.58
+        rr = pole_radius_at(z)
+        bm_box(bm, (0, -(rr + 0.012), z), (0.086, 0.024, 0.020))
+        for sx in (-1, 1):
+            bm_cyl(bm, (sx * 0.033, -(rr + 0.026), z), 0.006, 0.014,
+                   seg=6, axis='Y')
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Pole_Feeder_Cleats", bm, steel))
+
+    # Nuts and washers on the holding-down bolts.
+    bm = bmesh.new()
+    for k in range(4):
+        a = math.radians(45 + k * 90)
+        px, py = math.cos(a) * 0.245, math.sin(a) * 0.245
+        bm_cyl(bm, (px, py, 0.062), 0.030, 0.010, seg=16)       # washer
+        bm_cyl(bm, (px, py, 0.079), 0.023, 0.026, seg=6)        # nut
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Pole_Base_Nuts", bm, steel))
+
+    root = bpy.data.objects.get("LP12_ROOT")
+    for ob in made:
+        if root:
+            reparent(ob, root)
+    print(f"[v2] pole hardware: {len(made)} parts")
+
+
+def detail_radio(mats):
+    """The radio unit behind the radome: fin caps, status window, label.
+
+    Cooling_Fins was a bare charcoal comb. Real remote radio units close their
+    fin stack with a cast top and bottom, carry a small sealed status window on
+    the accessible face, and wear a barcode plate.
+    """
+    fins = bpy.data.objects.get("Cooling_Fins")
+    if not fins:
+        return
+    dark = mats.get("MAT_Steel_Dark") or mats.get("MAT_Connector_Steel")
+    steel = mats.get("MAT_Connector_Steel") or dark
+    char = mats.get("MAT_HeatSink_Charcoal") or dark
+
+    vs = [fins.matrix_world @ v.co for v in fins.data.vertices]
+    x0, x1 = min(v.x for v in vs), max(v.x for v in vs)
+    y0, y1 = min(v.y for v in vs), max(v.y for v in vs)
+    z0, z1 = min(v.z for v in vs), max(v.z for v in vs)
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    made = []
+
+    bm = bmesh.new()
+    for z in (z0 - 0.008, z1 + 0.008):
+        bm_box(bm, (cx, cy, z), ((x1 - x0) * 1.03, (y1 - y0) * 1.05, 0.018))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radio_Fin_Caps", bm, char))
+
+    bm = bmesh.new()
+    bm_box(bm, (cx - (x1 - x0) * 0.30, y0 - 0.006, z1 - 0.10),
+           (0.070, 0.010, 0.030))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radio_Status_Window", bm, steel))
+
+    bm = bmesh.new()
+    bm_box(bm, (cx + (x1 - x0) * 0.26, y0 - 0.004, z0 + 0.09),
+           (0.084, 0.006, 0.044))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Radio_Label", bm, steel))
+
+    for ob in made:
+        reparent(ob, fins)
+    print(f"[v2] radio detailed: {len(made)} parts")
+
+
+FLEX_RANGE_DEG = 10.0      # matches build_lp12.py CFG["downtilt_max"]
+
+
+def flex_cables(z_cleat, z_top):
+    """Let the feeder flex instead of swinging with the antenna.
+
+    Antenna_Cables hangs off Connector_Install_Rig -> Antenna_Install_Rig ->
+    Tilt_Rig, so every vertex rotates rigidly about the pivot when downtilt is
+    set. The run is cleated to the pole about 1.2 m below that pivot, and 1.2 m
+    of radius at 10 degrees is 105 mm of travel — measured, the cable ends up
+    68 mm INSIDE the shaft at -10. Real feeder cannot do that: the cleat holds
+    the bottom and the service loop absorbs the movement.
+
+    The parenting has to stay, because ANIM_06 slides the whole run up to the
+    ports through that same chain. So instead of reparenting, this adds two
+    morph targets that CANCEL the inherited rotation wherever the cable is
+    supposed to be held still:
+
+        w = 1 at the connector end   -> no correction, follows the antenna
+        w = 0 at the cleat and below -> full counter-rotation, stays put
+
+    For a target angle t, the parent will place a vertex at R(t)*(p - P) + P.
+    A vertex that should not move needs to start from R(t)^-1*(p - P) + P, so
+    the shape key stores exactly that, blended by (1 - w).
+
+    Morph targets are used rather than hooks or an armature because glTF
+    carries only TRS and morph weights — a hook modifier would look right in
+    Blender and export as nothing at all.
+    """
+    cab = bpy.data.objects.get("Antenna_Cables")
+    tilt = bpy.data.objects.get("Tilt_Rig")
+    if not cab or not tilt or cab.type != 'MESH':
+        return
+    me = cab.data
+    if me.shape_keys:
+        return
+
+    M = cab.matrix_world.copy()
+    Minv = M.inverted()
+    P = tilt.matrix_world.translation.copy()
+
+    span = max(z_top - z_cleat, 1e-6)
+
+    def weight(zw):
+        """Smoothstep: held at the cleat, free at the ports."""
+        t = min(max((zw - z_cleat) / span, 0.0), 1.0)
+        return t * t * (3.0 - 2.0 * t)
+
+    basis = cab.shape_key_add(name="Basis", from_mix=False)
+    basis.interpolation = 'KEY_LINEAR'
+
+    for name, deg in (("Flex_Tilt_Neg", -FLEX_RANGE_DEG),
+                      ("Flex_Tilt_Pos", FLEX_RANGE_DEG)):
+        sk = cab.shape_key_add(name=name, from_mix=False)
+        sk.interpolation = 'KEY_LINEAR'
+        Rinv = Matrix.Rotation(math.radians(-deg), 4, 'X')
+        for i, v in enumerate(me.vertices):
+            world = M @ v.co
+            w = weight(world.z)
+            if w >= 0.999:
+                continue                       # follows the antenna as built
+            corrected = Rinv @ (world - P) + P
+            target = world.lerp(corrected, 1.0 - w)
+            sk.data[i].co = Minv @ target
+        sk.value = 0.0
+
+    print(f"[v2] cable flex: 2 morph targets over z {z_cleat:.2f}..{z_top:.2f}")
+
+
+def tint_brass(mats):
+    """Make the brass material actually look like brass.
+
+    connector_brass_base_color is a neutral grey bake — sampled across the
+    whole 512x512 it comes back 0.498/0.492/0.474, and it is wired straight
+    into Base Color. So MAT_Connector_Brass and MAT_Connector_Steel render as
+    the same grey, which is why the connector's brass band was invisible
+    against its steel nut and why the bank's contact pins never read as brass.
+
+    The material already declares the alloy colour it wants — the Principled
+    node's own Base Color default is (0.585, 0.448, 0.196). Nothing was using
+    it, because the texture link overrides the default. Dropping that link
+    hands the shader the colour the material always named. Roughness and normal
+    stay connected, so the surface keeps its bake; only the flat, colourless
+    albedo goes.
+    """
+    m = mats.get("MAT_Connector_Brass")
+    if not m or not m.use_nodes:
+        return
+    nt = m.node_tree
+    bsdf = next((n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    if not bsdf:
+        return
+    sock = bsdf.inputs["Base Color"]
+    for l in [l for l in nt.links if l.to_socket == sock]:
+        nt.links.remove(l)
+    sock.default_value = (0.585, 0.448, 0.196, 1.0)
+    print("[v2] brass tint applied (albedo bake was neutral grey)")
+
+
+def rf_port_centres(bank):
+    """World (x, y) of every brass RF pin on the connector bank's underside.
+
+    Measured off the mesh, not copied from build_lp12.PORTS. That table lives
+    in the other script, and this file has already been burned once by a
+    constant duplicated across the two — the pole diameter kept its old value
+    through two rebuilds because only one of the copies was edited. Brass is
+    material slot 1 and only the pins use it, so the mesh already knows.
+    """
+    mw = bank.matrix_world
+    groups = []
+    for poly in bank.data.polygons:
+        if poly.material_index != 1:
+            continue
+        c = mw @ poly.center
+        for g in groups:
+            if (g[0] - c.x) ** 2 + (g[1] - c.y) ** 2 < 0.030 ** 2:
+                g[2].append((c.x, c.y))
+                break
+        else:
+            groups.append([c.x, c.y, [(c.x, c.y)]])
+    out = []
+    for g in groups:
+        pts = g[2]
+        out.append((sum(p[0] for p in pts) / len(pts),
+                    sum(p[1] for p in pts) / len(pts)))
+    return sorted(out)
+
+
+def bm_knurl_cyl(bm, c, r, d, seg=24, flute=0.93, axis='Z', mi=0):
+    """A cylinder with a fluted rim — the grip on a coax coupling nut.
+
+    Every second segment is pulled in, so the silhouette breaks up into ridges
+    the way a knurl does, at the cost of nothing: it is still one cylinder with
+    no extra faces. Modelling real knurl teeth on a 20 mm nut would add a few
+    thousand triangles that vanish at any sane viewing distance.
+    """
+    g = bmesh.ops.create_cone(bm, cap_ends=True, cap_tris=False, segments=seg,
+                              radius1=r, radius2=r, depth=d)
+    step = 2.0 * math.pi / seg
+    for vv in g["verts"]:
+        if abs(vv.co.x) < 1e-9 and abs(vv.co.y) < 1e-9:
+            continue                                   # cap centre, leave it
+        idx = int(round(math.atan2(vv.co.y, vv.co.x) / step)) % seg
+        if idx % 2:
+            vv.co.x *= flute
+            vv.co.y *= flute
+    rot = {'X': Matrix.Rotation(math.radians(90), 4, 'Y'),
+           'Y': Matrix.Rotation(math.radians(90), 4, 'X'),
+           'Z': Matrix.Identity(4)}[axis]
+    bmesh.ops.transform(bm, matrix=rot, verts=g["verts"])
+    bmesh.ops.translate(bm, vec=Vector(c), verts=g["verts"])
+    for vv in g["verts"]:
+        for f in vv.link_faces:
+            f.material_index = mi
+
+
 def band_half(name, z, a0, a1, mat):
     """One half of a circular clamp: an arc strap with a bolt lug at each end.
     Built at the world position it occupies when closed; the rig empty carries
@@ -236,6 +689,9 @@ def enhance_pole(mats):
     """
     conc = mats.get("MAT_Concrete_Pole")
     steel = mats.get("MAT_Connector_Steel") or mats.get("MAT_Steel_Brushed")
+    # The radome is an off-white composite shroud, not bare metal.
+    antenna = (mats.get("MAT_Antenna_OffWhite") or mats.get("MAT_Antenna_Offwhite")
+               or steel)
     made = []
 
     # --- footing: plinth, chamfer course, four gusset fins ------------------
@@ -301,6 +757,106 @@ def enhance_pole(mats):
                 bm.faces.new([V[3], V[2], V[6], V[7]])      # back rim
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
     made.append(new_obj("Pole_Cap", bm, steel))
+
+    # --- top canister antenna ----------------------------------------------
+    #
+    # The defining feature of the reference photograph and the one thing the
+    # model had no equivalent of: a shrouded small-cell canister sitting on the
+    # very top of the column, noticeably wider than the pole, reached through a
+    # short conical flare.
+    #
+    # It is deliberately NOT part of the assembly sequence. The six clips drive
+    # the mid-pole enclosure the learner installs; this is the radome that comes
+    # already fitted on the host pole, exactly as it does in the photograph.
+    bm = bmesh.new()
+    # Proportions read off the photograph: the radome is only about half again
+    # the pole's diameter and roughly a metre tall, so it reads as slender. The
+    # first pass made it 2.15x wide and 0.86 tall, which turned it into a squat
+    # drum sitting on the pole rather than a continuation of it.
+    can_r = rt * 1.52
+    flare_z0 = top + 0.14
+    flare_z1 = flare_z0 + 0.34
+    can_z1 = flare_z1 + 1.06
+    segs = 32
+
+    def _ring(z, r):
+        return [bm.verts.new((math.cos(2 * math.pi * i / segs) * r,
+                              math.sin(2 * math.pi * i / segs) * r, z))
+                for i in range(segs)]
+
+    def _skin(a, b):
+        for i in range(segs):
+            j = (i + 1) % segs
+            bm.faces.new((a[i], a[j], b[j], b[i]))
+
+    r_lo = _ring(flare_z0, rt + 0.02)          # springs from the cap collar
+    r_mid = _ring(flare_z1, can_r)             # flared out to full width
+    r_hi = _ring(can_z1, can_r)
+    r_cap = _ring(can_z1 + 0.07, can_r * 0.94)  # slightly domed crown
+    _skin(r_lo, r_mid)
+    _skin(r_mid, r_hi)
+    _skin(r_hi, r_cap)
+    bm.faces.new(list(reversed(r_lo)))
+    bm.faces.new(r_cap)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Antenna_Canister", bm, antenna))
+
+    # Joint band where the radome meets its flare, and a small vent strip. Both
+    # are in the photograph and both give the canister a scale reference.
+    bm = bmesh.new()
+    bm_cyl(bm, (0, 0, flare_z1 + 0.05), can_r + 0.012, 0.06, seg=segs, axis='Z')
+    bm_cyl(bm, (0, 0, can_z1 - 0.10), can_r + 0.010, 0.05, seg=segs, axis='Z')
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Canister_Bands", bm, steel))
+
+    # --- cable conduit, handhole and signage --------------------------------
+    #
+    # The photograph reads as a real installation largely because of these: a
+    # conduit running the length of the pole from the radio down to the base, a
+    # bolted handhole where the cable enters, and two small plates at head
+    # height. None cost much geometry and all three are what the eye uses to
+    # judge that the pole is equipment rather than a post.
+    bm = bmesh.new()
+    steps = 12
+    z0, z1 = 0.55, 6.98
+    ang = math.radians(-14.0)                  # sits just off the mounting face
+    prev = None
+    for i in range(steps + 1):
+        z = z0 + (z1 - z0) * i / steps
+        r = pole_radius_at(z) + 0.052
+        cx, cy = math.cos(ang) * r, math.sin(ang) * r
+        ring = []
+        for k in range(8):
+            a = 2 * math.pi * k / 8
+            ring.append(bm.verts.new((cx + math.cos(a) * 0.036 * math.cos(ang)
+                                      - math.sin(a) * 0.0,
+                                      cy + math.cos(a) * 0.036 * math.sin(ang)
+                                      + math.sin(a) * 0.0,
+                                      z + math.sin(a) * 0.036)))
+        if prev:
+            for k in range(8):
+                j = (k + 1) % 8
+                bm.faces.new((prev[k], prev[j], ring[j], ring[k]))
+        prev = ring
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Cable_Conduit", bm, steel))
+
+    bm = bmesh.new()
+    hz, hr = 1.35, pole_radius_at(1.35)
+    ha = math.radians(-14.0)
+    hx, hy = math.cos(ha) * (hr + 0.012), math.sin(ha) * (hr + 0.012)
+    bm_cyl(bm, (hx, hy, hz), 0.105, 0.030, seg=18, axis='X')     # handhole cover
+    for k in range(4):
+        a = math.pi / 2 * k + math.pi / 4
+        bm_cyl(bm, (hx + 0.004, hy + math.cos(a) * 0.078, hz + math.sin(a) * 0.078),
+               0.012, 0.026, seg=6, axis='X')                    # cover bolts
+    # Two identification plates at head height.
+    for pz in (2.05, 2.28):
+        pr = pole_radius_at(pz) + 0.008
+        px, py = math.cos(ha) * pr, math.sin(ha) * pr
+        bm_cyl(bm, (px, py, pz), 0.062, 0.010, seg=4, axis='X')
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+    made.append(new_obj("Pole_Service_Fittings", bm, steel))
 
     # --- paired step studs, kept clear of the 7.0-8.0 m mounting zone -------
     bm = bmesh.new()
@@ -490,7 +1046,13 @@ def push_to_nla(obj, clip, act):
     ad.action = None
     track = ad.nla_tracks.new()
     track.name = clip
-    track.strips.new(act.name, 1, act)
+    # Start the strip where the action's own keys start, not at frame 1.
+    # Hardcoding 1 re-bases the action: the coupling nuts are keyed 32-58 so
+    # that they thread on AFTER the rig seats at 30, and a strip pinned to 1
+    # slid that to 1-27 — the nuts spun during the cable approach and the clip
+    # died at 27 while the wrapper ran on to 60. Every earlier clip starts at
+    # frame 1, which is why this only ever showed up on ANIM_06.
+    track.strips.new(act.name, int(round(act.frame_range[0])), act)
 
 
 def key(obj, frame, loc=None, rot=None, interp='BEZIER', easing=None):
@@ -551,6 +1113,57 @@ def anim_wrapper(rig, clip, rest_loc, frames, settle=None):
         key(rig, f_seat + max(2, (f_end - f_seat) // 2), loc=settle)
     key(rig, f_end, loc=(0, 0, 0), interp='BEZIER', easing='EASE_OUT')
     push_to_nla(rig, clip, act)
+
+
+def anim_shapekey(ob, clip, key_name, keys):
+    """Key a morph weight and push it to a same-named NLA track.
+
+    Shape key animation lives on the shape_keys datablock, not the object, so
+    it needs its own action and its own track. The glTF exporter matches tracks
+    by name, so a track called ANIM_08_Downtilt_Set here is folded into the
+    same glTF animation as the Tilt_Rig rotation — which is the point: the
+    cable has to flex on exactly the frames the antenna is pitching.
+    """
+    sk = ob.data.shape_keys
+    if not sk or key_name not in sk.key_blocks:
+        return
+    kb = sk.key_blocks[key_name]
+    if sk.animation_data is None:
+        sk.animation_data_create()
+    act = bpy.data.actions.new(f"{clip}__{ob.name}_{key_name}")
+    sk.animation_data.action = act
+    for frame, value in keys:
+        kb.value = value
+        kb.keyframe_insert("value", frame=frame)
+    sk.animation_data.action = None
+    track = sk.animation_data.nla_tracks.new()
+    track.name = clip
+    track.strips.new(act.name, int(round(act.frame_range[0])), act)
+    kb.value = 0.0
+
+
+def anim_rotate(obj, clip, axis, deg_from, deg_to, frames, overshoot=1.18):
+    """Swing a rig from one angle to another and let it settle.
+
+    frames is (start, arrive, settle). The overshoot is not decoration: these
+    are hand adjustments against a scale, and a hand always goes slightly past
+    the mark and comes back. Landing dead on the value reads as a servo.
+    """
+    f0, f1, f2 = frames
+    idx = {'X': 0, 'Y': 1, 'Z': 2}[axis]
+
+    def euler(deg):
+        e = [0.0, 0.0, 0.0]
+        e[idx] = math.radians(deg)
+        return tuple(e)
+
+    act = start_action(obj, clip)
+    base = tuple(obj.location)
+    over = deg_from + (deg_to - deg_from) * overshoot
+    key(obj, f0, loc=base, rot=euler(deg_from))
+    key(obj, f1, loc=base, rot=euler(over), interp='BEZIER', easing='EASE_OUT')
+    key(obj, f2, loc=base, rot=euler(deg_to), interp='BEZIER', easing='EASE_IN_OUT')
+    push_to_nla(obj, clip, act)
 
 
 def anim_bolts(bolts, clip, axis, insert, f_start, f_end, turns=900, stagger=3):
@@ -716,9 +1329,17 @@ def rebuild_cables(mats):
         inner = max(r * r - x * x, 0.0) ** 0.5
         return inner + standoff
 
+    # Land each run on an actual port instead of on its own even third of the
+    # bank. The bank carries four RF ports in two pairs either side of the
+    # centre gland, so thirds put every connector in the gap between two ports
+    # — and the ports also sit 30 mm forward of the bank centre in Y, which the
+    # old spacing ignored entirely. Three runs, so the outermost port is left
+    # capped as the spare, which is how these are actually installed.
+    ports_xy = rf_port_centres(bank)[:n]
+    if len(ports_xy) < n:
+        raise RuntimeError(f"only {len(ports_xy)} RF ports found, need {n}")
     for i in range(n):
-        t = (i + 0.5) / n
-        x = x_lo + (x_hi - x_lo) * t
+        x, y_port = ports_xy[i]
         belly = 0.055 + i * 0.012
         # Constant depth: the three runs sit side by side in X, all lying the
         # same small distance off the face. Staggering the standoff instead
@@ -734,8 +1355,8 @@ def rebuild_cables(mats):
         # round the back of the pole. Holding x makes the descent a straight
         # vertical the handles cannot bend.
         pts = [
-            (x, y_c, z_ports - 0.012),                                  # gland
-            (x, y_c + 0.020, z_ports - 0.085),                          # strain relief
+            (x, y_port, z_ports - 0.012),                               # gland
+            (x, y_port + 0.020, z_ports - 0.085),                       # strain relief
             (x * 1.06, y_c + belly, z_ports - 0.215),                   # loop, outward
             (x * 1.02, y_c * 0.72, z_ports - 0.360),                    # loop closing
             (x, on_pole(x, z_ports - 0.52, stand + 0.045), z_ports - 0.52),
@@ -784,6 +1405,10 @@ def rebuild_cables(mats):
     # rises, and the cable pulls straight through it.
     reparent(cleat, bpy.data.objects["Mount_System"])
 
+    # Flex has to be built after reparenting: the shape keys are computed from
+    # the cable's world matrix, and reparent() changes it.
+    flex_cables(z_cleat, z_ports)
+
     bolts = []
     for k, sx in enumerate((-1, 1)):
         b = make_bolt(f"Cable_Cleat_Bolt_{k+1:02d}",
@@ -792,8 +1417,82 @@ def rebuild_cables(mats):
         reparent(b, bpy.data.objects["Mount_System"])
         bolts.append(b)
 
-    print(f"[v2] cables rerouted: {n} runs, gland -> loop -> pole -> cleat")
-    return ob, cleat, bolts
+    # Coax connectors, one per run, at the port each cable threads into.
+    #
+    # These were make_bolt() — a hex head on a shaft. That is a bolt, and it
+    # read as one: the reference shows an N-type coax connector, which is a
+    # knurled coupling nut with a brass band that CUPS DOWN OVER the port body
+    # and is turned to draw the plug home. Nothing about a hex head does that.
+    #
+    # Three objects per run, because they behave differently:
+    #   Connector_Coupling  the cup collar + knurled nut. Turns.
+    #   Connector_Ferrule   the brass band. Parented to the nut, so it turns
+    #                       with it without needing its own keys.
+    #   Connector_Plug      the body below the nut. Rises, never turns — a
+    #                       coupling nut spins on a plug that stays put.
+    #
+    # Origins sit at the TOP of each piece so seating is one subtraction from
+    # the port plane instead of a half-length correction per part.
+    steel = mats.get("MAT_Connector_Steel")
+    brass = mats.get("MAT_Connector_Brass") or steel
+    dark = mats.get("MAT_Steel_Dark") or steel
+    couplings, plugs = [], []
+    for i in range(n):
+        x, y_port = ports_xy[i]
+        # z_ports is the bank's bound-box floor as it stands at BUILD time; the
+        # rest-pose transforms carry the bank 32 mm higher before ANIM_06 ever
+        # resolves, so measuring against the raw value left the old nut 48 mm
+        # short of the port and it never touched.
+        # z_ports is the bank's bound-box FLOOR, and that floor belongs to the
+        # centre gland's rubber boot (z_plate - 0.084), not to an RF port. The
+        # RF brass pin only reaches z_plate - 0.065, so seating the cup on the
+        # bbox floor parked it 37 mm below the pin it was supposed to close
+        # over — the gold pin stayed visible and nothing was "cupped" at all.
+        # +0.032 carries build-time z_ports to the assembled bank floor, +0.036
+        # then lifts from that floor to just under the pin's retaining ring.
+        z_face = z_ports + 0.032 + 0.036
+
+        # Stack, top down, matching the reference: a DARK knurled cup that
+        # closes over the port body, a proud brass band, the bright knurled nut
+        # that is actually gripped and turned, then the plug body. The bands
+        # have to differ in both diameter and material or the whole connector
+        # reads as one grey tube — the first attempt recessed the brass inside
+        # the cup and the nut, and it disappeared completely.
+        bm = bmesh.new()
+        bm_knurl_cyl(bm, (0, 0, -0.051), 0.021, 0.030, seg=32, flute=0.90)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        c = new_obj(f"Connector_Coupling_{i+1:02d}", bm, steel)
+        c.location = (x, y_port, z_face)
+
+        bm = bmesh.new()
+        bm_knurl_cyl(bm, (0, 0, 0), 0.018, 0.024, seg=20, flute=0.95)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        cup = new_obj(f"Connector_Cup_{i+1:02d}", bm, dark)
+        cup.location = (x, y_port, z_face - 0.012)
+
+        bm = bmesh.new()
+        bm_cyl(bm, (0, 0, 0), 0.019, 0.012, seg=20)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        f_ = new_obj(f"Connector_Ferrule_{i+1:02d}", bm, brass)
+        f_.location = (x, y_port, z_face - 0.030)
+
+        bm = bmesh.new()
+        bm_cyl(bm, (0, 0, -0.010), 0.016, 0.020, seg=20)
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces[:])
+        pl = new_obj(f"Connector_Plug_{i+1:02d}", bm, dark)
+        pl.location = (x, y_port, z_face - 0.066)
+
+        reparent(cup, c)                # cup and brass ride the nut
+        reparent(f_, c)
+        if parent:
+            reparent(c, parent)
+            reparent(pl, parent)
+        couplings.append(c)
+        plugs.append(pl)
+
+    print(f"[v2] cables rerouted: {n} runs, gland -> loop -> pole -> cleat, "
+          f"{len(couplings)} couplings")
+    return ob, cleat, bolts, couplings, plugs
 
 
 def build_coverage_dome(mats):
@@ -959,7 +1658,12 @@ def main():
     # after apply_rest_state instead, reparent() preserves the world position of
     # a rig sitting at its REST offset and bakes that offset in permanently -
     # which put the whole vertical run at y -0.46, round the back of the pole.
-    rebuild_cables(mats)
+    tint_brass(mats)
+    detail_pole_hardware(mats)
+    detail_radio(mats)
+    make_pole_metal(mats)
+    detail_antenna(mats)
+    _cables, _cleat, _cleat_bolts, couplings, plugs = rebuild_cables(mats)
     for ob in pole_parts:                      # fixed furniture, never rigged
         reparent(ob, bpy.data.objects["LP12_ROOT"])
     bpy.context.view_layer.update()
@@ -982,8 +1686,48 @@ def main():
     anim_bolts(fasteners, "ANIM_05_Antenna_Secure", 'Y', 0.045, 1, 54,
                turns=900, stagger=3)
 
+    # ANIM_06 previously ended when the connector rig reached the enclosure —
+    # the cables travelled up, touched the ports and the clip stopped. The stage
+    # is called "Connect Signal Cables" and the interface draws rotation arrows
+    # on the couplings, so the tightening was the half that was missing.
+    #
+    # The rig now seats earlier, at frame 30 instead of 38, and the remaining
+    # 30 frames are spent threading each coupling onto its port: a short axial
+    # travel plus two and a half turns, staggered so the three do not move as
+    # one block. anim_bolts already does exactly this for every other fastener
+    # in the model, which is why the motion reads as the same action.
     anim_wrapper(rigs["Connector_Install_Rig"], "ANIM_06_Connectors_Attach",
-                 REST["Connector_Install_Rig"], (1, 19, 38, 60))
+                 REST["Connector_Install_Rig"], (1, 16, 30, 60))
+    # The rig has already carried the whole run up to the ports by frame 30.
+    # What is left is the threading: 14 mm of engagement — the depth a coupling
+    # nut actually draws down as it cups over the port body — plus two and a
+    # half turns. The plug follows the same travel with turns=0, because the
+    # nut spins and the plug it is pulling home does not.
+    anim_bolts(couplings, "ANIM_06_Connectors_Attach", 'Z', -0.018,
+               32, 58, turns=900, stagger=4)
+    anim_bolts(plugs, "ANIM_06_Connectors_Attach", 'Z', -0.018,
+               32, 58, turns=0, stagger=4)
+    # Azimuth swings the whole mount around the pole; downtilt pitches only
+    # the antenna at the bracket. Two different rigs, deliberately, because on
+    # the real thing they are two different sets of bolts.
+    height_rig = bpy.data.objects.get("Height_Rig")
+    tilt_rig = bpy.data.objects.get("Tilt_Rig")
+    if height_rig:
+        anim_rotate(height_rig, "ANIM_07_Azimuth_Set", 'Z',
+                    0.0, -22.0, (1, 34, 54))
+    if tilt_rig:
+        anim_rotate(tilt_rig, "ANIM_08_Downtilt_Set", 'X',
+                    0.0, CFG_DOWNTILT, (1, 30, 48))
+        # Flex the feeder on the same frames. CFG_DOWNTILT is 5 degrees out of
+        # the +/-10 the morph targets are built for, so the weight tops out at
+        # half, and it tracks the rotation's overshoot rather than ramping
+        # straight — the cable is being dragged by the antenna, not driven.
+        cab = bpy.data.objects.get("Antenna_Cables")
+        if cab and cab.data.shape_keys:
+            peak = CFG_DOWNTILT / FLEX_RANGE_DEG
+            anim_shapekey(cab, "ANIM_08_Downtilt_Set", "Flex_Tilt_Pos",
+                          [(1, 0.0), (30, peak * 1.18), (48, peak)])
+
     print(f"[v2] authored {len(CLIPS)} clips")
 
     apply_rest_state(rigs, bands)
@@ -1023,6 +1767,57 @@ def main():
     )
     print(f"[v2] exported {os.path.basename(glb)} "
           f"({os.path.getsize(glb)/1e6:.2f} MB)")
+
+    # A second, static export for the environment.
+    #
+    # The environment needs an LP12 that is already built; the application needs
+    # one that can be built, step by step. They cannot be the same file. The
+    # rest pose in the animated GLB is the UNASSEMBLED state — the antenna sits
+    # 0.62 m off the bracket waiting for ANIM_04 — and there is no way to undo
+    # that after import, because glTF bakes each node's transform into the
+    # hierarchy: zeroing an install rig in the imported file does not subtract
+    # an offset, it teleports the part to its parent's origin. Measured that
+    # way, the antenna ended up at z 14.9, two metres clear of the pole top.
+    #
+    # Here in the master the rigs are real offsets, so zeroing them IS the
+    # assembled pose. Do it, export, and put them back.
+    saved = {}
+    for name in ("Rail_Install_Rig", "Pivot_Install_Rig", "Antenna_Install_Rig",
+                 "Connector_Install_Rig", "Band_Top_Rig", "Band_Bottom_Rig"):
+        o = bpy.data.objects.get(name)
+        if o:
+            saved[name] = tuple(o.location)
+            o.location = (0.0, 0.0, 0.0)
+
+    # And point it. The animated model rests unpointed so ANIM_07 and ANIM_08
+    # have somewhere to travel from; the backdrop copy is a commissioned site,
+    # where the azimuth and downtilt have already been set and signed off.
+    saved_rot = {}
+    for name, axis, deg in (("Height_Rig", 2, -22.0), ("Tilt_Rig", 0, CFG_DOWNTILT)):
+        o = bpy.data.objects.get(name)
+        if o:
+            saved_rot[name] = tuple(o.rotation_euler)
+            e = list(o.rotation_euler)
+            e[axis] = math.radians(deg)
+            o.rotation_euler = e
+    bpy.context.view_layer.update()
+
+    asm = os.path.join(OUT_DIR, "lp12_v2_assembled.glb")
+    bpy.ops.export_scene.gltf(
+        filepath=asm, export_format='GLB', use_selection=True,
+        export_apply=False, export_yup=True,
+        export_cameras=False, export_lights=False,
+        export_extras=True, export_materials='EXPORT',
+        export_image_format='WEBP', export_image_quality=88,
+        export_animations=False,                  # a backdrop does not animate
+    )
+    for name, loc in saved.items():
+        bpy.data.objects[name].location = loc
+    for name, rot in saved_rot.items():
+        bpy.data.objects[name].rotation_euler = rot
+    bpy.context.view_layer.update()
+    print(f"[v2] exported {os.path.basename(asm)} "
+          f"({os.path.getsize(asm)/1e6:.2f} MB, assembled, no clips)")
 
 
 if __name__ == "__main__":
