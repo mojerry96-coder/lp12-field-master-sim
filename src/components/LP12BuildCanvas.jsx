@@ -1,8 +1,10 @@
-import { Suspense, useEffect, useMemo } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import * as THREE from 'three'
 import StudioEnvironment from './StudioEnvironment'
+import SiteLighting from './SiteLighting'
+import PartCallouts, { CalloutBridge } from './PartCallouts'
 import SiteEnvironment from './SiteEnvironment'
 import ComponentHighlight from './ComponentHighlight'
 import { STAGE_TO_VIEW } from '../lib/nodeAliases'
@@ -67,9 +69,43 @@ const applySubjectBias = (pos, tgt, bias, vFovDeg, aspect) => {
   return tgt.clone().addScaledVector(right, 2 * halfW * bias)
 }
 
-function CameraDirector({ flow, studio, stage, cameraName, view = 'front' }) {
+/**
+ * Clips worth pushing in on, and when.
+ *
+ * ANIM_06 spends its first second bringing the cable run up to the ports and
+ * its last second threading the coupling nuts — 900 degrees of rotation on a
+ * 21 mm nut. At the stage's authored framing that is a few pixels of movement,
+ * so the half of the clip the stage is actually named after was invisible.
+ * `delayMs` is set to land the push just as the nuts start to turn (frame 32
+ * of 60 at 30fps ≈ 1.07 s), not at the clip's start.
+ */
+const CLIP_FOCUS = {
+  ANIM_06_Connectors_Attach: { node: 'Connector_Bank', delayMs: 1050, distance: 1.15, lensMM: 90 },
+}
+
+const ORBIT_PERIOD_S = 22        // one revolution; slow enough to read detail
+
+/**
+ * Stages whose subject must be wholly in frame, and what "wholly" means.
+ *
+ * The fasteners stage is the case that forced this. Its authored anchor frames
+ * the antenna tightly and the four fasteners sit at the radome's corners, so
+ * two of them were outside the frustum for the entire clip — the learner was
+ * being shown a bolt animation with the bolts cropped off.
+ *
+ * Fitting is computed from the model rather than by moving the anchor, because
+ * the antenna has grown twice already (end caps, bezel, vent) and a hand-set
+ * distance goes stale every time it does.
+ */
+const STAGE_FIT = {
+  fasteners: { nodes: ['Antenna_Body', 'Antenna_Fasteners'], margin: 1.28 },
+}
+
+function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
+                          activeClip = null, modelRoot = null }) {
   const { camera, size } = useThree()
-  const state = useMemo(() => ({ anim: null, pos: null, tgt: null }), [])
+  const state = useMemo(
+    () => ({ anim: null, pos: null, tgt: null, focus: null }), [])
 
   // Studio manifest wins when present: it carries the 9 authored anchors and
   // the stage -> camera map straight from Blender.
@@ -118,7 +154,33 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front' }) {
     const fov = v.lensMM !== undefined
       ? fitFovToViewport(v.lensMM, STUDIO_AUTHORED_ASPECT, aspect)
       : (aspect < 16 / 9 ? v.fov * ((16 / 9) / aspect) : v.fov)
-    const tgt = applySubjectBias(v.pos, v.tgt, v.bias, fov, aspect)
+    let tgt = applySubjectBias(v.pos, v.tgt, v.bias, fov, aspect)
+
+    // Pull back until the stage's subject fits, if it does not already.
+    const fit = STAGE_FIT[stage]
+    if (fit && modelRoot) {
+      const box = new THREE.Box3()
+      let found = false
+      fit.nodes.forEach((n) => {
+        let node = null
+        modelRoot.traverse((o) => { if (!node && o.name === n) node = o })
+        if (node) { box.expandByObject(node); found = true }
+      })
+      if (found && !box.isEmpty()) {
+        const sphere = box.getBoundingSphere(new THREE.Sphere())
+        // Vertical FOV binds on a tall subject, horizontal on a wide one in a
+        // narrow viewport; take whichever needs the greater distance.
+        const vHalf = THREE.MathUtils.degToRad(fov) / 2
+        const hHalf = Math.atan(Math.tan(vHalf) * aspect)
+        const need = (sphere.radius * fit.margin)
+          / Math.sin(Math.min(vHalf, hHalf))
+        const dir = v.pos.clone().sub(sphere.center)
+        if (dir.length() < need) {
+          v = { ...v, pos: sphere.center.clone().add(dir.normalize().multiplyScalar(need)) }
+          tgt = sphere.center.clone()
+        }
+      }
+    }
     if (!state.pos) {
       state.pos = v.pos.clone(); state.tgt = tgt.clone()
       camera.position.copy(v.pos); camera.lookAt(tgt)
@@ -128,9 +190,58 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front' }) {
     }
     state.anim = { t: 0, fromPos: state.pos.clone(), fromTgt: state.tgt.clone(),
                    fromFov: camera.fov, to: { ...v, tgt, fov } }
-  }, [views, studio, stage, cameraName, view, camera, size, state])
+  }, [views, studio, stage, cameraName, view, camera, size, state, activeClip, modelRoot])
+
+  // Push in on the part being worked, partway through the clip.
+  useEffect(() => {
+    const spec = activeClip ? CLIP_FOCUS[activeClip] : null
+    // Runs in orbit too. Orbit is the default view now, and excluding it here
+    // meant the connector push-in — the whole reason that focus exists — never
+    // fired unless the learner had switched to Front or Side first. The frame
+    // loop already yields to state.anim, so the push takes over, and orbit
+    // resumes around wherever it left the camera.
+    if (!spec || !modelRoot) { state.focus = null; return undefined }
+    let node = null
+    modelRoot.traverse((o) => { if (!node && o.name === spec.node) node = o })
+    if (!node) return undefined
+    const id = setTimeout(() => {
+      const tgt = new THREE.Vector3()
+      node.getWorldPosition(tgt)
+      // Keep the current bearing and dolly along it, so the push reads as the
+      // same camera moving closer rather than a cut to somewhere else.
+      const dir = (state.pos || camera.position).clone().sub(tgt)
+      if (dir.lengthSq() < 1e-6) return
+      dir.normalize()
+      const aspect = size.width / size.height
+      const fov = fitFovToViewport(spec.lensMM, STUDIO_AUTHORED_ASPECT, aspect)
+      state.anim = {
+        t: 0, fromPos: (state.pos || camera.position).clone(),
+        fromTgt: (state.tgt || tgt).clone(), fromFov: camera.fov,
+        to: { pos: tgt.clone().add(dir.multiplyScalar(spec.distance)),
+              tgt, fov, near: camera.near, far: camera.far },
+      }
+      state.focus = activeClip
+    }, spec.delayMs)
+    return () => clearTimeout(id)
+  }, [activeClip, modelRoot, camera, size, state])
 
   useFrame((_, dt) => {
+    // Orbit runs on the resolved target, so it follows whatever the stage is
+    // framing and survives a stage change without re-deriving anything.
+    if (view === 'orbit' && state.tgt && state.pos && !state.anim) {
+      // Rotate the offset about the target's vertical axis. Height and radius
+      // come from wherever the camera already is, so orbit picks up the
+      // stage's framing instead of imposing one.
+      const step = (dt / ORBIT_PERIOD_S) * Math.PI * 2
+      const off = state.pos.clone().sub(state.tgt)
+      const r = Math.hypot(off.x, off.z)
+      const ang = Math.atan2(off.x, off.z) + step
+      state.pos = state.tgt.clone().add(
+        new THREE.Vector3(Math.sin(ang) * r, off.y, Math.cos(ang) * r))
+      camera.position.copy(state.pos)
+      camera.lookAt(state.tgt)
+      return
+    }
     const a = state.anim
     if (!a) return
     a.t = Math.min(1, a.t + dt / 1.25)
@@ -164,6 +275,10 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front' }) {
  */
 /** Stages that show the coverage dome. */
 const DOME_STAGES = new Set(['height', 'downtilt', 'coverage', 'complete'])
+
+/** Range the cable's flex morph targets were authored over, in degrees.
+ *  Must match FLEX_RANGE_DEG in build_lp12_v2.py. */
+const FLEX_RANGE_DEG = 10
 
 const TEXTURE_SLOTS = ['map', 'roughnessMap', 'normalMap', 'aoMap', 'emissiveMap']
 
@@ -264,6 +379,24 @@ function LP12Assembly({ height, downtilt, stage, completedClips, activeClip, rig
     if (!n) return
     n.rotation.x = -THREE.MathUtils.degToRad(downtilt)   // +UI = -local X
     n.updateMatrixWorld(true)
+
+    // Flex the feeder to match.
+    //
+    // Antenna_Cables hangs off this hinge, so without this the whole run —
+    // including the length cleated to the pole 1.2 m below the pivot — swings
+    // rigidly with the antenna. Measured in Blender, that puts the cable 68 mm
+    // INSIDE the shaft at full downtilt. The model carries two morph targets
+    // that cancel the inherited rotation below the cleat; driving them here
+    // keeps the run dressed against the pole across the whole range (clearance
+    // stays 16-78 mm instead of swinging -68 to +259 mm).
+    //
+    // +UI downtilt is -local X, so it is the NEG target that does the work.
+    const cable = nodes['Antenna_Cables']
+    const dict = cable?.morphTargetDictionary
+    if (!dict || !cable.morphTargetInfluences) return
+    const t = THREE.MathUtils.clamp(downtilt / FLEX_RANGE_DEG, 0, 1)
+    if (dict.Flex_Tilt_Neg !== undefined) cable.morphTargetInfluences[dict.Flex_Tilt_Neg] = t
+    if (dict.Flex_Tilt_Pos !== undefined) cable.morphTargetInfluences[dict.Flex_Tilt_Pos] = 0
   }, [nodes, downtilt])
 
   /**
@@ -371,12 +504,28 @@ function LP12Assembly({ height, downtilt, stage, completedClips, activeClip, rig
 }
 
 export default function LP12BuildCanvas(props) {
+  // Written by CalloutBridge inside the Canvas, read by PartCallouts outside
+  // it. A ref rather than state: it is updated every frame and nothing should
+  // re-render because the camera moved.
+  const calloutView = useRef(null)
   return (
     <div className="lp12-canvas-layer">
+      {/* Outside the Canvas on purpose: this is an SVG, and everything inside
+          <Canvas> is reconciled as three.js objects. Suppressed while a clip
+          runs — a label on a part in mid-flight points at where it used to be. */}
+      <PartCallouts viewRef={calloutView}
+                    modelRoot={props.modelRoot}
+                    installed={props.installedParts}
+                    hidden={Boolean(props.activeClip)} />
       <Canvas
         dpr={props.performanceTier === 'high' ? [1, 1.75] : 1}
         shadows={props.performanceTier === 'high'}
+        // preserveDrawingBuffer keeps the frame readable after compositing.
+        // Without it the canvas is blank to toDataURL and readPixels, so the
+        // viewport cannot be captured — which is what the lighting was
+        // calibrated against, and what any future frame export needs.
         gl={{ alpha: false, antialias: props.performanceTier === 'high',
+              preserveDrawingBuffer: true,
               powerPreference: 'high-performance' }}
         camera={{ fov: 32, near: 0.05, far: 250 }}
         onCreated={({ gl }) => {
@@ -401,6 +550,11 @@ export default function LP12BuildCanvas(props) {
           // Exposure is 0.62, not 0.9: Blender's AgX view runs at -0.7 EV, and
           // 2^-0.7 = 0.62 is that same offset expressed as three's linear
           // multiplier.
+          // Set from site_look.json by SiteLighting once the manifest loads.
+          // These are the pre-manifest defaults, and they are AgX only so the
+          // first frame is not blown out before the fetch resolves — the
+          // Blender scene moved to Standard at -0.15 EV, and the comment above
+          // describes a scene that no longer exists.
           gl.toneMapping = THREE.AgXToneMapping
           gl.toneMappingExposure = 0.62
           gl.shadowMap.enabled = true
@@ -424,23 +578,36 @@ export default function LP12BuildCanvas(props) {
             "Installing…" permanently. Isolating them means the environment can
             suspend as often as it likes without stopping the assembly. */}
         <Suspense fallback={null}>
-          <StudioEnvironment />
+          {/* The Blender rig when the manifest is available, the hand-matched
+              studio rig when it is not — so a missing or stale site_look.json
+              degrades to the previous look rather than to an unlit scene. */}
+          {props.look ? <SiteLighting look={props.look} /> : <StudioEnvironment />}
         </Suspense>
-        {/* The site around the pole. Its own Suspense boundary for the same
-            reason the others have one: a 2.9 MB GLB suspending must never tear
-            down the assembly's effects and freeze the animation mixer. */}
         {/* The site around the pole. Its own Suspense boundary for the same
             reason the others have one: a GLB suspending must never tear down
             the assembly's effects and freeze the animation mixer. */}
         <Suspense fallback={null}>
           <SiteEnvironment />
         </Suspense>
+        {/* Traffic is off, matching the Blender scene, which builds with
+            INCLUDE_VEHICLES = False. SiteTraffic and the ten vehicle GLBs are
+            left in place: putting the street back is re-adding this element
+            and flipping that flag, and the vehicle library took long enough to
+            build that deleting it over a staging decision would be wasteful.
+
+            It stayed a separate Suspense boundary for a reason — ten vehicle
+            GLBs suspend independently of the one environment GLB, and neither
+            may take the assembly's mixer down with it. Keep that shape if it
+            comes back. */}
         <Suspense fallback={null}>
           <LP12Assembly {...props} />
         </Suspense>
+        {/* Publishes the camera to the DOM overlay below the Canvas. */}
+        <CalloutBridge viewRef={calloutView} />
         <CameraDirector flow={props.flow} studio={props.studio}
                         stage={props.stage} cameraName={props.camera}
-                        view={props.view} />
+                        view={props.view} activeClip={props.activeClip}
+                        modelRoot={props.modelRoot} />
         {/* Amber active-component outline. One composer for the whole scene. */}
         {props.modelRoot && (
           <ComponentHighlight

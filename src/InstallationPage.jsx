@@ -21,15 +21,29 @@ import {
 export default function InstallationPage({ studio, flow, onExit, onComplete }) {
   const s = useSim()
   const [stageId, setStageId] = useState('overview')
-  const [view, setView] = useState('front')
+  // Orbit by default: a still three-quarter view hides half the work, and the
+  // learner should not have to discover a control to see the far side of the
+  // pole. Front and Side stay available for when they want to stop moving.
+  const [view, setView] = useState('orbit')
   const [busy, setBusy] = useState(false)
   const [installed, setInstalled] = useState([])
   const [notice, setNotice] = useState(null)
+  // The Blender look, fetched once. SiteLighting rebuilds the rig and the view
+  // transform from it, so the two ends cannot drift apart the way a rig
+  // restated in JSX does.
+  const [look, setLook] = useState(null)
+
+  useEffect(() => {
+    fetch('/models/site_look.json')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+      .then(setLook)
+      .catch((e) => console.warn('[LP12] site_look.json unavailable:', e.message))
+  }, [])
 
   const stage = stageById(stageId)
 
-  // s11.9: each new part is presented Front first.
-  useEffect(() => { setView('front') }, [stageId])
+  // Each new part is presented orbiting, for the same reason.
+  useEffect(() => { setView('orbit') }, [stageId])
 
   // A stale gate message must not follow the learner to the next screen.
   useEffect(() => { setNotice(null) }, [stageId])
@@ -119,7 +133,8 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
     >
       <Suspense fallback={null}>
         <LP12BuildCanvas
-          flow={flow} studio={studio}
+          flow={flow} studio={studio} look={look}
+          installedParts={installed}
           stage={stageId} view={view}
           camera={STAGE_CAMERA[stageId]}
           height={s.height} downtilt={s.downtilt}
