@@ -15,6 +15,26 @@ export const ASSEMBLY_CLIPS = {
   attachConnectors: 'ANIM_06_Connectors_Attach',
 }
 
+/**
+ * Pointing clips, added with the model's 7th and 8th animations.
+ *
+ * Deliberately NOT in ASSEMBLY_CLIPS or CLIP_ORDER. Those two drive the
+ * numbered install sequence and the re-application pass, and the pointing
+ * stages are not install steps — the existing `height` and `downtilt` stages
+ * set Height_Rig and Tilt_Rig directly and carry no clip by design.
+ *
+ * What these add is the option of animating that set instead of snapping it.
+ * Note the overlap before using them: ANIM_08 drives Tilt_Rig.rotation.x, which
+ * is the same channel the downtilt stage writes, so play the clip or set the
+ * value — never both in the same frame. ANIM_07 is safe alongside the height
+ * stage: it drives Height_Rig.rotation.z (azimuth), while the stage writes
+ * Height_Rig.position.y.
+ */
+export const POINTING_CLIPS = {
+  azimuth:  'ANIM_07_Azimuth_Set',
+  downtilt: 'ANIM_08_Downtilt_Set',
+}
+
 /** Manifest order — completed clips must be re-applied in this order (s34). */
 export const CLIP_ORDER = [
   'ANIM_01_Bands_Attach', 'ANIM_02_Rail_Attach', 'ANIM_03_Pivot_Attach',

@@ -1,18 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
+import DowntiltKnob from './DowntiltKnob'
 import {
   STAGES, PART_LABELS, PART_ORDER, PART_PREREQ_MESSAGE,
-  stageIndex, stageById, COMPLETED_PART_BY_STAGE, DOWNTILT_STEPS,
+  stageIndex, stageById, COMPLETED_PART_BY_STAGE,
 } from '../lib/installationStages'
 import { useSim } from '../store'
 
 /* ---------------------------------------------------------------- tool rail */
 const RAIL_ICONS = {
-  network: 'M12 3v5m0 8v5M5 12h5m4 0h5M8 8a2 2 0 1 0 0-.01M16 8a2 2 0 1 0 0-.01M8 16a2 2 0 1 0 0-.01M16 16a2 2 0 1 0 0-.01',
-  reports: 'M4 5h16v14H4zM9 9v6M15 9v6',
   install: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM15 9l-2.2 4.8L8 16l2.2-4.8z',
-  cloud:   'M7 18h10a4 4 0 0 0 .3-8 6 6 0 0 0-11.5 1.6A3.5 3.5 0 0 0 7 18z',
-  upload:  'M12 16V6m0 0-3.5 3.5M12 6l3.5 3.5M5 18h14',
-  settings:'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM12 2v3m0 14v3M4.2 4.2l2.1 2.1m11.4 11.4 2.1 2.1M2 12h3m14 0h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1',
 }
 
 /* STAGES is overview + the installable steps + complete, so the index is not
@@ -46,15 +42,14 @@ function RailButton({ id, active, label }) {
 
 function ToolRail() {
   return (
+    /* Only the control that does something. Network view, Reports, Cloud sync,
+       Upload and Settings were all rendered permanently disabled — five
+       controls that can never be used, which is worse than no rail at all:
+       they read as features that are broken rather than absent. */
     <nav className="tool-rail" aria-label="Workspace tools">
       <div className="rail-group">
-        <RailButton id="network" label="Network view" />
-        <RailButton id="reports" label="Reports" />
         <RailButton id="install" label="Installation workspace" active />
-        <RailButton id="cloud" label="Cloud sync" />
-        <RailButton id="upload" label="Upload" />
       </div>
-      <RailButton id="settings" label="Settings" />
     </nav>
   )
 }
@@ -74,12 +69,18 @@ function PositionTracker({ rect }) {
 function ViewToggle({ view, onChange, disabled }) {
   return (
     <div className="view-toggle" role="group" aria-label="Camera view">
-      {['front', 'side'].map((v) => (
+      {/* Orbit is a third camera VIEW, not a mode: it reuses the same target
+          the stage camera is already framing, so it works on every stage and
+          leaves the model untouched (s11: rotate the camera, never the
+          model). Not disabled during a clip — watching the install turn is
+          the point of having it. */}
+      {['front', 'side', 'orbit'].map((v) => (
         <button key={v} type="button"
                 className={`cursor-target ${view === v ? 'is-active' : ''}`}
-                aria-pressed={view === v} disabled={disabled}
+                aria-pressed={view === v}
+                disabled={disabled && v !== 'orbit'}
                 onClick={() => onChange(v)}>
-          {v === 'front' ? 'Front' : 'Side'}
+          {v === 'front' ? 'Front' : v === 'side' ? 'Side' : 'Orbit'}
         </button>
       ))}
     </div>
@@ -87,7 +88,8 @@ function ViewToggle({ view, onChange, disabled }) {
 }
 
 /* --------------------------------------------------------- parts carousel */
-function PartsCarousel({ cards, activePart, installed, onSelect, shakeId }) {
+function PartsCarousel({ cards, activePart, installed, onSelect, shakeId,
+                        onDragPart, dragging }) {
   if (!cards.length) return null
   return (
     <>
@@ -98,8 +100,16 @@ function PartsCarousel({ cards, activePart, installed, onSelect, shakeId }) {
           return (
             <button key={id} type="button"
                     className={`part-card cursor-target${id === activePart ? ' is-selected' : ''}`
-                               + (done ? ' is-done' : '') + (shakeId === id ? ' is-shake' : '')}
+                               + (done ? ' is-done' : '') + (shakeId === id ? ' is-shake' : '')
+                               + (dragging === id ? ' is-dragging' : '')}
                     aria-pressed={id === activePart}
+                    /* Every card drags, not only the correct one. Letting the
+                       wrong part be picked up and refused at the drop is the
+                       teaching moment; making it undraggable just hides the
+                       ordering rule the stage exists to teach. */
+                    draggable={!done}
+                    onDragStart={(e) => onDragPart?.(id, e)}
+                    onDragEnd={() => onDragPart?.(null)}
                     onClick={() => onSelect(id)}>
               <img src={`/lp12/parts/${id}.png`} alt="" />
               <span>{PART_LABELS[id]}</span>
@@ -144,23 +154,16 @@ function RigControl({ kind, disabled }) {
     )
   }
 
-  const ok = s.tiltOk()
+  // Downtilt is turned, not picked from a list — see DowntiltKnob.
   return (
-    <div className="panel-control">
-      <label>Downtilt</label>
-      <div className="tilt-steps">
-        {DOWNTILT_STEPS.map((d) => (
-          <button key={d} type="button" disabled={disabled}
-                  className={`cursor-target${s.downtilt === d ? ' is-on' : ''}`}
-                  aria-pressed={s.downtilt === d}
-                  onClick={() => s.setDowntilt(d)}>{d}°</button>
-        ))}
-      </div>
-      <div className="panel-control-readout">
-        <b className={ok ? 'is-ok' : 'is-warn'}>{s.downtilt}°</b>
-        <span>{ok ? 'within target' : `target ${lim.downtilt_correct}°`}</span>
-      </div>
-    </div>
+    <DowntiltKnob
+      value={s.downtilt}
+      min={lim.downtilt_min ?? 0}
+      max={lim.downtilt_max ?? 10}
+      target={lim.downtilt_correct}
+      disabled={disabled}
+      onChange={s.setDowntilt}
+    />
   )
 }
 
@@ -172,6 +175,8 @@ export default function InstallShell({
   const idx = stageIndex(stageId)
   const [shakeId, setShakeId] = useState(null)
   const [warning, setWarning] = useState(null)
+  const [dragging, setDragging] = useState(null)
+  const [over, setOver] = useState(false)
   const timer = useRef(null)
 
   useEffect(() => () => clearTimeout(timer.current), [])
@@ -189,6 +194,38 @@ export default function InstallShell({
   }
 
   const done = stageId === 'complete'
+
+  /* --- drag and drop ------------------------------------------------------
+     The parts are physical components and the model is the pole: carrying one
+     to the other is the gesture the stage is describing. A click on a card
+     only ever selected it — the install still had to be triggered from a
+     separate button on the far side of the panel. */
+  const onDragPart = (id, e) => {
+    setDragging(id)
+    if (!e) return
+    e.dataTransfer.effectAllowed = 'move'
+    // A payload is required or Safari cancels the drag before it starts.
+    e.dataTransfer.setData('text/plain', id)
+  }
+
+  const onDragOver = (e) => {
+    if (!dragging || busy) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (!over) setOver(true)
+  }
+
+  const onDrop = (e) => {
+    e.preventDefault()
+    const id = dragging || e.dataTransfer.getData('text/plain')
+    setOver(false)
+    setDragging(null)
+    if (!id || busy) return
+    // Correct part: run the stage. Wrong part: the same refusal a wrong click
+    // gets, so there is one rule and one message rather than two.
+    if (id === stage.activePart) onAction?.()
+    else selectPart(id)
+  }
 
   return (
     <div className="installation-shell">
@@ -232,15 +269,31 @@ export default function InstallShell({
           </ul>
         ) : (
           <PartsCarousel cards={stage.cards} activePart={stage.activePart}
-                         installed={installed} onSelect={selectPart} shakeId={shakeId} />
+                         installed={installed} onSelect={selectPart} shakeId={shakeId}
+                         onDragPart={onDragPart} dragging={dragging} />
         )}
       </aside>
 
-      <main className="viewport">
+      <main
+        className={`viewport${dragging ? ' is-drop-armed' : ''}${over ? ' is-drop-over' : ''}`}
+        onDragOver={onDragOver}
+        onDragEnter={onDragOver}
+        onDragLeave={() => setOver(false)}
+        onDrop={onDrop}
+      >
         {children}
         <PositionTracker rect={stage.tracker} />
         <ViewToggle view={view} onChange={onView} disabled={busy} />
         <div className="stage-counter">{stageCounterLabel(idx, stageId)}</div>
+        {dragging && (
+          <div className="drop-hint" aria-hidden="true">
+            <span className={`drop-hint-pill${over ? ' is-over' : ''}`}>
+              {dragging === stage.activePart
+                ? 'Release to install'
+                : `${PART_LABELS[dragging]} is not next`}
+            </span>
+          </div>
+        )}
       </main>
     </div>
   )
