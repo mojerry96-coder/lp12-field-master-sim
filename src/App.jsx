@@ -13,6 +13,7 @@ import CanvasDimLayer from './components/CanvasDimLayer'
 import TargetCursor from './components/TargetCursor'
 import { STAGE_CONFIG, detectPerformanceTier, prefersReducedMotion } from './lib/stageConfig'
 import MivaOpener from './components/MivaOpener'
+import MissionBriefing from './components/MissionBriefing'
 import StageGate from './components/StageGate'
 import CompletionScreen, { PerformanceReview } from './components/CompletionScreen'
 import { P2, P3, warm } from './lib/preloader'
@@ -110,6 +111,9 @@ export default function App() {
 
   // The opener owns the screen until it hands over. It preloads P1 while it
   // plays, so this is not three seconds spent, it is three seconds used.
+  // Opener, then the briefing, then the site. Both sit in front of the
+  // simulation while P1 and P2 warm behind them, so the explanation costs the
+  // learner nothing — it happens during loading that was going to happen.
   if (!s.openerDone) {
     return (
       <MivaOpener
@@ -118,6 +122,15 @@ export default function App() {
         // should not have to sit through the titles.
         skippable={Boolean(s.result)}
         onDone={useSim.getState().openerFinished}
+      />
+    )
+  }
+
+  if (!s.briefingDone) {
+    return (
+      <MissionBriefing
+        reducedMotion={s.reducedMotion}
+        onDone={useSim.getState().briefingFinished}
       />
     )
   }

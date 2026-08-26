@@ -185,3 +185,67 @@
   .completion-mark{transform:none}
   .completion-sweep{display:none}
 }
+
+/* --- mission briefing ----------------------------------------------------- */
+/* Deliberately the completion screen's fade, reused: same plate, same
+   scale(1.04), same 900ms ease-out, same single sweep. The simulation opens
+   and closes on the same shot of the same street, so the ending reads as a
+   return rather than as an unrelated screen. */
+.briefing{position:fixed;inset:0;z-index:58;overflow:hidden;background:#050a16;
+  font-family:"Helvetica Neue",Manrope,Inter,system-ui,-apple-system,sans-serif;
+  opacity:1;transition:opacity 400ms ease-in}
+.briefing.is-leaving{opacity:0}
+
+.briefing-plate{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  transform:scale(1.04);opacity:0;transition:opacity 900ms ease-out}
+.briefing.is-shown .briefing-plate{opacity:.9}
+
+.briefing-sweep{position:absolute;inset:0;opacity:0;pointer-events:none;
+  background:linear-gradient(104deg,rgba(60,120,255,0) 34%,rgba(120,175,255,.16) 50%,
+    rgba(60,120,255,0) 66%)}
+.briefing.is-shown .briefing-sweep{animation:completion-sweep 1900ms ease-out .3s 1}
+
+.briefing-scrim{position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(5,10,22,.94) 0%,rgba(5,10,22,.80) 40%,
+    rgba(5,10,22,.16) 74%,rgba(5,10,22,0) 100%)}
+
+.briefing-panel{position:relative;height:100%;width:min(620px,56vw);
+  padding:0 clamp(28px,4vw,64px);display:flex;flex-direction:column;
+  justify-content:center;gap:16px;color:#eaf1ff;
+  opacity:0;transform:translateY(6px);
+  transition:opacity 700ms ease-out 260ms,transform 700ms ease-out 260ms}
+.briefing.is-shown .briefing-panel{opacity:1;transform:none}
+
+.briefing-eyebrow{margin:0;font:600 11px/1 inherit;letter-spacing:.28em;
+  text-transform:uppercase;color:rgba(150,186,255,.8);text-indent:.28em}
+
+/* min-height reserves the finished block so the panel does not grow line by
+   line as the text types — layout movement is exactly what the loading work
+   was about removing. */
+.briefing-body{display:grid;gap:2px;min-height:15.5em}
+.briefing-line{margin:0;font-size:clamp(14px,1.45vw,17px);line-height:1.62;
+  color:rgba(226,236,255,.92);max-width:46ch}
+.briefing-line.is-meta{font-size:clamp(12px,1.15vw,13.5px);letter-spacing:.06em;
+  color:rgba(160,192,250,.86)}
+.briefing-line.is-accent{color:#9ec4ff}
+.briefing-gap{display:block;height:.7em}
+
+.briefing-caret{display:inline-block;width:2px;height:1.05em;margin-left:2px;
+  vertical-align:-.16em;background:#6aa4ff;animation:briefing-caret 1s steps(1) infinite}
+@keyframes briefing-caret{0%,50%{opacity:1}51%,100%{opacity:0}}
+
+.briefing-skip{align-self:flex-start;margin-top:6px;height:42px;padding:0 22px;
+  border-radius:9px;border:1px solid rgba(150,185,255,.34);background:transparent;
+  color:#dce8ff;font:600 13px/1 inherit;letter-spacing:.04em;cursor:pointer;
+  transition:background 160ms ease,border-color 160ms ease}
+.briefing-skip:hover{background:#075cff;border-color:#075cff;color:#fff}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+@media (prefers-reduced-motion:reduce){
+  .briefing-plate,.briefing-panel{transition:none;opacity:1;transform:none}
+  .briefing-plate{opacity:.9;transform:scale(1.04)}
+  .briefing-sweep{display:none}
+  .briefing-caret{animation:none;opacity:0}
+}

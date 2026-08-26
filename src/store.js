@@ -37,6 +37,7 @@ export const useSim = create((set, get) => ({
   bgReady: false,
   loadError: null,
   openerDone: false,           // the MIVA opener has handed over
+  briefingDone: false,         // the typed mission briefing has been read
   startedAt: null,             // set when the learner first opens the build
   wrongAttempts: 0,            // parts fitted out of order, for the review
   completedStages: [],         // stage titles, in the order they were finished
@@ -162,6 +163,7 @@ export const useSim = create((set, get) => ({
   },
 
   openerFinished: () => set({ openerDone: true }),
+  briefingFinished: () => set({ briefingDone: true }),
   noteWrongAttempt: () => set((st) => ({ wrongAttempts: st.wrongAttempts + 1 })),
   noteStageComplete: (title) => set((st) => (
     st.completedStages.includes(title)
@@ -213,6 +215,7 @@ export const useSim = create((set, get) => ({
       mode: 'locate',
       loadError: null,
       openerDone: false,
+      briefingDone: false,
       startedAt: null,
       wrongAttempts: 0,
       completedStages: [],
