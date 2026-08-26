@@ -13,8 +13,15 @@ import CanvasDimLayer from './components/CanvasDimLayer'
 import TargetCursor from './components/TargetCursor'
 import { STAGE_CONFIG, detectPerformanceTier, prefersReducedMotion } from './lib/stageConfig'
 
-const BACKGROUND_URL = '/background.jpg'
-const BACKGROUND_VIDEO_URL = '/background-loop.mp4'
+// The locate page is the isometric city rendered straight out of the Blender
+// scene (CAM_ENV_ISOMETRIC), not the aerial photograph. It is the same
+// geometry the build canvas loads, so the site the learner picks on the map is
+// literally the site they then work on.
+//
+// No video plate here: the render is a still, and a photographic loop under a
+// low-poly render read as two different scenes stitched together.
+const BACKGROUND_URL = '/city-isometric.jpg'
+const BACKGROUND_VIDEO_URL = null
 
 export default function App() {
   const s = useSim()

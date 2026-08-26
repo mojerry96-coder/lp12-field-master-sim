@@ -63,6 +63,32 @@
   perspective: 1800px;
 }
 
+/* The street plane.
+   Sized past the viewport and counter-shifted, so the parallax can slide it
+   without ever showing an edge. The blur is the point of the shot: the tablet
+   is the subject, and a sharp street competes with a UI made of small type.
+   Slight desaturation and a lift push it further back than blur alone does. */
+.lp12-backdrop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 118%;
+  height: 118%;
+  will-change: transform;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lp12-backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(17px) saturate(72%) brightness(1.06);
+  /* Blur samples past the element's edge and returns transparent there, which
+     draws a pale border around the whole plate. Scaling up hides the seam. */
+  transform: scale(1.06);
+}
+
 /* A soft pool of light behind the tablet. It does not move, so the artboard
    sliding across it is what actually sells the parallax — a tilt against a
    flat, featureless field has nothing to be measured against. */
@@ -77,6 +103,7 @@
 }
 
 .lp12-artboard {
+  z-index: 1;
   position: absolute;
   left: 50%;
   top: 50%;

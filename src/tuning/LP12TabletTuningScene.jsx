@@ -44,8 +44,24 @@ const SCREEN = TABLET_ARTBOARD.screen
  */
 const PARALLAX = { rotate: 3.2, shift: 16, glide: 0.085 }
 
+/**
+ * The street behind the tablet is a SEPARATE plane, and it has to be.
+ *
+ * Everything above is why the tablet, its screen and the hand share one
+ * transform — the coded UI is clipped inside a photographed aperture. The
+ * backdrop has no such registration: nothing is clipped against it, so it is
+ * free to move at its own rate, and moving two planes at different rates is
+ * the only thing that actually reads as depth. One plane tilting is a tilt.
+ *
+ * It travels the OPPOSITE way and further, the way a distant background slides
+ * against a near subject, and it carries no rotation — a rotating backdrop
+ * behind a rotating tablet just looks like the whole photograph is loose.
+ */
+const BACKDROP = { shift: -34, scale: 1.14 }
+
 function useCursorParallax(hostRef, enabled) {
   const [transform, setTransform] = useState('')
+  const [backdrop, setBackdrop] = useState('')
 
   useEffect(() => {
     if (!enabled) { setTransform(''); return undefined }
@@ -79,6 +95,11 @@ function useCursorParallax(hostRef, enabled) {
           + `translate3d(${(eased.x * PARALLAX.shift).toFixed(2)}px, `
           + `${(eased.y * PARALLAX.shift * 0.6).toFixed(2)}px, 0)`,
         )
+        setBackdrop(
+          `scale(${BACKDROP.scale}) `
+          + `translate3d(${(eased.x * BACKDROP.shift).toFixed(2)}px, `
+          + `${(eased.y * BACKDROP.shift * 0.6).toFixed(2)}px, 0)`,
+        )
         settled = done
       }
       frame = requestAnimationFrame(tick)
@@ -94,7 +115,7 @@ function useCursorParallax(hostRef, enabled) {
     }
   }, [hostRef, enabled])
 
-  return transform
+  return { transform, backdrop }
 }
 
 function useContainedScale(width, height) {
@@ -182,7 +203,7 @@ export default function LP12TabletTuningScene({ onExit }) {
   const { hostRef, scale } = useContainedScale(ARTBOARD.width, ARTBOARD.height)
   // A pointer-driven tilt is exactly the sustained motion prefers-reduced-motion
   // asks us to drop, so it is gated rather than merely slowed.
-  const parallax = useCursorParallax(hostRef, !reducedMotion)
+  const { transform: parallax, backdrop } = useCursorParallax(hostRef, !reducedMotion)
 
   const [step, setStep] = useState('interval')
   const [values, setValues] = useState(INITIAL_TUNING)
@@ -238,6 +259,16 @@ export default function LP12TabletTuningScene({ onExit }) {
 
   return (
     <main ref={hostRef} className="lp12-scene" aria-label="LP12 network tuning">
+      {/* Blurred street, its own plane. Oversized and clipped by .lp12-scene so
+          the counter-shift never exposes an edge. */}
+      <div
+        className="lp12-backdrop"
+        style={{ transform: `translate(-50%, -50%) ${backdrop}` }}
+        aria-hidden="true"
+      >
+        <img src="/assets/lp12/street-plate.jpg" alt="" draggable={false} />
+      </div>
+
       <div
         className="lp12-artboard"
         style={{
@@ -246,9 +277,10 @@ export default function LP12TabletTuningScene({ onExit }) {
           transform: `translate(-50%, -50%) scale(${scale}) ${parallax}`,
         }}
       >
+        {/* Hand and tablet only — the street is the plane behind. */}
         <img
           className="lp12-tablet-plate"
-          src="/assets/lp12/tablet-background.png"
+          src="/assets/lp12/tablet-cutout.png"
           alt="A field engineer holding a landscape tablet on Awolowo Way"
           draggable={false}
         />
