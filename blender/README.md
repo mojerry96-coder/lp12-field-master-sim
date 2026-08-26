@@ -15,7 +15,9 @@ step ran.
 
 | Script | Produces |
 | --- | --- |
-| `build_lp12_v2.py` | the LP12 antenna, its rig and the six assembly clips → `public/models/lp12_v2.glb` |
+| `build_lp12.py` | the master `.blend` every LP12 script opens — the pole shaft, the mount, the connector bank |
+| `build_lp12_v2.py` | the LP12, its rig and the **eight** clips → `public/models/lp12_v2.glb`, plus `lp12_v2_assembled.glb` |
+| `export_vehicles.py` | the per-vehicle GLBs and `vehicle_placements.json` |
 | `build_lp12_studio.py` | the studio lighting scene and the camera anchors behind `public/models/camera_studio.json` |
 | `regrade_textures.py` | non-destructive grade of the baked texture atlases |
 | `render_coverage.py` | the coverage-dome reference renders |
@@ -89,9 +91,19 @@ joined to anything, and `export_awolowo_env.py` strips it before writing the
 GLB — the application loads that model itself, and shipping a second copy would
 stand two poles in the same place.
 
-Do not "assemble" the LP12 on import. Its rest pose already IS the assembled
-pose: the install wrappers sit at identity and the six clips animate them FROM
-an offset back to it. Unmuting the NLA drives parts away from where they belong.
+The environment imports **`lp12_v2_assembled.glb`**, not the animated one.
+
+An earlier version of this file claimed the animated GLB's rest pose was already
+the assembled pose. It is not: the rest pose is the UNASSEMBLED start of the
+task, with the antenna parked 0.62 m off its bracket waiting for ANIM_04. That
+is correct for a training model and wrong for a backdrop.
+
+Do not try to assemble the animated one after import. glTF bakes each node's
+transform into the hierarchy, so an install rig's location in the imported file
+is an absolute placement rather than the offset it was in the master — zeroing
+them looks like it should work and instead puts the antenna at z 14.9, two
+metres above the top of a 12.96 m pole. `build_lp12_v2.py` does the zeroing in
+the master, where the rigs really are offsets, and exports the result.
 
 Collections survive the export as parent nodes (`ENV_Roads`, `ENV_Buildings_Main`,
 `ENV_Vegetation`, `ENV_Vehicles`, `ENV_StreetFurniture`, …), so groups can be
@@ -104,3 +116,35 @@ GUI save writes its own in-memory scene over whatever the CLI just built, and
 it does so silently — `is_dirty` can read `False` while the two have already
 diverged. Close the file in the GUI before rebuilding, or snapshot and revert
 it first.
+
+## Things that are not obvious
+
+**`INCLUDE_VEHICLES = False`** in `build_awolowo_env.py`. Traffic is off by
+request. The library, the `TRAFFIC` table and the placement code are all intact
+— turning it back on is one line, and re-deriving 26 hand-placed positions from
+nothing would not be.
+
+**`site_look.json`** is written into `public/models/` by the environment build
+and read by `src/components/SiteLighting.jsx`. It carries the view transform and
+exposure, the world colour and strength, every light with its position, energy,
+colour and aim vector, and every camera with lens, aperture and resolved focus
+point. The application builds its own three.js scene and cannot read a `.blend`,
+so anything not in that file gets re-guessed on the other side and drifts.
+
+Note the tone-mapping entry. Blender's `Standard` is a linear transfer with an
+exposure multiply, clipped at white — that is `THREE.LinearToneMapping`, not
+`NoToneMapping`, which silently ignores `toneMappingExposure`.
+
+**The cable flexes.** `Antenna_Cables` hangs off the tilt chain, so before this
+the whole run — including the length cleated to the pole 1.2 m below the pivot —
+swung rigidly with the antenna, ending 68 mm inside the shaft at full downtilt.
+It now carries two morph targets, `Flex_Tilt_Neg` and `Flex_Tilt_Pos`, that
+cancel the inherited rotation below the cleat. Anything setting
+`Tilt_Rig.rotation.x` directly rather than playing ANIM_08 must drive those
+weights too; the rule and the measured clearances are in `site_look.json` under
+`lp12.cable_flex`.
+
+**Two constants are duplicated across scripts** and have already caused silent
+failures: the pole diameter (`build_lp12.py` builds `Pole_Shaft`, `build_lp12_v2.py`
+has its own copy of the figure) and the downtilt range. Changing one and not the
+other produces a build that runs cleanly and changes nothing.

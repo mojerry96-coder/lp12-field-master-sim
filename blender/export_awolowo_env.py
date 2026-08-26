@@ -76,6 +76,30 @@ def hide_prototypes():
     print(f"  removed {n} prototype objects")
 
 
+def drop_vehicles():
+    """Take the vehicles out of the environment GLB.
+
+    They ship as ten separate files instead, one per type, because they repeat:
+    36 instances share ten meshes, and merging them into the environment would
+    bake 36 full copies of that geometry into a single mesh. The application
+    loads each type once and clones it, which is both smaller to download and
+    cheaper to draw.
+
+    Their positions travel in vehicle_placements.json rather than in the mesh.
+    """
+    coll = bpy.data.collections.get("ENV_Vehicles")
+    lib = bpy.data.collections.get("VEHICLE_LIBRARY")
+    n = 0
+    for c in (coll, lib):
+        if c is None:
+            continue
+        n += len(c.objects)
+        for ob in list(c.objects):
+            bpy.data.objects.remove(ob, do_unlink=True)
+        bpy.data.collections.remove(c)
+    print(f"  dropped {n} vehicle objects (they ship as their own GLBs)")
+
+
 def merge_for_realtime():
     """Collapse each collection into a single mesh before export.
 
@@ -137,12 +161,18 @@ def drop_lp12():
     same spot, and the app could no longer show, hide or replace the antenna
     independently, which is the whole reason they are separate assets.
     """
-    coll = bpy.data.collections.get("LP12_POLE")
-    if coll is None:
-        return
-    n = len(coll.objects)
-    for ob in list(coll.objects):
-        bpy.data.objects.remove(ob, do_unlink=True)
+    # Both copies: LP12_POLE is the assembled backdrop model and LP12_ANIMATED
+    # is the hidden review copy carrying the clips. Neither belongs in the
+    # environment GLB — leaving the review copy in would ship a second pole
+    # AND every install animation inside the backdrop.
+    n = 0
+    for name in ("LP12_POLE", "LP12_ANIMATED"):
+        coll = bpy.data.collections.get(name)
+        if coll is None:
+            continue
+        n += len(coll.objects)
+        for ob in list(coll.objects):
+            bpy.data.objects.remove(ob, do_unlink=True)
     bpy.data.collections.remove(coll)
     print(f"  dropped {n} LP12 objects (the app loads that model itself)")
 
@@ -231,6 +261,7 @@ def main():
     render_set()
     hide_prototypes()
     drop_lp12()
+    drop_vehicles()
     merge_for_realtime()
     recentre_on_anchor()
     apply_transforms()

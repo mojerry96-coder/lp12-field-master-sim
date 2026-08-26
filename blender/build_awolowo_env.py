@@ -20,6 +20,7 @@ Run:
     blender --background --python build_awolowo_env.py
 """
 
+import json
 import math
 import os
 import sys
@@ -37,8 +38,17 @@ OUT = os.path.abspath(os.path.join(HERE, ".."))
 BLEND_PATH = os.path.join(OUT, "awolowo_lowpoly_env.blend")
 GLB_PATH = os.path.join(OUT, "awolowo_lowpoly_env.glb")
 RENDER_DIR = os.path.join(OUT, "env_lowpoly_renders")
-LP12_GLB = os.path.abspath(os.path.join(
+# The environment wants the ASSEMBLED pole. build_lp12_v2.py writes a second,
+# static export for exactly this: same model, install rigs collapsed, no clips.
+# The animated lp12_v2.glb the application loads has its antenna parked 0.62 m
+# off the bracket, which is correct for a training model and wrong for a
+# backdrop. Falls back to the animated file if the assembled one is missing.
+LP12_GLB_ANIMATED = os.path.abspath(os.path.join(
     HERE, "..", "..", "field-master-sim", "public", "models", "lp12_v2.glb"))
+LP12_GLB_ASSEMBLED = os.path.abspath(os.path.join(
+    HERE, "..", "lp12_v2_assembled.glb"))
+LP12_GLB = (LP12_GLB_ASSEMBLED if os.path.exists(LP12_GLB_ASSEMBLED)
+            else LP12_GLB_ANIMATED)
 
 # --------------------------------------------------------------- palette
 
@@ -95,7 +105,7 @@ COLLECTIONS = [
     "ENV_Ground", "ENV_Roads", "ENV_Buildings_Main", "ENV_Buildings_Secondary",
     "ENV_Pavements", "ENV_StreetFurniture", "ENV_Vegetation", "ENV_Vehicles",
     "ENV_Pedestrians", "ENV_LP12_Anchor", "ENV_Lighting", "ENV_Cameras",
-    "LP12_POLE", "VEHICLE_LIBRARY",
+    "LP12_POLE", "LP12_ANIMATED", "VEHICLE_LIBRARY",
 ]
 
 
@@ -456,6 +466,251 @@ def build_markings():
         y = sign * (KERB_Y - 0.45)
         box(f"Mark_Edge_{sign}", -half + 4, half - 4, y - 0.09, y + 0.09,
             z0, z1, "ENV_Road_Marking", "ENV_Roads")
+
+
+def detail_road():
+    """Surface detail on the carriageway, section 25.
+
+    The road was four clean slabs and some paint. Real tarmac is a patchwork:
+    it is cut open and made good, it drains, and it is laid in bays. Everything
+    here sits a few millimetres proud of the slab rather than flush with it —
+    coplanar geometry z-fights the moment the camera moves, and on a surface
+    this large the artefact reads as a flicker across the whole street.
+    """
+    half = ROAD_LEN / 2
+    z = ROAD_T
+    n = 0
+
+    # Inspection covers, set in the nearside lane where the ducts actually run.
+    for i, (mx, my) in enumerate((
+            (-96.0, 11.4), (-58.0, -11.9), (-24.0, 10.8), (2.0, -10.4),
+            (21.5, 11.9), (46.0, -11.2), (78.0, 10.6), (104.0, -11.8))):
+        arc_slab(f"Road_Manhole_{i}", mx, my, 0.02, 0.36, 0, 360,
+                 z, z + 0.014, segs=16, mat="ENV_Metal", coll="ENV_Roads")
+        n += 1
+
+    # Gully gratings tight against both kerbs, on the fall.
+    gi = 0
+    for sign in (1, -1):
+        y = sign * (KERB_Y - 0.34)
+        x = -half + 14
+        while x < half - 14:
+            box(f"Road_Gully_{gi}", x, x + 0.62, y - 0.21, y + 0.21,
+                z, z + 0.010, "ENV_Metal", "ENV_Roads")
+            x += 27.0
+            gi += 1
+            n += 1
+
+    # Construction joints between bays, one line per bay across each
+    # carriageway. Darker than the slab, which is what a sealed joint looks
+    # like once it has weathered.
+    ji = 0
+    for sign in (1, -1):
+        y0, y1 = sorted((sign * MEDIAN_HW, sign * KERB_Y))
+        x = -half + 9
+        while x < half - 9:
+            box(f"Road_Joint_{ji}", x, x + 0.07, y0 + 0.1, y1 - 0.1,
+                z, z + 0.004, "ENV_Road_Secondary", "ENV_Roads")
+            x += 13.5
+            ji += 1
+            n += 1
+
+    # Made-good patches where the surface has been cut and reinstated.
+    for i, (px, py, pw, pd) in enumerate((
+            (-88.0, 8.6, 5.2, 3.0), (-40.0, -9.2, 3.6, 2.4),
+            (-6.0, 7.4, 6.4, 3.4), (30.0, -6.8, 4.0, 2.8),
+            (62.0, 9.8, 5.6, 3.2), (98.0, -8.4, 3.8, 2.6))):
+        box(f"Road_Patch_{i}", px, px + pw, py, py + pd,
+            z, z + 0.007, "ENV_Road_Secondary", "ENV_Roads", bevel=0.02)
+        n += 1
+
+    # Reflective studs down every lane line, sitting in the gaps between the
+    # painted dashes rather than on top of them.
+    si = 0
+    for sign in (1, -1):
+        for lane_i in range(1, LANES):
+            y = sign * (MEDIAN_HW + lane_i * LANE)
+            x = -half + 8.5
+            while x < half - 8.5:
+                box(f"Road_Stud_{si}", x, x + 0.14, y - 0.06, y + 0.06,
+                    z, z + 0.018, "ENV_Metal", "ENV_Roads")
+                x += 9.0
+                si += 1
+                n += 1
+
+    # Kerb stones read as one extruded ribbon until the joints between them
+    # are cut in.
+    ki = 0
+    for sign in (1, -1):
+        y = sign * KERB_Y
+        x = -half + 6
+        while x < half - 6:
+            box(f"Kerb_Joint_{ki}", x, x + 0.05, y - 0.16, y + 0.16,
+                ROAD_T + KERB_H - 0.002, ROAD_T + KERB_H + 0.004,
+                "ENV_Road_Secondary", "ENV_Roads")
+            x += 4.0
+            ki += 1
+            n += 1
+
+    print(f"  road detail: {n} parts "
+          f"(covers, gullies, joints, patches, studs, kerb joints)")
+
+
+def detail_facades():
+    """Facade relief on the two named buildings, section 25.
+
+    The blocks were flat planes with window rectangles laid on them. What a
+    facade actually reads by, at this distance, is the horizontal lines — sills
+    and heads under and over each opening, a string course at every floor, and
+    a coping that oversails the parapet — plus the vertical service runs that
+    break the wall up: downpipes at the returns and a condenser bank on the
+    service elevation.
+
+    Cheap in geometry and disproportionately effective: a sill is a 60 mm box,
+    and it is the shadow under it that does the work.
+    """
+    n = 0
+    # --- Bank of Industry, the landmark ------------------------------------
+    cx, cy, w, d = 30.0, 46.0, 70.0, 30.0
+    storeys, storey_h = 7, 3.6
+    x0, x1 = cx - w / 2, cx + w / 2
+    y_face = cy - d / 2
+
+    for st in range(storeys):
+        zb = st * storey_h
+        # string course across the whole elevation at every floor line
+        box(f"BOI_String_{st}", x0 - 0.15, x1 + 0.15, y_face - 0.22, y_face + 0.02,
+            zb - 0.06, zb + 0.10, "ENV_Building_Hi", "ENV_Buildings_Main")
+        n += 1
+        # sill and head to each opening
+        for i in range(11):
+            wx = x0 + 4.2 + i * ((w - 8.4) / 10.0)
+            box(f"BOI_Sill_{st}_{i}", wx - 1.35, wx + 1.35,
+                y_face - 0.30, y_face + 0.02, zb + 0.92, zb + 1.04,
+                "ENV_Building_Hi", "ENV_Buildings_Main")
+            box(f"BOI_Head_{st}_{i}", wx - 1.45, wx + 1.45,
+                y_face - 0.26, y_face + 0.02, zb + 2.58, zb + 2.72,
+                "ENV_Building_Shadow", "ENV_Buildings_Main")
+            n += 2
+
+    # downpipes at both returns, full height
+    for tag, px in (("W", x0 + 0.9), ("E", x1 - 0.9)):
+        box(f"BOI_Downpipe_{tag}", px - 0.11, px + 0.11,
+            y_face - 0.34, y_face - 0.12, 0.0, storeys * storey_h,
+            "ENV_Metal", "ENV_Buildings_Main")
+        for k in range(7):
+            zz = 1.6 + k * 3.6
+            box(f"BOI_Pipe_Clip_{tag}_{k}", px - 0.17, px + 0.17,
+                y_face - 0.38, y_face - 0.08, zz, zz + 0.10,
+                "ENV_Metal", "ENV_Buildings_Main")
+        n += 8
+
+    # condenser bank on the service elevation
+    for k in range(9):
+        bx = x0 + 7.0 + k * 6.4
+        box(f"BOI_Condenser_{k}", bx - 0.95, bx + 0.95, cy + d / 2 - 0.05,
+            cy + d / 2 + 0.85, 3.1, 4.05, "ENV_Metal", "ENV_Buildings_Main",
+            bevel=0.04)
+        box(f"BOI_Cond_Bracket_{k}", bx - 1.05, bx + 1.05, cy + d / 2 - 0.05,
+            cy + d / 2 + 0.95, 2.95, 3.10, "ENV_Building_Shadow",
+            "ENV_Buildings_Main")
+        n += 2
+
+    print(f"  facade detail: {n} parts (courses, sills, heads, pipes, plant)")
+
+
+def detail_street_furniture():
+    """Furniture that was standing in as bare posts, section 25.
+
+    Lamp columns had no lanterns, the signals had no heads and no hoods, and
+    there was nowhere to sit or put litter. All of it is small, and all of it
+    is at eye level in the hero and context cameras, which is exactly where
+    missing detail gets noticed.
+    """
+    n = 0
+    half = ROAD_LEN / 2
+    z = ROAD_T + KERB_H
+
+    # Lantern arms and heads on the median columns.
+    #
+    # The spacing puts a column at x = 18.0, which is LP12_ANCHOR_X exactly.
+    # That is not a collision to design around — background.png shows the LP12
+    # mounted on a twin-arm lighting column, so those arms ARE the host pole's.
+    # Deleting them lost the thing the reference is of.
+    #
+    # What was wrong is the height. At 8.05 m the arm ran straight through the
+    # antenna, which occupies z 7.72..8.93. LAMP_ARM_Z clears the top of it by
+    # about 0.7 m, applied to every column so the street stays consistent — a
+    # 9.6 m outreach on a 12.5 m column is ordinary for a dual carriageway.
+    x = -half + 22
+    i = 0
+    while x < half - 22:
+        for sign in (1, -1):
+            box(f"Lamp_Arm_{i}_{sign}", x - 0.09, x + 0.09,
+                sign * 0.2, sign * 2.05, LAMP_ARM_Z, LAMP_ARM_Z + 0.18,
+                "ENV_Metal", "ENV_StreetFurniture")
+            box(f"Lamp_Head_{i}_{sign}", x - 0.30, x + 0.30,
+                sign * 1.62, sign * 2.42, LAMP_ARM_Z - 0.25, LAMP_ARM_Z + 0.01,
+                "ENV_Building_Hi", "ENV_StreetFurniture", bevel=0.05)
+            n += 2
+        x += 34.0
+        i += 1
+
+    # Litter bins and benches along both pavements.
+    skipped = 0
+    for k in range(8):
+        bx = -half + 30 + k * 32.0
+        if abs(bx - LP12_ANCHOR_X) < FURNITURE_CLEAR:
+            skipped += 1
+            continue
+        for sign in (1, -1):
+            by = sign * (KERB_Y + 2.4)
+            box(f"Bin_{k}_{sign}", bx - 0.28, bx + 0.28, by - 0.28, by + 0.28,
+                z, z + 0.92, "ENV_Metal", "ENV_StreetFurniture", bevel=0.04)
+            box(f"Bin_Lid_{k}_{sign}", bx - 0.34, bx + 0.34, by - 0.34, by + 0.34,
+                z + 0.92, z + 1.02, "ENV_Building_Shadow", "ENV_StreetFurniture")
+            sx = bx + 3.2
+            box(f"Bench_Seat_{k}_{sign}", sx - 1.05, sx + 1.05,
+                by - 0.24, by + 0.24, z + 0.42, z + 0.50,
+                "ENV_Building_Hi", "ENV_StreetFurniture", bevel=0.03)
+            for lx in (sx - 0.85, sx + 0.85):
+                box(f"Bench_Leg_{k}_{sign}_{lx:.0f}", lx - 0.06, lx + 0.06,
+                    by - 0.20, by + 0.20, z, z + 0.42,
+                    "ENV_Metal", "ENV_StreetFurniture")
+            n += 5
+
+    print(f"  street furniture detail: {n} parts (lanterns, bins, benches), "
+          f"{skipped} bin/bench positions skipped clear of the LP12")
+
+
+def detail_markings():
+    """Lane arrows and stop lines — the markings that say how the road works."""
+    half = ROAD_LEN / 2
+    z0, z1 = ROAD_T, ROAD_T + MARK_Z
+    n = 0
+    for ci, cx in enumerate((-62.0, 4.0, 70.0)):
+        for sign in (1, -1):
+            # stop line just short of the crossing, on the approach side
+            sx = cx - sign * 5.2
+            y0, y1 = sorted((sign * MEDIAN_HW, sign * KERB_Y))
+            box(f"Mark_Stop_{ci}_{sign}", sx - 0.22, sx + 0.22, y0 + 0.3, y1 - 0.3,
+                z0, z1, "ENV_Road_Marking", "ENV_Roads")
+            n += 1
+            # straight-ahead arrows, one per lane, set back from the line
+            for lane_i in range(LANES):
+                y = sign * (MEDIAN_HW + LANE * (lane_i + 0.5))
+                ax = cx - sign * 12.0
+                box(f"Mark_Arrow_Shaft_{ci}_{sign}_{lane_i}",
+                    ax - 1.5, ax + 1.5, y - 0.13, y + 0.13, z0, z1,
+                    "ENV_Road_Marking", "ENV_Roads")
+                for k in range(4):
+                    hw = 0.42 - k * 0.10
+                    hx = ax + sign * (1.5 + k * 0.22)
+                    box(f"Mark_Arrow_Head_{ci}_{sign}_{lane_i}_{k}",
+                        hx - 0.11, hx + 0.11, y - hw, y + hw, z0, z1,
+                        "ENV_Road_Marking", "ENV_Roads")
+                n += 5
+    print(f"  marking detail: {n} parts (stop lines, lane arrows)")
 
 
 def build_pavements():
@@ -927,6 +1182,28 @@ def build_secondary():
         face_y = y0 if cy > 0 else y1
         floor_bands(name, x0, x1, y0, y1, storeys, 0.0, h / max(storeys, 1),
                     "ENV_Buildings_Secondary")
+
+        # Pilasters between the window bays, and a cornice at the head.
+        #
+        # The landmark got vertical fins early on and the difference was
+        # obvious; the secondary blocks never did, which is why they still read
+        # as banded slabs next to it. A pier every bay gives the facade a rhythm
+        # and, more usefully, gives the key light a vertical edge to catch on a
+        # wall that is otherwise one flat plane.
+        bay_pitch = 4.2
+        bays = max(3, int(round((x1 - x0 - 5.0) / bay_pitch)))
+        pitch = (x1 - x0 - 5.0) / bays
+        for face_y, face_out in ((y0, -1.0), (y1, 1.0)):
+            for b in range(bays + 1):
+                px = x0 + 2.5 + pitch * b
+                py0, py1 = sorted((face_y, face_y + face_out * 0.22))
+                box(f"{name}_Pier_{'S' if face_out < 0 else 'N'}_{b}",
+                    px - 0.30, px + 0.30, py0, py1, 0.9, h - 0.15,
+                    "ENV_Building_Hi", "ENV_Buildings_Secondary", bevel=0.03)
+        # Cornice: a shadow line where wall meets parapet.
+        box(f"{name}_Cornice", x0 - 0.55, x1 + 0.55, y0 - 0.55, y1 + 0.55,
+            h - 0.42, h - 0.12, "ENV_Building_Hi", "ENV_Buildings_Secondary",
+            bevel=0.04)
         if storeys >= 3:
             sb = 2.2
             box(f"{name}_Upper", x0 + sb, x1 - sb, y0 + sb, y1 - sb,
@@ -1406,11 +1683,27 @@ def build_vehicle_library():
         ob.modifiers.clear()
         BV.seat_on_ground(bpy, ob)
         ob.hide_render = ob.hide_viewport = True
+        BV.make_lods(bpy, ob, name,
+                     lambda o: COLL["VEHICLE_LIBRARY"].objects.link(o))
         lib[key] = ob
     return lib
 
 
+INCLUDE_VEHICLES = False   # set True to put the traffic back
+INSTALL_FRAMES = [0]       # filled in by place_lp12_animated()
+FURNITURE_CLEAR = 12.0     # keep bins and benches off the LP12 anchor
+LAMP_ARM_Z = 9.62          # lantern outreach, clear of the antenna top
+
+
 def build_vehicles():
+    # Traffic is off by request. The library, the TRAFFIC table and the
+    # placement logic below are all left intact rather than deleted — turning
+    # this back on is a one-line change, and re-deriving 26 hand-placed
+    # positions from nothing would not be.
+    if not INCLUDE_VEHICLES:
+        print("  vehicles: skipped (INCLUDE_VEHICLES is False)")
+        return
+    import build_vehicles as BV
     lib = build_vehicle_library()
     z = ROAD_T
 
@@ -1427,8 +1720,9 @@ def build_vehicles():
             skipped += 1
             continue
         rot = VEH_ROT_EAST if sign > 0 else VEH_ROT_WEST
-        instance(f"Traffic_{i:02d}_{key}", lib[key], (x, lane_y(lane, sign), z),
-                 rot_z=rot, coll="ENV_Vehicles")
+        ob = instance(f"Traffic_{i:02d}_{key}", lib[key], (x, lane_y(lane, sign), z),
+                      rot_z=rot, coll="ENV_Vehicles")
+        BV.apply_variant(ob, MATS, i)
         placed += 1
 
     for i, (key, x, y, sign) in enumerate(TWO_WHEELERS):
@@ -1440,9 +1734,10 @@ def build_vehicles():
 
     # A parked rank on the Native Supply plaza, nose-in to the building.
     for i, key in enumerate(("sedan", "compact", "sedan", "coupe", "compact", "sedan")):
-        instance(f"Parked_{i}_{key}", lib[key],
-                 (-70 + i * 3.1, -(KERB_Y + PAVE_W + 4.2), ROAD_T + KERB_H),
-                 rot_z=0.0, coll="ENV_Vehicles")
+        ob = instance(f"Parked_{i}_{key}", lib[key],
+                      (-70 + i * 3.1, -(KERB_Y + PAVE_W + 4.2), ROAD_T + KERB_H),
+                      rot_z=0.0, coll="ENV_Vehicles")
+        BV.apply_variant(ob, MATS, i + 3)
         placed += 1
 
     print(f"  vehicles placed: {placed} "
@@ -1528,10 +1823,16 @@ def place_lp12(anchor):
     lp12_v2.glb on its own, and shipping a second copy inside the environment
     would put two poles in the same place.
 
-    No clips are evaluated on import. The GLB's rest pose already IS the
-    assembled pose — the install wrappers sit at identity and the six clips
-    animate them FROM an offset back to it — so "snapping the clips" drives
-    parts away from where they belong rather than into place.
+    No clips are evaluated on import, and none are present: this imports
+    lp12_v2_assembled.glb, which build_lp12_v2.py exports with the install
+    rigs already collapsed.
+
+    Do not switch this to the animated lp12_v2.glb and try to assemble it here.
+    Its rest pose is the UNASSEMBLED start of the task, and glTF bakes node
+    transforms into the hierarchy, so an install rig's location in the imported
+    file is an absolute placement rather than the offset it was in the master.
+    Zeroing them looks like it should work and instead puts the antenna at
+    z 14.9, two metres above the top of a 12.96 m pole.
     """
     if not os.path.exists(LP12_GLB):
         print(f"  LP12 not found at {LP12_GLB} — anchor left empty")
@@ -1560,6 +1861,121 @@ def place_lp12(anchor):
     print(f"  LP12 placed: {len(imported)} objects at "
           f"{[round(v, 2) for v in anchor.matrix_world.translation]}")
     return roots[0] if roots else None
+
+
+def place_lp12_animated(anchor):
+    """A second LP12 at the same anchor, this one carrying the clips.
+
+    LP12_POLE holds the assembled export, which is the right thing to render
+    and the wrong thing to review: it has no animation data at all, so opening
+    the scene shows the site but none of the eight install clips.
+
+    This imports the animated model into its own collection, parked on the same
+    anchor and hidden from both the viewport and the render. Nothing about the
+    look changes and no second pole appears in any camera — but the NLA tracks,
+    the morph targets and the whole install sequence are in the file, so the
+    timeline can be scrubbed in context. Unhide LP12_ANIMATED and hide
+    LP12_POLE to review it; they occupy the same space by design.
+    """
+    if not os.path.exists(LP12_GLB_ANIMATED):
+        print("  animated LP12 not found — review copy skipped")
+        return
+    before = set(bpy.data.objects)
+    bpy.ops.import_scene.gltf(filepath=LP12_GLB_ANIMATED)
+    imported = [o for o in bpy.data.objects if o not in before]
+    for ob in imported:
+        for coll in list(ob.users_collection):
+            coll.objects.unlink(ob)
+        COLL["LP12_ANIMATED"].objects.link(ob)
+    for root in (o for o in imported if o.parent is None):
+        root.matrix_world = anchor.matrix_world.copy()
+    for coll in list(bpy.data.collections):
+        if not coll.objects and not coll.children and coll.name not in COLLECTIONS:
+            bpy.data.collections.remove(coll)
+
+    lc = bpy.context.view_layer.layer_collection.children.get("LP12_ANIMATED")
+    if lc:
+        lc.hide_viewport = True
+    COLL["LP12_ANIMATED"].hide_render = True
+    # Per object as well as per collection. The collection flag is what the
+    # renderer honours, but the triangle count walks objects and checks
+    # ob.hide_render — without this the scene reported 413k render-visible
+    # triangles for a 304k render, which makes the budget figure useless.
+    for ob in imported:
+        ob.hide_render = True
+
+    total = sequence_install_clips(imported)
+
+    clips = sorted({t.name for o in imported if o.animation_data
+                    for t in o.animation_data.nla_tracks})
+    morphs = sum(1 for o in imported if o.type == 'MESH' and o.data.shape_keys)
+    print(f"  LP12 review copy: {len(imported)} objects, {len(clips)} clips, "
+          f"{morphs} mesh(es) with morph targets (hidden)")
+    print(f"    install sequence runs 1..{total} frames")
+    return total
+
+
+def _all_strips(imported):
+    """Every NLA strip on the imported copy, objects and shape keys alike."""
+    out = []
+    for ob in imported:
+        if ob.animation_data:
+            for tr in ob.animation_data.nla_tracks:
+                for st in tr.strips:
+                    out.append((tr, st))
+        if ob.type == 'MESH' and ob.data.shape_keys:
+            ad = ob.data.shape_keys.animation_data
+            if ad:
+                for tr in ad.nla_tracks:
+                    for st in tr.strips:
+                        out.append((tr, st))
+    return out
+
+
+def sequence_install_clips(imported):
+    """Lay the eight clips end to end and unmute them.
+
+    The glTF importer mutes every track, and it is right to: all eight clips
+    are authored from frame 1, so unmuting them as they arrive would have the
+    bands, the rail, the antenna and the downtilt all moving at once. That is
+    correct for the application, which plays one clip at a time on demand.
+
+    It is useless for review. Offsetting each clip to start where the last one
+    ends turns the same data into a single continuous install that can be
+    scrubbed from bare pole to pointed antenna. Only this copy is touched — the
+    GLB the application loads still has all eight starting at frame 1, and the
+    environment export strips this collection entirely.
+
+    Shape key strips are offset with the object strips, or the cable would flex
+    at the wrong moment.
+    """
+    strips = _all_strips(imported)
+    if not strips:
+        return 0
+
+    spans = {}
+    for tr, st in strips:
+        lo, hi = spans.get(tr.name, (1e9, -1e9))
+        spans[tr.name] = (min(lo, st.frame_start), max(hi, st.frame_end))
+
+    cursor = 1.0
+    offsets = {}
+    for name in sorted(spans):
+        lo, hi = spans[name]
+        offsets[name] = cursor - lo
+        cursor += (hi - lo) + 6.0          # a short beat between stages
+
+    for tr, st in strips:
+        off = offsets.get(tr.name, 0.0)
+        if off:
+            # frame_end first: Blender clamps frame_start against the current
+            # end, so moving the start of a strip rightwards silently fails
+            # if the end has not been moved out of the way already.
+            st.frame_end = st.frame_end + off
+            st.frame_start = st.frame_start + off
+        tr.mute = False
+
+    return int(round(cursor))
 
 
 def build_cameras(dome_origin):
@@ -1592,6 +2008,13 @@ def build_cameras(dome_origin):
     ctx_data.lens = 42.0
     ctx_data.clip_start = 0.1
     ctx_data.clip_end = 600.0
+    # This camera predates the brief cameras and was the only perspective one
+    # in the scene rendering with everything in focus. At 60 m a wide lens gives
+    # very little natural fall-off, so f/2.8 is doing real work here rather
+    # than being decorative; it focuses on the dome origin, same as its aim.
+    ctx_data.dof.use_dof = True
+    ctx_data.dof.focus_object = dome_origin
+    ctx_data.dof.aperture_fstop = 2.8
     ctx = bpy.data.objects.new("CAM_LP12_CONTEXT", ctx_data)
     # Far enough back and high enough that the boulevard, the anchor's pavement
     # and the landmark all sit in frame. Closer than this and the building
@@ -1603,49 +2026,294 @@ def build_cameras(dome_origin):
     track.track_axis = "TRACK_NEGATIVE_Z"
     track.up_axis = "UP_Y"
 
+    build_brief_cameras(dome_origin)
     bpy.context.scene.camera = cam
     return cam, ctx
+
+
+def build_brief_cameras(dome_origin):
+    """CAM_ENV_ESTABLISHING, CAM_LP12_HERO and CAM_VEHICLE_INSPECTION.
+
+    All three are perspective with a real aperture, because the brief asks for
+    depth of field and an orthographic camera has none — there is no lens, so
+    nothing to defocus. The existing CAM_ENV_ISOMETRIC stays orthographic: it is
+    the layout view, and layout is exactly where you do not want perspective.
+    """
+    focus = build_focus_targets()
+
+    # Azimuth -21 deg is not a look — it is the protected corridor. The two
+    # wide anchors sit at (6.8, -29.8) and (5.6, -33.0), and
+    # check_camera_sightlines() guarantees nothing is built across it. Framing
+    # anywhere else risks the flat grey wall the first build rendered when a
+    # parapet landed 0.9 m in front of CAM_01.
+    CORRIDOR = -21.0
+    specs = [
+        # name, lens, f-stop, focus empty, elevation, azimuth, distance
+        # Down off the old 56-degree elevation: at that height the street read
+        # as a site plan. A near-eye-level camera on a wider lens puts the
+        # buildings behind the pole instead of underneath it.
+        # Closer and a touch off the corridor centreline: at 62 m a pavement tree
+        # stood in the near third of the frame. Still inside the guarded
+        # corridor, which spans both wide anchors rather than a single bearing.
+        ("CAM_ENV_ESTABLISHING", 32.0, 3.4, "FOCUS_ENVIRONMENT", 5.0, -13.0, 44.0),
+        # f/2.2 rather than f/3.1: at 30 m on an 85 the far side of the street
+        # goes properly soft, so the pole separates instead of competing with
+        # eight storeys of window mullions.
+        ("CAM_LP12_HERO",        85.0, 2.2, "FOCUS_LP12",        7.0, CORRIDOR, 30.0),
+        # Replaces CAM_VEHICLE_INSPECTION, which framed traffic that no longer
+        # exists. Long lens, close, wide open — the working view of the mount.
+        ("CAM_LP12_MOUNT",       95.0, 2.4, "FOCUS_MOUNT",       4.0, CORRIDOR,  6.5),
+    ]
+    for name, lens, fstop, focus_name, elev, azim, dist in specs:
+        cd = bpy.data.cameras.new(name)
+        cd.lens = lens
+        cd.sensor_width = 36.0
+        cd.clip_start = 0.1
+        cd.clip_end = 900.0
+        cd.dof.use_dof = True
+        cd.dof.focus_object = focus[focus_name]
+        cd.dof.aperture_fstop = fstop
+        cam = bpy.data.objects.new(name, cd)
+
+        target = focus[focus_name].location
+        e, a = math.radians(elev), math.radians(azim)
+        offset = Vector((math.sin(a) * math.cos(e),
+                         -math.cos(a) * math.cos(e),
+                         math.sin(e))) * dist
+        cam.location = target + offset
+        track = cam.constraints.new("TRACK_TO")
+        track.target = focus[focus_name]
+        track.track_axis = "TRACK_NEGATIVE_Z"
+        track.up_axis = "UP_Y"
+        link(cam, "ENV_Cameras")
 
 
 # ---------------------------------------------------------------- lighting
 
 def build_lighting():
+    """Lighting rig, section 18.
+
+    Warm key high and camera-left, cool fill opposite it, a soft sun aligned
+    with the key so shadow direction reads as one source, and a restrained rim
+    behind the LP12. The rim is deliberately weak: at anything above ~600 W it
+    stops separating the pole from the backdrop and starts drawing a glowing
+    outline around it, which the brief rules out.
+    """
     world = bpy.data.worlds.new("ENV_World")
     world.use_nodes = True
     bg = world.node_tree.nodes["Background"]
-    bg.inputs["Color"].default_value = hex_rgba("#E9EDF3")
-    bg.inputs["Strength"].default_value = 0.75
+    # Warm off-white sky at high strength. The reference look is a high-key
+    # product render: white surfaces that actually reach white, with shadows
+    # that stay soft and light rather than dark. That needs a lot of ambient —
+    # a cool #DCE8F3 at 0.40 was lighting the whole street to a flat mid grey
+    # and tinting every white facade blue.
+    bg.inputs["Color"].default_value = hex_rgba("#F7F5F1")
+    bg.inputs["Strength"].default_value = 1.10
     bpy.context.scene.world = world
 
-    sun_data = bpy.data.lights.new("ENV_Key_Sun", "SUN")
-    sun_data.energy = 1.9
-    sun_data.angle = math.radians(8.0)
-    sun_data.color = hex_rgba("#FFF7EA")[:3]
-    sun = bpy.data.objects.new("ENV_Key_Sun", sun_data)
-    sun.rotation_euler = (math.radians(25.0), math.radians(-20.0), math.radians(135.0))
-    sun.location = (0, 0, 90)
-    link(sun, "ENV_Lighting")
+    key_data = bpy.data.lights.new("ENV_Key_Warm", "AREA")
+    key_data.shape = "SQUARE"
+    key_data.size = 18.0
+    key_data.energy = 2200.0
+    key_data.color = hex_rgba("#FFF6EE")[:3]
+    key = bpy.data.objects.new("ENV_Key_Warm", key_data)
+    key.location = (-46.0, -52.0, 62.0)
+    key.rotation_euler = (math.radians(44.0), 0.0, math.radians(-40.0))
+    link(key, "ENV_Lighting")
 
-    fill_data = bpy.data.lights.new("ENV_Fill_Area", "AREA")
+    fill_data = bpy.data.lights.new("ENV_Fill_Cool", "AREA")
     fill_data.shape = "SQUARE"
     fill_data.size = 26.0
-    fill_data.energy = 900.0
-    fill_data.color = hex_rgba("#E6F0FF")[:3]
-    fill = bpy.data.objects.new("ENV_Fill_Area", fill_data)
-    fill.location = (95.0, -95.0, 58.0)
-    fill.rotation_euler = (math.radians(52.0), 0.0, math.radians(-135.0 + 180))
+    fill_data.energy = 850.0
+    fill_data.color = hex_rgba("#D8E9FF")[:3]
+    fill = bpy.data.objects.new("ENV_Fill_Cool", fill_data)
+    fill.location = (58.0, 62.0, 48.0)
+    fill.rotation_euler = (math.radians(52.0), 0.0, math.radians(140.0))
     link(fill, "ENV_Lighting")
 
-    # Soft rim so the landmark's silhouette separates from the pale world.
-    rim_data = bpy.data.lights.new("ENV_Rim_Area", "AREA")
+    # Sun aligned with the key, so every shadow in the scene falls the same way.
+    sun_data = bpy.data.lights.new("ENV_Sun_Soft", "SUN")
+    sun_data.energy = 0.9
+    sun_data.angle = math.radians(9.0)
+    sun_data.color = hex_rgba("#FFE4C3")[:3]
+    sun = bpy.data.objects.new("ENV_Sun_Soft", sun_data)
+    sun.rotation_euler = (math.radians(44.0), 0.0, math.radians(-40.0))
+    sun.location = (0.0, 0.0, 90.0)
+    link(sun, "ENV_Lighting")
+
+    rim_data = bpy.data.lights.new("ENV_Rim", "AREA")
     rim_data.shape = "RECTANGLE"
-    rim_data.size, rim_data.size_y = 70.0, 26.0
+    rim_data.size, rim_data.size_y = 34.0, 18.0
     rim_data.energy = 480.0
-    rim_data.color = hex_rgba("#FFFFFF")[:3]
-    rim = bpy.data.objects.new("ENV_Rim_Area", rim_data)
-    rim.location = (30.0, 96.0, 34.0)
-    rim.rotation_euler = (math.radians(74.0), 0.0, math.radians(180.0))
+    rim_data.color = hex_rgba("#E8F2FF")[:3]
+    rim = bpy.data.objects.new("ENV_Rim", rim_data)
+    rim.location = (LP12_ANCHOR_X + 6.0, 58.0, 26.0)
+    rim.rotation_euler = (math.radians(76.0), 0.0, math.radians(184.0))
     link(rim, "ENV_Lighting")
+
+
+def build_focus_targets():
+    """Empties the cameras focus on, section 19.
+
+    Depth of field needs something to track. Using an empty rather than a
+    distance means the focus follows the subject if it ever moves, and the same
+    anchors can be read by the application to drive its own focus.
+    """
+    out = {}
+    for name, loc, size in (
+            ("FOCUS_ENVIRONMENT", (8.0, 0.0, 6.5), 4.0),
+            ("FOCUS_LP12", (LP12_ANCHOR_X - 0.30, -0.55, 7.10), 2.5),
+            # The mount zone, not the whole pole: the enclosure, the bank and
+            # the connectors are what the install stages are about, and a
+            # focus empty at the pole's midpoint leaves all of it soft.
+            #
+            # Measured off the built scene, not assumed. The antenna hangs at
+            # (17.38, -1.16, 8.37) with the pole axis at x = 18 — it is offset
+            # to -X and -Y. An earlier guess of +0.62/+1.05 put the focus on
+            # the opposite side of the pole and defocused the entire subject.
+            ("FOCUS_MOUNT", (LP12_ANCHOR_X - 0.62, -1.05, 8.05), 0.6)):
+        e = bpy.data.objects.new(name, None)
+        e.empty_display_type = "SPHERE"
+        e.empty_display_size = size
+        e.location = loc
+        link(e, "ENV_Cameras")
+        out[name] = e
+    return out
+
+
+def write_look_manifest():
+    """Everything the simulation needs to reproduce this render, as JSON.
+
+    The application builds its own three.js scene; it does not read the .blend.
+    So every value that decides how this looks — tone mapping and exposure, the
+    world colour and strength, each light's position, energy and colour, each
+    camera's lens, aperture and focus point — has to cross over as data, or it
+    gets re-guessed on the other side and drifts.
+
+    Written next to the models so the app fetches it the way it fetches a GLB.
+    Angles are degrees, positions are Blender Z-up; converting to three.js Y-up
+    is one documented swap, (x, y, z) -> (x, z, -y). Doing that conversion here
+    would hide it from whoever has to debug a mismatch later.
+    """
+    scn = bpy.context.scene
+    world = scn.world
+    bg = world.node_tree.nodes["Background"] if world and world.use_nodes else None
+    dg = bpy.context.evaluated_depsgraph_get()
+
+    def rgb(c):
+        return [round(v, 5) for v in list(c)[:3]]
+
+    lights = []
+    for ob in sorted(bpy.data.objects, key=lambda o: o.name):
+        if ob.type != 'LIGHT':
+            continue
+        d = ob.data
+        # Direction as a vector, not just Euler angles. A Blender light points
+        # down its local -Z, and a consumer that has to rebuild that from an
+        # XYZ Euler in a Z-up space has three chances to get a sign wrong. A
+        # unit vector survives the Y-up swap with the same substitution the
+        # positions use, so there is nothing left to derive.
+        aim = (ob.matrix_world.to_3x3() @ Vector((0.0, 0.0, -1.0))).normalized()
+        e = {"name": ob.name, "type": d.type,
+             "location": [round(v, 4) for v in ob.location],
+             "rotation_deg": [round(math.degrees(a), 3) for a in ob.rotation_euler],
+             "direction": [round(v, 5) for v in aim],
+             "energy": round(d.energy, 3), "color": rgb(d.color)}
+        for attr in ("size", "size_y", "shape", "angle", "spot_size"):
+            if hasattr(d, attr):
+                v = getattr(d, attr)
+                e[attr] = round(v, 5) if isinstance(v, float) else v
+        lights.append(e)
+
+    cameras = []
+    for ob in sorted(bpy.data.objects, key=lambda o: o.name):
+        if ob.type != 'CAMERA':
+            continue
+        d = ob.data
+        # Evaluated, so TRACK_TO is baked into what we hand over: the app has
+        # no constraint system and needs the resolved orientation.
+        ev = ob.evaluated_get(dg)
+        loc, rot, _ = ev.matrix_world.decompose()
+        e = {"name": ob.name, "type": d.type,
+             "location": [round(v, 4) for v in loc],
+             "rotation_deg": [round(math.degrees(a), 3)
+                              for a in rot.to_euler('XYZ')],
+             "clip_start": round(d.clip_start, 4),
+             "clip_end": round(d.clip_end, 2)}
+        if d.type == 'ORTHO':
+            e["ortho_scale"] = round(d.ortho_scale, 3)
+        else:
+            e["lens_mm"] = round(d.lens, 3)
+            e["sensor_width_mm"] = round(d.sensor_width, 3)
+            e["fov_y_deg"] = round(math.degrees(
+                2 * math.atan(0.5 * d.sensor_width / d.lens)), 3)
+            dof = {"enabled": bool(d.dof.use_dof),
+                   "f_stop": round(d.dof.aperture_fstop, 3)}
+            if d.dof.focus_object:
+                dof["focus_point"] = [round(v, 4) for v in
+                                      d.dof.focus_object.matrix_world.translation]
+            else:
+                dof["focus_distance"] = round(d.dof.focus_distance, 4)
+            e["dof"] = dof
+        cameras.append(e)
+
+    manifest = {
+        "generated_by": "build_awolowo_env.py",
+        "axis_note": "Blender Z-up. three.js: (x, y, z) -> (x, z, -y).",
+        "units": {"length": "metres", "angle": "degrees"},
+        "color_management": {
+            "view_transform": scn.view_settings.view_transform,
+            "look": scn.view_settings.look,
+            "exposure": round(scn.view_settings.exposure, 4),
+            # Corrected: NoToneMapping IGNORES toneMappingExposure in three's
+            # shader, so that pairing silently drops the exposure. Blender's
+            # Standard is a linear transfer with an exposure multiply, clipped
+            # at white — which is exactly THREE.LinearToneMapping.
+            "three_js_hint": ("Blender Standard == THREE.LinearToneMapping with "
+                              "toneMappingExposure = 2 ** exposure, and "
+                              "outputColorSpace = SRGBColorSpace. Do NOT use "
+                              "NoToneMapping: it ignores toneMappingExposure."),
+            "three_js_tone_mapping": "LinearToneMapping",
+            "three_js_exposure": round(pow(2.0, scn.view_settings.exposure), 5),
+        },
+        "world": {
+            "color": rgb(bg.inputs["Color"].default_value) if bg else None,
+            "strength": round(bg.inputs["Strength"].default_value, 4) if bg else None,
+        },
+        "palette": PALETTE,
+        "lights": lights,
+        "cameras": cameras,
+        "lp12": {
+            "anchor": [LP12_ANCHOR_X, 0.0, 0.0],
+            "assembled_glb": "lp12_v2_assembled.glb",
+            "animated_glb": "lp12_v2.glb",
+            # Anything that sets Tilt_Rig.rotation.x directly, rather than
+            # playing ANIM_08, must drive these too. Antenna_Cables hangs off
+            # the hinge, so without them the run cleated to the pole swings
+            # with the antenna and ends up inside the shaft.
+            "cable_flex": {
+                "node": "Antenna_Cables",
+                "targets": ["Flex_Tilt_Neg", "Flex_Tilt_Pos"],
+                "range_deg": 10.0,
+                "rule": ("local Tilt_Rig.rotation.x in degrees -> "
+                         "Flex_Tilt_Neg = clamp(-deg/10, 0, 1), "
+                         "Flex_Tilt_Pos = clamp(deg/10, 0, 1). "
+                         "UI downtilt maps to NEGATIVE local X."),
+                "measured_clearance_m": {
+                    "rigid": {"-10deg": -0.0683, "0deg": 0.0582, "+10deg": 0.2591},
+                    "flexed": {"-10deg": 0.0158, "0deg": 0.0582, "+10deg": 0.0780},
+                },
+            },
+        },
+        "vehicles_included": INCLUDE_VEHICLES,
+    }
+
+    out = os.path.abspath(os.path.join(
+        HERE, "..", "..", "field-master-sim", "public", "models", "site_look.json"))
+    with open(out, "w") as fh:
+        json.dump(manifest, fh, indent=2)
+    print(f"  look manifest: {len(cameras)} cameras, {len(lights)} lights -> "
+          f"{os.path.basename(out)}")
 
 
 # --------------------------------------------------------- render settings
@@ -1665,6 +2333,17 @@ def configure_render():
     print("  engine:", scn.render.engine)
 
     ee = scn.eevee
+    # Depth of field is the point of the perspective cameras, and EEVEE's
+    # defaults undersample it: without a larger max bokeh size and more jitter
+    # passes the blur banks into visible rings on high-contrast edges like a
+    # lit window seen past the pole.
+    for attr, value in (("bokeh_max_size", 48.0), ("bokeh_denoise_fac", 0.9),
+                        ("use_bokeh_jittered", True), ("bokeh_neighbor_max", 12.0),
+                        ("taa_render_samples", 96)):
+        try:
+            setattr(ee, attr, value)
+        except (AttributeError, TypeError):
+            pass
     for attr, value in (("use_gtao", True), ("gtao_distance", 1.4),
                         ("use_shadows", True), ("use_soft_shadows", True),
                         ("use_raytracing", True), ("use_bloom", False),
@@ -1676,6 +2355,12 @@ def configure_render():
             except (TypeError, ValueError):
                 pass
 
+    # Timeline spans the longest clip (ANIM_04 at 81 frames) so the whole
+    # install sequence can be scrubbed without resetting the range by hand.
+    scn.frame_start = 1
+    scn.frame_end = INSTALL_FRAMES[0] or 81
+    scn.render.fps = 30
+
     scn.render.use_motion_blur = False
     scn.render.film_transparent = False
     scn.render.resolution_x = 1920
@@ -1683,14 +2368,31 @@ def configure_render():
     scn.render.resolution_percentage = 100
     scn.render.image_settings.file_format = "PNG"
 
-    scn.view_settings.view_transform = "AgX"
-    for look in ("AgX - Medium High Contrast", "Medium High Contrast"):
+    # Standard, not AgX.
+    #
+    # AgX has a long highlight shoulder that deliberately refuses to reach
+    # white — it maps a diffuse white surface to roughly 180/255 and desaturates
+    # as it goes. That is the right call for a filmic scene and the wrong one
+    # here: the palette is already near-white (#F2F0E9 walls, #FAF9F5 highlights)
+    # and AgX was pulling all of it back to grey. Measured across five cameras,
+    # nothing in the scene rendered above 183 and the mean sat at 150.
+    #
+    # Standard maps linear straight through, so a white wall lit to 1.0 renders
+    # as white. The cost is a hard highlight clip, which for a high-key product
+    # render is the look rather than a defect.
+    scn.view_settings.view_transform = "Standard"
+    for look in ("None", "Standard"):
         try:
             scn.view_settings.look = look
             break
         except (TypeError, ValueError):
             continue
-    scn.view_settings.exposure = 0.2
+    # Set by measurement, not by eye. At exposure 0.0 the facades rendered
+    # 253/252/244 — clipped, with every pilaster and window reveal flattened
+    # into one white shape. At -0.65 they fell to 204 and the scene was grey
+    # again. -0.15 lands diffuse white in the high 230s: the modelling still
+    # reads, and 255 is left for the specular highlights where it belongs.
+    scn.view_settings.exposure = -0.15
     print("  view transform:", scn.view_settings.view_transform,
           "| look:", scn.view_settings.look)
 
@@ -1749,9 +2451,13 @@ def main():
     build_ground()
     build_roads()
     build_markings()
+    detail_road()
+    detail_markings()
     build_pavements()
     build_bank_of_industry()
     build_native_supply()
+    detail_facades()
+    detail_street_furniture()
     build_secondary()
     check_camera_sightlines()
     build_plots()
@@ -1761,9 +2467,11 @@ def main():
     build_pedestrians()
     anchor, dome = build_anchors()
     place_lp12(anchor)
+    INSTALL_FRAMES[0] = place_lp12_animated(anchor) or 0
     build_cameras(dome)
     build_lighting()
     configure_render()
+    write_look_manifest()
 
     tris = report()
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)

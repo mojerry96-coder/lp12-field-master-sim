@@ -1,0 +1,314 @@
+{
+  "generated_by": "build_awolowo_env.py",
+  "axis_note": "Blender Z-up. three.js: (x, y, z) -> (x, z, -y).",
+  "units": {
+    "length": "metres",
+    "angle": "degrees"
+  },
+  "color_management": {
+    "view_transform": "Standard",
+    "look": "None",
+    "exposure": -0.15,
+    "three_js_hint": "Blender Standard == THREE.LinearToneMapping with toneMappingExposure = 2 ** exposure, and outputColorSpace = SRGBColorSpace. Do NOT use NoToneMapping: it ignores toneMappingExposure.",
+    "three_js_tone_mapping": "LinearToneMapping",
+    "three_js_exposure": 0.90125
+  },
+  "world": {
+    "color": [
+      0.93011,
+      0.9131,
+      0.87962
+    ],
+    "strength": 1.1
+  },
+  "palette": {
+    "road_primary": "#2F6EDB",
+    "road_secondary": "#3E7BE2",
+    "road_marking": "#EAF1FF",
+    "building": "#F2F0E9",
+    "building_hi": "#FAF9F5",
+    "building_shadow": "#DDE1E5",
+    "ground": "#EEF1F4",
+    "pavement": "#E5E8EC",
+    "window": "#B9C8D8",
+    "window_dark": "#53677D",
+    "metal": "#AEB7C1",
+    "vegetation": "#91AD8C",
+    "network_green": "#63BF70",
+    "accent_blue": "#194FAF"
+  },
+  "lights": [
+    {
+      "name": "ENV_Fill_Cool",
+      "type": "AREA",
+      "location": [
+        58.0,
+        62.0,
+        48.0
+      ],
+      "rotation_deg": [
+        52.0,
+        0.0,
+        140.0
+      ],
+      "direction": [
+        -0.50652,
+        -0.60365,
+        -0.61566
+      ],
+      "energy": 850.0,
+      "color": [
+        0.68669,
+        0.81485,
+        1.0
+      ],
+      "size": 26.0,
+      "size_y": 0.25,
+      "shape": "SQUARE"
+    },
+    {
+      "name": "ENV_Key_Warm",
+      "type": "AREA",
+      "location": [
+        -46.0,
+        -52.0,
+        62.0
+      ],
+      "rotation_deg": [
+        44.0,
+        0.0,
+        -40.0
+      ],
+      "direction": [
+        0.44652,
+        0.53214,
+        -0.71934
+      ],
+      "energy": 2200.0,
+      "color": [
+        1.0,
+        0.92158,
+        0.85499
+      ],
+      "size": 18.0,
+      "size_y": 0.25,
+      "shape": "SQUARE"
+    },
+    {
+      "name": "ENV_Rim",
+      "type": "AREA",
+      "location": [
+        24.0,
+        58.0,
+        26.0
+      ],
+      "rotation_deg": [
+        76.0,
+        0.0,
+        184.0
+      ],
+      "direction": [
+        0.06768,
+        -0.96793,
+        -0.24192
+      ],
+      "energy": 480.0,
+      "color": [
+        0.80695,
+        0.88792,
+        1.0
+      ],
+      "size": 34.0,
+      "size_y": 18.0,
+      "shape": "RECTANGLE"
+    },
+    {
+      "name": "ENV_Sun_Soft",
+      "type": "SUN",
+      "location": [
+        0.0,
+        0.0,
+        90.0
+      ],
+      "rotation_deg": [
+        44.0,
+        0.0,
+        -40.0
+      ],
+      "direction": [
+        0.44652,
+        0.53214,
+        -0.71934
+      ],
+      "energy": 0.9,
+      "color": [
+        1.0,
+        0.77582,
+        0.54572
+      ],
+      "angle": 0.15708
+    }
+  ],
+  "cameras": [
+    {
+      "name": "CAM_ENV_ESTABLISHING",
+      "type": "PERSP",
+      "location": [
+        -1.8602,
+        -42.7091,
+        10.3349
+      ],
+      "rotation_deg": [
+        85.0,
+        -0.0,
+        -13.0
+      ],
+      "clip_start": 0.1,
+      "clip_end": 900.0,
+      "lens_mm": 32.0,
+      "sensor_width_mm": 36.0,
+      "fov_y_deg": 58.716,
+      "dof": {
+        "enabled": true,
+        "f_stop": 3.4,
+        "focus_point": [
+          8.0,
+          0.0,
+          6.5
+        ]
+      }
+    },
+    {
+      "name": "CAM_ENV_ISOMETRIC",
+      "type": "ORTHO",
+      "location": [
+        155.9117,
+        -149.9117,
+        143.779
+      ],
+      "rotation_deg": [
+        58.0,
+        0.0,
+        45.0
+      ],
+      "clip_start": 1.0,
+      "clip_end": 900.0,
+      "ortho_scale": 190.0
+    },
+    {
+      "name": "CAM_LP12_CONTEXT",
+      "type": "PERSP",
+      "location": [
+        -30.0,
+        -52.0,
+        30.0
+      ],
+      "rotation_deg": [
+        72.701,
+        -0.0,
+        -42.709
+      ],
+      "clip_start": 0.1,
+      "clip_end": 600.0,
+      "lens_mm": 42.0,
+      "sensor_width_mm": 36.0,
+      "fov_y_deg": 46.397,
+      "dof": {
+        "enabled": true,
+        "f_stop": 2.8,
+        "focus_point": [
+          18.0,
+          0.0,
+          7.96
+        ]
+      }
+    },
+    {
+      "name": "CAM_LP12_HERO",
+      "type": "PERSP",
+      "location": [
+        7.0291,
+        -28.3486,
+        10.7561
+      ],
+      "rotation_deg": [
+        83.0,
+        0.0,
+        -21.0
+      ],
+      "clip_start": 0.1,
+      "clip_end": 900.0,
+      "lens_mm": 85.0,
+      "sensor_width_mm": 36.0,
+      "fov_y_deg": 23.913,
+      "dof": {
+        "enabled": true,
+        "f_stop": 2.2,
+        "focus_point": [
+          17.7,
+          -0.55,
+          7.1
+        ]
+      }
+    },
+    {
+      "name": "CAM_LP12_MOUNT",
+      "type": "PERSP",
+      "location": [
+        15.0563,
+        -7.1035,
+        8.5034
+      ],
+      "rotation_deg": [
+        86.0,
+        0.0,
+        -21.0
+      ],
+      "clip_start": 0.1,
+      "clip_end": 900.0,
+      "lens_mm": 95.0,
+      "sensor_width_mm": 36.0,
+      "fov_y_deg": 21.458,
+      "dof": {
+        "enabled": true,
+        "f_stop": 2.4,
+        "focus_point": [
+          17.38,
+          -1.05,
+          8.05
+        ]
+      }
+    }
+  ],
+  "lp12": {
+    "anchor": [
+      18.0,
+      0.0,
+      0.0
+    ],
+    "assembled_glb": "lp12_v2_assembled.glb",
+    "animated_glb": "lp12_v2.glb",
+    "cable_flex": {
+      "node": "Antenna_Cables",
+      "targets": [
+        "Flex_Tilt_Neg",
+        "Flex_Tilt_Pos"
+      ],
+      "range_deg": 10.0,
+      "rule": "local Tilt_Rig.rotation.x in degrees -> Flex_Tilt_Neg = clamp(-deg/10, 0, 1), Flex_Tilt_Pos = clamp(deg/10, 0, 1). UI downtilt maps to NEGATIVE local X.",
+      "measured_clearance_m": {
+        "rigid": {
+          "-10deg": -0.0683,
+          "0deg": 0.0582,
+          "+10deg": 0.2591
+        },
+        "flexed": {
+          "-10deg": 0.0158,
+          "0deg": 0.0582,
+          "+10deg": 0.078
+        }
+      }
+    }
+  },
+  "vehicles_included": false
+}

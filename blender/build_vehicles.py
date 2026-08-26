@@ -57,7 +57,25 @@ VEHICLE_COLOURS = {
     "MAT_LIGHT_BRAKE":       ("#E64A4A", 0.30, 0.00),
     "MAT_LIGHT_INDICATOR":   ("#F2B84B", 0.30, 0.00),
     "MAT_TRIM":              ("#283343", 0.62, 0.10),
+    # Muted accents for the variation system, section 13. Deliberately desaturated
+    # against the palette's blue so a handful of them add life to the traffic
+    # without turning the corridor into a toy city.
+    "MAT_VEHICLE_YELLOW":    ("#D9B457", 0.46, 0.08),
+    "MAT_VEHICLE_RED":       ("#B85B54", 0.46, 0.08),
 }
+
+# Body-colour variants, section 13. Roughly two thirds stay off-white or blue,
+# which is what keeps the environment's visual language intact.
+VARIANTS = [
+    ("VAR_OFFWHITE",      "MAT_VEHICLE_OFFWHITE"),
+    ("VAR_OFFWHITE",      "MAT_VEHICLE_OFFWHITE"),
+    ("VAR_BLUE",          "MAT_VEHICLE_BLUE"),
+    ("VAR_BLUE_OFFWHITE", "MAT_VEHICLE_OFFWHITE"),
+    ("VAR_OFFWHITE",      "MAT_VEHICLE_OFFWHITE"),
+    ("VAR_MUTED_YELLOW",  "MAT_VEHICLE_YELLOW"),
+    ("VAR_BLUE",          "MAT_VEHICLE_BLUE"),
+    ("VAR_MUTED_RED",     "MAT_VEHICLE_RED"),
+]
 
 
 # ------------------------------------------------------------ part library
@@ -241,6 +259,65 @@ def seat_on_ground(bpy, ob):
         for v in ob.data.vertices:
             v.co.z -= drop
     return drop
+
+
+def apply_variant(ob, mats, variant_index):
+    """Recolour one instance without duplicating its mesh.
+
+    Blender lets a material slot be linked to the OBJECT rather than the mesh,
+    which is exactly what is needed here: forty vehicles sharing ten meshes but
+    not all the same colour. Building a mesh per colour would multiply the
+    library by five for no geometric difference at all.
+    """
+    _, mat_name = VARIANTS[variant_index % len(VARIANTS)]
+    if not ob.material_slots:
+        return
+    slot = ob.material_slots[BODY]
+    slot.link = "OBJECT"
+    slot.material = mats[mat_name]
+
+
+def make_lods(bpy, ob, name, coll_link):
+    """LOD1 and LOD2 from the LOD0 mesh.
+
+    Both levels collapse by ratio. A planar dissolve was the obvious first
+    choice — these bodies are flat panels joined by bevels, so dissolving
+    near-coplanar faces should strip the bevel subdivision and leave every
+    silhouette untouched. Measured, it removed 4%: a 90-degree corner bevelled
+    with two segments has facets meeting at roughly 30 degrees, so no dissolve
+    angle small enough to be safe is large enough to touch them, and one large
+    enough to touch them also flattens the windscreen rake.
+
+    Collapse gets the ratios the brief asks for and, because edge-collapse cost
+    favours flat regions, it spends its budget on the bevel fillets before it
+    touches anything that carries the shape.
+    """
+    out = []
+    for tag, kind, setting in (("LOD1", "COLLAPSE", 0.55),
+                               ("LOD2", "COLLAPSE", 0.28)):
+        cp = ob.copy()
+        cp.data = ob.data.copy()
+        cp.name = f"{name}_{tag}"
+        # The prototype is hidden, and .copy() carries that across. Blender does
+        # not evaluate a hidden object, so the modifier below would silently
+        # produce nothing and the LOD would come back byte-identical to LOD0.
+        cp.hide_viewport = False
+        cp.hide_render = False
+        coll_link(cp)
+        mod = cp.modifiers.new("Decimate", "DECIMATE")
+        mod.decimate_type = kind
+        mod.ratio = setting
+        # The depsgraph has to be told the object and its new modifier exist
+        # before it can be evaluated. Without this the evaluated mesh comes back
+        # unmodified and every LOD is a byte-for-byte copy of LOD0 — which looks
+        # like it worked right up until you count the triangles.
+        bpy.context.view_layer.update()
+        deps = bpy.context.evaluated_depsgraph_get()
+        cp.data = bpy.data.meshes.new_from_object(cp.evaluated_get(deps))
+        cp.modifiers.clear()
+        cp.hide_render = cp.hide_viewport = True
+        out.append(cp)
+    return out
 
 
 def add_bevel(ob, width, segments=2, angle=40.0):

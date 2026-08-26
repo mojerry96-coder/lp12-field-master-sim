@@ -1,0 +1,456 @@
+{
+ "vehicles": {
+  "VEH_BUS_CITY_01": {
+   "file": "veh_bus_city_01.glb",
+   "kb": 77.7,
+   "nodes": [
+    "VEH_BUS_CITY_01_LOD1",
+    "VEH_BUS_CITY_01_LOD2",
+    "VEH_BUS_CITY_01_ROOT"
+   ]
+  },
+  "VEH_TRUCK_SEMI_01": {
+   "file": "veh_truck_semi_01.glb",
+   "kb": 129.6,
+   "nodes": [
+    "VEH_TRUCK_SEMI_01_LOD1",
+    "VEH_TRUCK_SEMI_01_LOD2",
+    "VEH_TRUCK_SEMI_01_ROOT"
+   ]
+  },
+  "VEH_TRUCK_BOX_01": {
+   "file": "veh_truck_box_01.glb",
+   "kb": 80.4,
+   "nodes": [
+    "VEH_TRUCK_BOX_01_LOD1",
+    "VEH_TRUCK_BOX_01_LOD2",
+    "VEH_TRUCK_BOX_01_ROOT"
+   ]
+  },
+  "VEH_TRUCK_PANEL_01": {
+   "file": "veh_truck_panel_01.glb",
+   "kb": 70.4,
+   "nodes": [
+    "VEH_TRUCK_PANEL_01_LOD1",
+    "VEH_TRUCK_PANEL_01_LOD2",
+    "VEH_TRUCK_PANEL_01_ROOT"
+   ]
+  },
+  "VEH_VAN_CARGO_01": {
+   "file": "veh_van_cargo_01.glb",
+   "kb": 66.3,
+   "nodes": [
+    "VEH_VAN_CARGO_01_LOD1",
+    "VEH_VAN_CARGO_01_LOD2",
+    "VEH_VAN_CARGO_01_ROOT"
+   ]
+  },
+  "VEH_CAR_SEDAN_01": {
+   "file": "veh_car_sedan_01.glb",
+   "kb": 62.2,
+   "nodes": [
+    "VEH_CAR_SEDAN_01_LOD1",
+    "VEH_CAR_SEDAN_01_LOD2",
+    "VEH_CAR_SEDAN_01_ROOT"
+   ]
+  },
+  "VEH_CAR_COMPACT_01": {
+   "file": "veh_car_compact_01.glb",
+   "kb": 62.1,
+   "nodes": [
+    "VEH_CAR_COMPACT_01_LOD1",
+    "VEH_CAR_COMPACT_01_LOD2",
+    "VEH_CAR_COMPACT_01_ROOT"
+   ]
+  },
+  "VEH_CAR_COUPE_01": {
+   "file": "veh_car_coupe_01.glb",
+   "kb": 56.9,
+   "nodes": [
+    "VEH_CAR_COUPE_01_LOD1",
+    "VEH_CAR_COUPE_01_LOD2",
+    "VEH_CAR_COUPE_01_ROOT"
+   ]
+  },
+  "VEH_SCOOTER_01": {
+   "file": "veh_scooter_01.glb",
+   "kb": 25.0,
+   "nodes": [
+    "VEH_SCOOTER_01_LOD1",
+    "VEH_SCOOTER_01_LOD2",
+    "VEH_SCOOTER_01_ROOT"
+   ]
+  },
+  "VEH_E_SCOOTER_01": {
+   "file": "veh_e_scooter_01.glb",
+   "kb": 14.9,
+   "nodes": [
+    "VEH_E_SCOOTER_01_LOD1",
+    "VEH_E_SCOOTER_01_LOD2",
+    "VEH_E_SCOOTER_01_ROOT"
+   ]
+  }
+ },
+ "placements": [
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    122.0,
+    -0.3,
+    4.075
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    106.0,
+    -0.3,
+    7.725
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_VAN_CARGO_01",
+   "position": [
+    90.0,
+    -0.3,
+    11.375
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_BLUE"
+  },
+  {
+   "type": "VEH_CAR_COUPE_01",
+   "position": [
+    76.0,
+    -0.3,
+    4.075
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_BUS_CITY_01",
+   "position": [
+    62.0,
+    -0.3,
+    11.375
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    48.0,
+    -0.3,
+    7.725
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_YELLOW"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    26.0,
+    -0.3,
+    4.075
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_BLUE"
+  },
+  {
+   "type": "VEH_CAR_COUPE_01",
+   "position": [
+    8.0,
+    -0.3,
+    7.725
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_RED"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    -8.0,
+    -0.3,
+    4.075
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    -26.0,
+    -0.3,
+    7.725
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_TRUCK_PANEL_01",
+   "position": [
+    -44.0,
+    -0.3,
+    11.375
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_BLUE"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    -62.0,
+    -0.3,
+    4.075
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_COUPE_01",
+   "position": [
+    -80.0,
+    -0.3,
+    7.725
+   ],
+   "rotationY": 1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    128.0,
+    -0.3,
+    -4.075
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_YELLOW"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    112.0,
+    -0.3,
+    -7.725
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_BLUE"
+  },
+  {
+   "type": "VEH_TRUCK_BOX_01",
+   "position": [
+    94.0,
+    -0.3,
+    -11.375
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_RED"
+  },
+  {
+   "type": "VEH_CAR_COUPE_01",
+   "position": [
+    78.0,
+    -0.3,
+    -4.075
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    60.0,
+    -0.3,
+    -7.725
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_VAN_CARGO_01",
+   "position": [
+    42.0,
+    -0.3,
+    -11.375
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_BLUE"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    24.0,
+    -0.3,
+    -4.075
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    4.0,
+    -0.3,
+    -7.725
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_COUPE_01",
+   "position": [
+    -14.0,
+    -0.3,
+    -4.075
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_YELLOW"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    -32.0,
+    -0.3,
+    -7.725
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_BLUE"
+  },
+  {
+   "type": "VEH_VAN_CARGO_01",
+   "position": [
+    -50.0,
+    -0.3,
+    -11.375
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_RED"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    -68.0,
+    -0.3,
+    -4.075
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_TRUCK_SEMI_01",
+   "position": [
+    -94.0,
+    -0.3,
+    -11.375
+   ],
+   "rotationY": -1.5708,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_SCOOTER_01",
+   "position": [
+    72.0,
+    -0.3,
+    11.3
+   ],
+   "rotationY": 1.5708,
+   "variant": null
+  },
+  {
+   "type": "VEH_SCOOTER_01",
+   "position": [
+    -16.0,
+    -0.3,
+    -11.3
+   ],
+   "rotationY": -1.5708,
+   "variant": null
+  },
+  {
+   "type": "VEH_E_SCOOTER_01",
+   "position": [
+    36.0,
+    0.0,
+    16.6
+   ],
+   "rotationY": 1.5708,
+   "variant": null
+  },
+  {
+   "type": "VEH_E_SCOOTER_01",
+   "position": [
+    -38.0,
+    0.0,
+    -16.6
+   ],
+   "rotationY": -1.5708,
+   "variant": null
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    88.0,
+    0.0,
+    -24.4
+   ],
+   "rotationY": 3.1416,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    84.9,
+    0.0,
+    -24.4
+   ],
+   "rotationY": 3.1416,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    81.8,
+    0.0,
+    -24.4
+   ],
+   "rotationY": 3.1416,
+   "variant": "MAT_VEHICLE_YELLOW"
+  },
+  {
+   "type": "VEH_CAR_COUPE_01",
+   "position": [
+    78.7,
+    0.0,
+    -24.4
+   ],
+   "rotationY": 3.1416,
+   "variant": "MAT_VEHICLE_BLUE"
+  },
+  {
+   "type": "VEH_CAR_COMPACT_01",
+   "position": [
+    75.6,
+    0.0,
+    -24.4
+   ],
+   "rotationY": 3.1416,
+   "variant": "MAT_VEHICLE_RED"
+  },
+  {
+   "type": "VEH_CAR_SEDAN_01",
+   "position": [
+    72.5,
+    0.0,
+    -24.4
+   ],
+   "rotationY": 3.1416,
+   "variant": "MAT_VEHICLE_OFFWHITE"
+  }
+ ]
+}
