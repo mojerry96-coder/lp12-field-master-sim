@@ -1,6 +1,10 @@
+import { urlFor } from './lib/assetManifest'
 import { create } from 'zustand'
 
-export const LP12_MODEL_URL = '/models/lp12_v2.glb'
+// Via the manifest so the loader cache is guaranteed to hit: five call sites
+// ask for this model, and any of them spelling the path differently would
+// download and parse a second 1.5 MB copy.
+export const LP12_MODEL_URL = urlFor('lp12')
 
 /** Shell mode wraps the existing build sequence; it does not replace it. */
 export const MODES = ['locate', 'opening', 'build', 'complete', 'tuning']
@@ -32,6 +36,11 @@ export const useSim = create((set, get) => ({
   reducedMotion: false,
   bgReady: false,
   loadError: null,
+  openerDone: false,           // the MIVA opener has handed over
+  startedAt: null,             // set when the learner first opens the build
+  wrongAttempts: 0,            // parts fitted out of order, for the review
+  completedStages: [],         // stage titles, in the order they were finished
+  result: null,                // frozen snapshot, survives restart for review
   ...INITIAL_BUILD,
   controller: null,             // survives restart; owns the GLB mixer
 
@@ -62,7 +71,8 @@ export const useSim = create((set, get) => ({
   openBuild: async () => {
     const { transitionLocked, mode } = get()
     if (transitionLocked || mode !== 'locate') return
-    set({ transitionLocked: true, mode: 'opening', loadError: null })
+    set({ transitionLocked: true, mode: 'opening', loadError: null,
+         startedAt: get().startedAt || Date.now() })
     try {
       const res = await fetch(LP12_MODEL_URL, { cache: 'force-cache' })
       if (!res.ok) throw new Error(`${LP12_MODEL_URL} responded ${res.status}`)
@@ -151,11 +161,62 @@ export const useSim = create((set, get) => ({
               .forEach((c) => controller.applyClipEndPose(c))
   },
 
+  openerFinished: () => set({ openerDone: true }),
+  noteWrongAttempt: () => set((st) => ({ wrongAttempts: st.wrongAttempts + 1 })),
+  noteStageComplete: (title) => set((st) => (
+    st.completedStages.includes(title)
+      ? st
+      : { completedStages: [...st.completedStages, title] })),
+
+  /**
+   * Freeze the outcome. Called once when the simulation finishes, so the
+   * completion screen and the review read a stable snapshot rather than live
+   * state that restart is about to clear.
+   */
+  finish: () => {
+    const st = get()
+    const result = {
+      version: 1,
+      installed: st.installed,
+      height: st.height,
+      downtilt: st.downtilt,
+      heightOk: st.heightOk(),
+      tiltOk: st.tiltOk(),
+      wrongAttempts: st.wrongAttempts,
+      completedStages: st.completedStages,
+      durationMs: st.startedAt ? Date.now() - st.startedAt : null,
+      finishedAt: new Date().toISOString(),
+    }
+    try {
+      // Small and versioned. No images, GLBs or textures go in here — this is
+      // a handful of numbers describing one attempt.
+      localStorage.setItem('lp12.result.v1', JSON.stringify(result))
+    } catch { /* private mode, quota: the in-memory copy still works */ }
+    set({ result, mode: 'complete' })
+  },
+
   restart: () => {
     // s35: return the model to the unassembled rest state. The controller
-    // itself is deliberately preserved — it owns the GLB's mixer.
+    // itself is deliberately preserved — it owns the GLB's mixer, and
+    // rebuilding it would mean re-parsing the GLB.
+    //
+    // Nothing here touches the asset caches. That is the point: a restart
+    // resets the attempt, not the download. No page reload either — a reload
+    // would drop the parsed GLBs, the decoded images and the compiled shaders
+    // and make the second run slower than the first.
+    //
+    // `result` is deliberately kept so the review is still readable after a
+    // restart, and openerDone is cleared so the opener replays (skippable).
     get().controller?.resetAll()
-    set({ ...INITIAL_BUILD, mode: 'locate', loadError: null })
+    set({
+      ...INITIAL_BUILD,
+      mode: 'locate',
+      loadError: null,
+      openerDone: false,
+      startedAt: null,
+      wrongAttempts: 0,
+      completedStages: [],
+    })
   },
 
   heightOk: () => {

@@ -1,3 +1,4 @@
+import { urlFor } from '../lib/assetManifest'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useSim } from '../store'
 import LP12LiveViewport from './LP12LiveViewport'
@@ -266,7 +267,7 @@ export default function LP12TabletTuningScene({ onExit }) {
         style={{ transform: `translate(-50%, -50%) ${backdrop}` }}
         aria-hidden="true"
       >
-        <img src="/assets/lp12/street-plate.jpg" alt="" draggable={false} />
+        <img src={urlFor('street-background')} alt="" draggable={false} />
       </div>
 
       <div
@@ -280,7 +281,7 @@ export default function LP12TabletTuningScene({ onExit }) {
         {/* Hand and tablet only — the street is the plane behind. */}
         <img
           className="lp12-tablet-plate"
-          src="/assets/lp12/tablet-cutout.png"
+          src={urlFor('tablet-foreground')}
           alt="A field engineer holding a landscape tablet on Awolowo Way"
           draggable={false}
         />

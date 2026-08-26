@@ -105,6 +105,7 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
         { timeScale: useSim.getState().reducedMotion ? 2 : 1 })
       const part = COMPLETED_PART_BY_STAGE[stageId]
       if (part) setInstalled((prev) => prev.includes(part) ? prev : [...prev, part])
+      useSim.getState().noteStageComplete(stage.title)
       // s6: only advance once the animation has clearly completed
       setStageId(STAGES[Math.min(idx + 1, STAGES.length - 1)].id)
     } catch (err) {

@@ -101,6 +101,41 @@ const STAGE_FIT = {
   fasteners: { nodes: ['Antenna_Body', 'Antenna_Fasteners'], margin: 1.28 },
 }
 
+/**
+ * Compiles the scene's shaders before the stage is revealed.
+ *
+ * three compiles a material's program the first time it is actually drawn. Do
+ * that on the first visible frame and the first camera move stutters — the
+ * jank is not the camera, it is twenty programs compiling while the frame is
+ * already on screen. renderer.compile() walks the graph and builds them up
+ * front, off-screen, before anyone is looking.
+ *
+ * It reports ready once, after one compile pass and one settled frame; the
+ * gate above is what turns that into a reveal.
+ */
+function ScenePrecompile({ onCompiled }) {
+  const { gl, scene, camera } = useThree()
+  const state = useRef({ done: false, frames: 0 })
+
+  useFrame(() => {
+    const st = state.current
+    if (st.done) return
+    if (st.frames === 0) {
+      // compile() is synchronous and can take tens of ms — which is the whole
+      // point of it happening here rather than on the first visible frame.
+      gl.compile(scene, camera)
+    }
+    st.frames += 1
+    // One frame to compile, one to let anything lazily created settle.
+    if (st.frames >= 2) {
+      st.done = true
+      onCompiled?.()
+    }
+  })
+  return null
+}
+
+
 function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
                           activeClip = null, modelRoot = null }) {
   const { camera, size } = useThree()
@@ -604,6 +639,7 @@ export default function LP12BuildCanvas(props) {
         </Suspense>
         {/* Publishes the camera to the DOM overlay below the Canvas. */}
         <CalloutBridge viewRef={calloutView} />
+        <ScenePrecompile onCompiled={props.onCompiled} />
         <CameraDirector flow={props.flow} studio={props.studio}
                         stage={props.stage} cameraName={props.camera}
                         view={props.view} activeClip={props.activeClip}

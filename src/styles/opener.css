@@ -1,0 +1,187 @@
+/* MIVA opener + stage gates.
+   Dark navy ground, one blue, one thin progress line. Deliberately shares the
+   --lp12-blue the rest of the simulation uses so the opener reads as the same
+   product rather than a title card bolted on the front. */
+.miva-opener{position:fixed;inset:0;z-index:60;display:grid;place-items:center;
+  background:#050a16;overflow:hidden;
+  font-family:"Helvetica Neue",Manrope,Inter,system-ui,-apple-system,sans-serif}
+
+/* 0.0-0.4s: a blue atmosphere rises out of black. */
+.miva-atmosphere{position:absolute;inset:-20%;opacity:0;
+  background:radial-gradient(ellipse at 50% 58%,
+    rgba(28,86,214,.42) 0%, rgba(10,26,66,.30) 42%, rgba(5,10,22,0) 72%);
+  transition:opacity 620ms ease-out}
+.miva-opener:not(.phase-atmosphere) .miva-atmosphere{opacity:1}
+
+/* A single pass of light behind the mark, not a loop. */
+.miva-sweep{position:absolute;left:-40%;top:0;width:40%;height:100%;opacity:0;
+  background:linear-gradient(100deg,rgba(90,150,255,0) 0%,rgba(120,175,255,.16) 50%,rgba(90,150,255,0) 100%);
+  filter:blur(26px)}
+.miva-opener.phase-mark .miva-sweep,
+.miva-opener.phase-title .miva-sweep{opacity:1;animation:miva-sweep 1500ms ease-out forwards}
+@keyframes miva-sweep{from{transform:translateX(0)}to{transform:translateX(360%)}}
+
+.miva-stack{position:relative;display:grid;justify-items:center;gap:14px;padding:0 24px;
+  text-align:center}
+
+/* Slot for the approved mark. Reserves its height so nothing shifts when the
+   real asset is dropped in later. */
+.miva-mark{width:96px;height:96px;margin-bottom:6px}
+
+.miva-title{margin:0;font-size:clamp(26px,4.4vw,54px);font-weight:600;
+  letter-spacing:.20em;color:#f2f7ff;text-indent:.20em;
+  text-shadow:0 0 34px rgba(90,150,255,.34);
+  opacity:0;transform:scale(.97);
+  transition:opacity 760ms ease-out,transform 900ms cubic-bezier(.2,.7,.25,1)}
+.miva-sub{margin:0;font-size:clamp(11px,1.15vw,14px);font-weight:500;
+  letter-spacing:.30em;text-transform:uppercase;color:rgba(178,205,255,.78);
+  text-indent:.30em;opacity:0;transition:opacity 700ms ease-out 160ms}
+
+.miva-opener.phase-title .miva-title,
+.miva-opener.phase-hold .miva-title{opacity:1;transform:scale(1)}
+.miva-opener.phase-title .miva-sub,
+.miva-opener.phase-hold .miva-sub{opacity:1}
+
+/* Reduced motion: no sweep, no scale, no staged reveal — just the title. */
+.miva-opener.is-reduced .miva-title,
+.miva-opener.is-reduced .miva-sub{opacity:1;transform:none;transition:none}
+.miva-opener.is-reduced .miva-atmosphere{transition:none;opacity:1}
+
+.miva-status{margin-top:26px;display:grid;justify-items:center;gap:9px;
+  animation:miva-fade 340ms ease-out}
+.miva-status-line{display:block;width:min(260px,52vw);height:2px;border-radius:2px;
+  background:rgba(120,160,235,.20);overflow:hidden}
+.miva-status-line i{display:block;height:100%;width:100%;transform-origin:0 50%;
+  background:linear-gradient(90deg,#2f6ee0,#6aa4ff);transition:transform 220ms ease-out}
+.miva-status-text{font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(178,205,255,.72)}
+@keyframes miva-fade{from{opacity:0}to{opacity:1}}
+
+.miva-skip{position:absolute;right:26px;bottom:24px;height:34px;padding:0 16px;
+  border:1px solid rgba(150,185,255,.28);border-radius:999px;background:transparent;
+  color:rgba(198,220,255,.82);font:500 12px/1 inherit;letter-spacing:.12em;
+  text-transform:uppercase;cursor:pointer;animation:miva-fade 300ms ease-out}
+.miva-skip:hover{border-color:rgba(150,185,255,.6);color:#fff}
+
+/* --- stage gate ----------------------------------------------------------- */
+/* A stage stays behind this until every asset it needs is ready, then the
+   whole thing crossfades in at once. The point is that nothing appears
+   individually — no header first, then background, then model. */
+.stage-gate{position:absolute;inset:0;z-index:40;display:grid;place-items:center;
+  background:#050a16;
+  font-family:"Helvetica Neue",Manrope,Inter,system-ui,-apple-system,sans-serif}
+.stage-gate-inner{display:grid;justify-items:center;gap:12px;text-align:center;padding:0 24px}
+.stage-gate .miva-mark{width:56px;height:56px;margin:0}
+.stage-gate-name{margin:0;font:600 12px/1 inherit;letter-spacing:.24em;
+  text-transform:uppercase;color:rgba(178,205,255,.76);text-indent:.24em}
+.stage-gate-line{display:block;width:min(240px,46vw);height:2px;border-radius:2px;
+  background:rgba(120,160,235,.20);overflow:hidden;margin-top:4px}
+.stage-gate-line i{display:block;height:100%;width:100%;transform-origin:0 50%;
+  background:linear-gradient(90deg,#2f6ee0,#6aa4ff);transition:transform 200ms ease-out}
+.stage-gate-pct{font:500 11px/1 inherit;letter-spacing:.16em;color:rgba(178,205,255,.6)}
+
+.stage-gate-error{max-width:380px;display:grid;gap:14px;justify-items:center}
+.stage-gate-error p{margin:0;font:500 14px/1.5 inherit;color:#e8eef7}
+.stage-gate-actions{display:flex;gap:10px}
+.stage-gate-actions button{height:38px;padding:0 18px;border-radius:8px;cursor:pointer;
+  font:600 13px/1 inherit;border:1px solid rgba(150,185,255,.3);
+  background:transparent;color:#dce8ff}
+.stage-gate-actions button.is-primary{background:#075cff;border-color:#075cff;color:#fff}
+
+/* The revealed stage. 180-300ms, one transition for the whole scene. */
+.stage-reveal{opacity:0;transition:opacity 240ms ease-out}
+.stage-reveal.is-shown{opacity:1}
+
+@media (prefers-reduced-motion:reduce){
+  .miva-sweep{display:none}
+  .miva-title,.miva-sub,.stage-reveal{transition:none}
+}
+
+/* --- completion ----------------------------------------------------------- */
+/* The finished site is the picture. The panel sits on it, never over it. */
+.completion{position:fixed;inset:0;z-index:50;overflow:hidden;background:#050a16;
+  font-family:"Helvetica Neue",Manrope,Inter,system-ui,-apple-system,sans-serif}
+.completion-plate{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  transform:scale(1.04);opacity:0;transition:opacity 900ms ease-out}
+.completion.is-swept .completion-plate{opacity:1}
+
+/* The coverage the learner produced: one expansion, then it settles. */
+.completion-dome{position:absolute;left:54.5%;top:62.8%;width:min(46vw,560px);
+  aspect-ratio:1;transform:translate(-50%,-50%) scale(.4);opacity:0;border-radius:999px;
+  background:radial-gradient(circle,rgba(74,222,128,.30) 0%,rgba(52,199,110,.16) 52%,
+    rgba(52,199,110,0) 72%);
+  transition:transform 1200ms cubic-bezier(.16,.84,.3,1),opacity 900ms ease-out}
+.completion.is-swept .completion-dome{transform:translate(-50%,-50%) scale(1);opacity:1}
+
+/* Blue-to-green pass across the coverage area. Once. */
+.completion-sweep{position:absolute;inset:0;opacity:0;pointer-events:none;
+  background:linear-gradient(104deg,rgba(60,120,255,0) 34%,rgba(74,222,128,.20) 50%,
+    rgba(60,120,255,0) 66%)}
+.completion.is-swept .completion-sweep{animation:completion-sweep 1900ms ease-out .35s 1}
+@keyframes completion-sweep{0%{opacity:0;transform:translateX(-42%)}
+  30%{opacity:1}100%{opacity:0;transform:translateX(42%)}}
+
+.completion-scrim{position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(5,10,22,.90) 0%,rgba(5,10,22,.72) 38%,
+    rgba(5,10,22,.10) 70%,rgba(5,10,22,0) 100%)}
+
+.completion-panel{position:relative;height:100%;width:min(560px,52vw);
+  padding:0 clamp(28px,4vw,64px);display:flex;flex-direction:column;
+  justify-content:center;gap:14px;color:#eaf1ff}
+.completion-mark{margin:0;width:46px;height:46px;border-radius:999px;display:grid;
+  place-items:center;font-size:22px;font-weight:700;
+  background:rgba(224,161,62,.16);color:#ffca7a;border:1px solid rgba(224,161,62,.4);
+  opacity:0;transform:scale(.9);transition:opacity 500ms ease-out 700ms,transform 500ms ease-out 700ms}
+.completion-mark.is-pass{background:rgba(62,224,138,.16);color:#8ef0b4;
+  border-color:rgba(62,224,138,.42)}
+.completion.is-swept .completion-mark{opacity:1;transform:scale(1)}
+.completion-title{margin:0;font-size:clamp(24px,3.2vw,40px);font-weight:600;
+  letter-spacing:.16em;text-indent:.16em}
+.completion-lead{margin:0;font-size:clamp(13px,1.3vw,16px);font-weight:500;
+  color:rgba(180,206,255,.9)}
+.completion-copy{margin:0;font-size:14px;line-height:1.6;color:rgba(214,228,255,.78);
+  max-width:44ch}
+
+.completion-stats{margin:8px 0 0;display:grid;gap:1px;background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden}
+.completion-stats > div{display:flex;justify-content:space-between;gap:16px;
+  padding:11px 14px;background:rgba(9,20,44,.72);font-size:13px}
+.completion-stats dt{margin:0;color:rgba(190,212,250,.8)}
+.completion-stats dd{margin:0;font-weight:600}
+.completion-stats .is-ok dd{color:#8ef0b4}
+.completion-stats .is-warn dd{color:#ffca7a}
+
+.completion-actions{margin-top:14px;display:flex;flex-wrap:wrap;gap:10px}
+.completion-actions button{height:44px;padding:0 22px;border-radius:9px;cursor:pointer;
+  font:600 14px/1 inherit;border:1px solid rgba(150,185,255,.3);background:transparent;
+  color:#dce8ff}
+.completion-actions button.is-primary{background:#075cff;border-color:#075cff;color:#fff}
+.completion-actions button:hover{border-color:rgba(150,185,255,.7)}
+
+/* --- performance review --------------------------------------------------- */
+.review-sheet{position:fixed;inset:0;z-index:55;display:grid;place-items:center;
+  background:rgba(4,9,20,.72);backdrop-filter:blur(6px);
+  font-family:"Helvetica Neue",Manrope,Inter,system-ui,-apple-system,sans-serif}
+.review-inner{width:min(560px,92vw);max-height:84vh;overflow:auto;padding:26px 28px;
+  border-radius:14px;background:#0a1630;border:1px solid rgba(255,255,255,.12);
+  color:#e6eeff;display:grid;gap:12px}
+.review-inner h2{margin:0;font-size:20px;letter-spacing:.02em}
+.review-inner h3{margin:10px 0 0;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(178,205,255,.68)}
+.review-steps,.review-notes{margin:0;padding:0;list-style:none;display:grid;gap:6px;
+  font-size:13.5px;line-height:1.5}
+.review-steps li i{color:#8ef0b4;margin-right:8px;font-style:normal}
+.review-steps li.is-warn{color:#ffca7a}
+.review-notes li{color:rgba(214,228,255,.82);padding-left:14px;position:relative}
+.review-notes li::before{content:"•";position:absolute;left:0;color:#6aa4ff}
+.review-inner button{margin-top:10px;justify-self:start;height:40px;padding:0 20px;
+  border-radius:9px;border:0;background:#075cff;color:#fff;font:600 13px/1 inherit;
+  cursor:pointer}
+
+@media (prefers-reduced-motion:reduce){
+  .completion-plate,.completion-dome,.completion-mark{transition:none;opacity:1;
+    transform:translate(-50%,-50%) scale(1)}
+  .completion-plate{transform:scale(1.04)}
+  .completion-mark{transform:none}
+  .completion-sweep{display:none}
+}

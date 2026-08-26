@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
+import { urlFor } from '../lib/assetManifest'
 import * as THREE from 'three'
 
-export const ENV_MODEL_URL = '/models/awolowo_lowpoly_env.glb'
+export const ENV_MODEL_URL = urlFor('environment')
 
 /**
  * The low-poly Awolowo Way environment, standing around the LP12.

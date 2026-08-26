@@ -57,8 +57,8 @@ export default function GuidedHandOverlay({ cue, reducedMotion = false }) {
     <img
       className={`lp12-guided-hand is-${phase}`}
       src={phase === 'tap'
-        ? '/assets/lp12/hand-tap-alpha.png'
-        : '/assets/lp12/hand-point-alpha.png'}
+        ? '/assets/lp12/hand-tap-alpha.webp'
+        : '/assets/lp12/hand-point-alpha.webp'}
       alt=""
       aria-hidden="true"
       draggable={false}

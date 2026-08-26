@@ -187,6 +187,10 @@ export default function InstallShell({
     if (busy) return
     if (id === stage.activePart) return
     const needed = PART_ORDER[PART_ORDER.indexOf(id) - 1]
+    // Recorded for the performance review. The learner is not penalised for
+    // it in the moment — the refusal already teaches the order — but the
+    // review is more useful when it can say how often it happened.
+    useSim.getState().noteWrongAttempt()
     setShakeId(id)
     setWarning(PART_PREREQ_MESSAGE[id] || `Install the ${PART_LABELS[needed]} first.`)
     clearTimeout(timer.current)

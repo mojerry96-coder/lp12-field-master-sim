@@ -1764,6 +1764,17 @@ def main():
         export_animation_mode='NLA_TRACKS',       # one glTF clip per track name
         export_bake_animation=False,
         export_optimize_animation_size=False,
+        # Draco. The uncompressed file was 4.4 MB and is the single largest
+        # asset the application loads — bigger than the entire environment.
+        # Position quantisation stays at 14 bits rather than the default 11:
+        # this model is 12.5 m tall and carries 20 mm bolt heads, and 11 bits
+        # across that range is a ~1.5 mm step, which is visible on a hex head.
+        export_draco_mesh_compression_enable=True,
+        export_draco_mesh_compression_level=6,
+        export_draco_position_quantization=14,
+        export_draco_normal_quantization=10,
+        export_draco_texcoord_quantization=12,
+        export_draco_generic_quantization=12,
     )
     print(f"[v2] exported {os.path.basename(glb)} "
           f"({os.path.getsize(glb)/1e6:.2f} MB)")
