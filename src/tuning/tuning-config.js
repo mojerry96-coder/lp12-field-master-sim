@@ -257,8 +257,29 @@ export const STATUS_ROWS = {
 export const TABLET_ARTBOARD = {
   width: 1672,
   height: 941,
-  screen: { left: 268, top: 46, width: 1149, height: 846, radius: 27 },
+  /* Measured against the supplied foreground plate: the black display runs
+     x 288–1405, y 34–868. The aperture is inset a few pixels inside that so no
+     UI pixel ever touches the bezel highlight. */
+  screen: { left: 294, top: 42, width: 1104, height: 818, radius: 22 },
 }
+
+/**
+ * Parallax travel limits.
+ *
+ * The street counter-shifts far and does not rotate; the device group moves a
+ * little with the pointer and turns by a fraction of a degree. Two planes at
+ * different rates is what reads as depth — one plane moving is just a tilt.
+ * The device tilt stays small on purpose: GuidedHandOverlay converts browser
+ * rectangles back into artboard coordinates, and a rotated element reports the
+ * bounding box of its rotated quad.
+ */
+export const PARALLAX_LIMITS = {
+  street: { x: 30, y: 18, scale: 1.12 },
+  device: { x: 8, y: 5, rotateY: 1.2, rotateX: 0.8 },
+  glide: 0.085,
+  dragStrength: 0.1,
+}
+
 
 /**
  * Reporter sample points shown on the coverage shell, in spherical coordinates

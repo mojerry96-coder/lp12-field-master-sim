@@ -83,7 +83,6 @@ const CLIP_FOCUS = {
   ANIM_06_Connectors_Attach: { node: 'Connector_Bank', delayMs: 1050, distance: 1.15, lensMM: 90 },
 }
 
-const ORBIT_PERIOD_S = 22        // one revolution; slow enough to read detail
 
 /**
  * Stages whose subject must be wholly in frame, and what "wholly" means.
@@ -97,8 +96,24 @@ const ORBIT_PERIOD_S = 22        // one revolution; slow enough to read detail
  * the antenna has grown twice already (end caps, bezel, vent) and a hand-set
  * distance goes stale every time it does.
  */
+/**
+ * Stages that pull the camera back until their subject fits.
+ *
+ * The rig pages needed it for a reason worth recording: their anchors are
+ * authored close, and at a tall or narrow viewport that framing crops INTO the
+ * assembly. The antenna, the bracket and the rail then arrive on screen as
+ * three separate objects with gaps between them, and the pole reads as
+ * scattered rather than built — the model is correct, the camera is simply
+ * standing inside it. Fitting the whole mounted assembly guarantees the
+ * relationship between the parts is visible at every aspect, which is the
+ * thing these two pages are asking the learner to judge.
+ */
+const MOUNTED_ASSEMBLY = ['Antenna_Body', 'Pivot_Bracket', 'Mounting_Rail', 'Band_Top_Front']
+
 const STAGE_FIT = {
   fasteners: { nodes: ['Antenna_Body', 'Antenna_Fasteners'], margin: 1.28 },
+  downtilt: { nodes: MOUNTED_ASSEMBLY, margin: 1.9 },
+  height: { nodes: [...MOUNTED_ASSEMBLY, 'Pole_Shaft'], margin: 1.12 },
 }
 
 /**
@@ -137,10 +152,11 @@ function ScenePrecompile({ onCompiled }) {
 
 
 function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
-                          activeClip = null, modelRoot = null }) {
+                          activeClip = null, modelRoot = null, orbitInput = null,
+                          viewRef = null }) {
   const { camera, size } = useThree()
   const state = useMemo(
-    () => ({ anim: null, pos: null, tgt: null, focus: null }), [])
+    () => ({ anim: null, pos: null, tgt: null, subject: null, focus: null }), [])
 
   // Studio manifest wins when present: it carries the 9 authored anchors and
   // the stage -> camera map straight from Blender.
@@ -189,6 +205,10 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
     const fov = v.lensMM !== undefined
       ? fitFovToViewport(v.lensMM, STUDIO_AUTHORED_ASPECT, aspect)
       : (aspect < 16 / 9 ? v.fov * ((16 / 9) / aspect) : v.fov)
+    // The subject itself, before the composition bias slides the aim sideways
+    // to push it off centre. Overlays that have to sit ON the hardware need
+    // this one; the camera needs the biased one below.
+    state.subject = v.tgt.clone()
     let tgt = applySubjectBias(v.pos, v.tgt, v.bias, fov, aspect)
 
     // Pull back until the stage's subject fits, if it does not already.
@@ -261,13 +281,24 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
   }, [activeClip, modelRoot, camera, size, state])
 
   useFrame((_, dt) => {
+    // The stage's look-at point, published for the DOM overlays. It is the
+    // Blender anchor's own target, so "where this stage is working" is
+    // authored data rather than a rectangle guessed in CSS.
+    if (viewRef?.current && state.subject) viewRef.current.target = state.subject
+
     // Orbit runs on the resolved target, so it follows whatever the stage is
     // framing and survives a stage change without re-deriving anything.
     if (view === 'orbit' && state.tgt && state.pos && !state.anim) {
+      // Driven by the learner's wheel, never by the clock. The simulation does
+      // not turn the hardware on its own (specification 2.3), so a frame with
+      // nothing scrolled is a frame where the camera does not move — which is
+      // also what makes the motion stop the instant the scrolling does.
+      const step = orbitInput ? orbitInput.consume() : 0
+      if (!step) return
       // Rotate the offset about the target's vertical axis. Height and radius
       // come from wherever the camera already is, so orbit picks up the
-      // stage's framing instead of imposing one.
-      const step = (dt / ORBIT_PERIOD_S) * Math.PI * 2
+      // stage's framing instead of imposing one — and neither changes here,
+      // which is the whole of the constraint.
       const off = state.pos.clone().sub(state.tgt)
       const r = Math.hypot(off.x, off.z)
       const ang = Math.atan2(off.x, off.z) + step
@@ -308,8 +339,22 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
  * chrome. The only thing left below is environment response, which is a
  * property of this scene rather than of the material.
  */
-/** Stages that show the coverage dome. */
-const DOME_STAGES = new Set(['height', 'downtilt', 'coverage', 'complete'])
+/**
+ * Stages that show the coverage dome.
+ *
+ * Not the height stage. It used to be included so the learner could watch the
+ * footprint change while they moved the control, but that reasoning assumed
+ * the city was behind it; with the environment gone (specification 2.4) the
+ * dome is a pale hemisphere filling an otherwise empty studio, and Page 11
+ * asks the learner to judge a height against the column, which is exactly what
+ * it covers. Nor the downtilt stage, where the same information is carried by
+ * the coverage mini viewport (2.7) and a scene-sized dome would swallow the
+ * hinge geometry the learner is there to watch. Nor the completion screen,
+ * which summarises what was commissioned — repeating the footprint under it
+ * turns a consequence into wallpaper. Coverage gets one page, and that is the
+ * page it gets.
+ */
+const DOME_STAGES = new Set(['coverage'])
 
 /** Range the cable's flex morph targets were authored over, in degrees.
  *  Must match FLEX_RANGE_DEG in build_lp12_v2.py. */
@@ -442,6 +487,41 @@ function LP12Assembly({ height, downtilt, stage, completedClips, activeClip, rig
    * on screen already looking mounted before the learner pressed "Mount
    * antenna", and it showed the whole assembly during inspectPole.
    */
+  /**
+   * Hold every finished clip at its end pose.
+   *
+   * The visibility pass below reveals the parts a stage has installed, but
+   * revealing a part does not move it: the GLB ships every component at a rest
+   * offset and only its own clip carries it to the mount. Playback used to be
+   * the only thing holding those poses — each action clamps when finished and
+   * is deliberately never stopped — and that works right up until an action
+   * stops holding for any reason at all. When it does, the part springs back
+   * to rest and the pole is left with a component lying at its base while the
+   * rest of the assembly sits 7.5 m up: the "scattered" pole on the rig pages.
+   *
+   * So the assembled state is derived from `completedClips` rather than
+   * inherited from a history of successful playbacks. Snapping is idempotent —
+   * the clip that just finished is already at its end — and it means arriving
+   * at a stage by any route produces the same pole.
+   */
+  useEffect(() => {
+    const done = (completedClips || []).filter((c) => c && c !== activeClip)
+    if (!done.length || !actions) return
+    done.forEach((name) => {
+      const a = actions[name]
+      if (!a) return
+      a.enabled = true
+      a.reset()
+      a.setEffectiveWeight(1)
+      a.setLoop(THREE.LoopOnce, 1)
+      a.clampWhenFinished = true
+      a.play()
+      a.time = a.getClip().duration
+      a.paused = true
+    })
+    mixer.update(0)
+  }, [actions, mixer, completedClips, activeClip])
+
   useEffect(() => {
     const done = new Set(completedClips || [])
     const revealed = new Set()
@@ -538,6 +618,71 @@ function LP12Assembly({ height, downtilt, stage, completedClips, activeClip, rig
   )
 }
 
+/**
+ * The stage's target region, drawn where the stage is actually working.
+ *
+ * The specification places this with viewport units (`right: 27vw, top: 27vh`).
+ * That holds for exactly one camera and one window shape, and the learner can
+ * now turn the camera, so it would slide off the column the moment they did.
+ *
+ * Projecting the component itself is not available either: the parts ship at
+ * rest offsets and only reach their mounting positions when their clip runs,
+ * so the destination does not exist as a node until after the drop that the
+ * highlight exists to invite.
+ *
+ * What does exist is the stage's camera anchor, whose look-at point was
+ * authored in Blender to frame precisely the area being worked on. The region
+ * is a fixed-size collar around that point, sized in WORLD units so it stays
+ * the same physical size on the pole however close the stage's camera sits —
+ * an earlier version sized it as a fraction of the projected pole, which is
+ * correct in world terms and useless in practice, because a camera framing the
+ * band area puts most of the pole outside the frame and the region with it.
+ */
+const TARGET_RADIUS_M = 0.17      // half-width of the collar, in metres
+const TARGET_HEIGHT_M = 0.46      // its vertical extent
+
+function StageTargetHighlight({ viewRef, region, hidden }) {
+  const boxRef = useRef(null)
+  const vec = useMemo(() => new THREE.Vector3(), [])
+
+  useEffect(() => {
+    if (!region) return undefined
+    let raf = 0
+    const tick = () => {
+      raf = requestAnimationFrame(tick)
+      const el = boxRef.current
+      const view = viewRef.current
+      if (!el || !view || !view.target) return
+      if (hidden) { el.style.opacity = '0'; return }
+      const { camera, size } = view
+      const tgt = view.target
+
+      const toPx = (p) => ({
+        x: (p.x * 0.5 + 0.5) * size.width,
+        y: (-p.y * 0.5 + 0.5) * size.height,
+      })
+      const centre = vec.copy(tgt).project(camera).clone()
+      if (centre.z > 1) { el.style.opacity = '0'; return }
+      const top = vec.set(tgt.x, tgt.y + TARGET_HEIGHT_M / 2, tgt.z).project(camera).clone()
+      const side = vec.set(tgt.x + TARGET_RADIUS_M, tgt.y, tgt.z).project(camera).clone()
+
+      const c = toPx(centre)
+      const h = Math.abs(toPx(top).y - c.y) * 2
+      const w = Math.abs(toPx(side).x - c.x) * 2
+
+      el.style.opacity = '1'
+      el.style.width = `${Math.max(w, 18)}px`
+      el.style.height = `${Math.max(h, 26)}px`
+      el.style.transform = `translate(${c.x - Math.max(w, 18) / 2}px, ${c.y - Math.max(h, 26) / 2}px)`
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [viewRef, region, hidden, vec])
+
+  if (!region) return null
+  return <div ref={boxRef} className="fm-target-highlight lp12-stage-target" aria-hidden="true" />
+}
+
 export default function LP12BuildCanvas(props) {
   // Written by CalloutBridge inside the Canvas, read by PartCallouts outside
   // it. A ref rather than state: it is updated every frame and nothing should
@@ -548,10 +693,20 @@ export default function LP12BuildCanvas(props) {
       {/* Outside the Canvas on purpose: this is an SVG, and everything inside
           <Canvas> is reconciled as three.js objects. Suppressed while a clip
           runs — a label on a part in mid-flight points at where it used to be. */}
+      {/* Leader-line labels naming the hardware already on the pole.
+          Suppressed on the assembly pages: the tray there deliberately shows
+          unlabelled objects because recognising them is the assessment, and a
+          label pointing at the part on the model gives away the answer to the
+          step after it. */}
       <PartCallouts viewRef={calloutView}
                     modelRoot={props.modelRoot}
                     installed={props.installedParts}
-                    hidden={Boolean(props.activeClip)} />
+                    hidden={Boolean(props.activeClip) || props.hideCallouts} />
+      {/* Where this stage's component goes. Suppressed while a clip runs, for
+          the same reason the callouts are: the part is in flight. */}
+      <StageTargetHighlight viewRef={calloutView}
+                            region={props.targetRegion}
+                            hidden={Boolean(props.activeClip)} />
       <Canvas
         dpr={props.performanceTier === 'high' ? [1, 1.75] : 1}
         shadows={props.performanceTier === 'high'}
@@ -620,10 +775,19 @@ export default function LP12BuildCanvas(props) {
         </Suspense>
         {/* The site around the pole. Its own Suspense boundary for the same
             reason the others have one: a GLB suspending must never tear down
-            the assembly's effects and freeze the animation mixer. */}
-        <Suspense fallback={null}>
-          <SiteEnvironment />
-        </Suspense>
+            the assembly's effects and freeze the animation mixer.
+
+            Off for most of the workspace now. Specification 2.4 removes the
+            city outright once the assembly starts — buildings, roads, cars and
+            street furniture, not merely blurred — and the pole overview shows
+            the street as a softened plate behind the model instead, so the
+            only stages that still build the 3D city are the ones where the
+            city is the point. */}
+        {props.showEnvironment && (
+          <Suspense fallback={null}>
+            <SiteEnvironment />
+          </Suspense>
+        )}
         {/* Traffic is off, matching the Blender scene, which builds with
             INCLUDE_VEHICLES = False. SiteTraffic and the ten vehicle GLBs are
             left in place: putting the street back is re-adding this element
@@ -643,7 +807,8 @@ export default function LP12BuildCanvas(props) {
         <CameraDirector flow={props.flow} studio={props.studio}
                         stage={props.stage} cameraName={props.camera}
                         view={props.view} activeClip={props.activeClip}
-                        modelRoot={props.modelRoot} />
+                        modelRoot={props.modelRoot} orbitInput={props.orbitInput}
+                        viewRef={calloutView} />
         {/* Amber active-component outline. One composer for the whole scene. */}
         {props.modelRoot && (
           <ComponentHighlight

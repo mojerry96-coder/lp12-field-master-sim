@@ -4,18 +4,18 @@ import {
   selectControlsEnabled,
 } from './store'
 import BackgroundPlate from './components/BackgroundPlate'
-import ResponsiveLP12Hotspot from './components/Hotspot'
+import Page03LocateSite from './pages/Page03LocateSite'
 import NetworkCoverageDome from './components/NetworkCoverageDome'
 import LP12BuildCanvas from './components/LP12BuildCanvas'
 import InstallationPage from './InstallationPage'
 import LP12TabletTuningScene from './tuning/LP12TabletTuningScene'
 import CanvasDimLayer from './components/CanvasDimLayer'
-import TargetCursor from './components/TargetCursor'
 import { STAGE_CONFIG, detectPerformanceTier, prefersReducedMotion } from './lib/stageConfig'
-import MivaOpener from './components/MivaOpener'
-import MissionBriefing from './components/MissionBriefing'
+import Page01Welcome from './pages/Page01Welcome'
+import Page02MissionBriefing from './pages/Page02MissionBriefing'
 import StageGate from './components/StageGate'
-import CompletionScreen, { PerformanceReview } from './components/CompletionScreen'
+import { PerformanceReview } from './components/CompletionScreen'
+import Page19CommissioningComplete from './pages/Page19CommissioningComplete'
 import { P2, P3, warm } from './lib/preloader'
 import { urlFor } from './lib/assetManifest'
 
@@ -31,14 +31,11 @@ import { urlFor } from './lib/assetManifest'
 const BACKGROUND_URL = urlFor('iso-background')
 const BACKGROUND_VIDEO_URL = null
 
-/**
- * Where "Return to Course" goes, if anywhere.
- *
- * Read from a build-time variable rather than assumed. The brief is explicit
- * that a broken or placeholder route is worse than no button, so when this is
- * unset the action is not rendered at all.
- */
-const COURSE_URL = import.meta.env.VITE_COURSE_URL || null
+/* "Return to Course" is gone with the old completion screen. Page 19's copy
+ * list is two buttons — Review Performance and Restart — and its layout rule
+ * is to remove everything else. The route it used lived in VITE_COURSE_URL and
+ * was only ever rendered when that was set; putting it back is one button and
+ * one constant, but it is not on the page the specification describes. */
 
 export default function App() {
   const s = useSim()
@@ -51,6 +48,17 @@ export default function App() {
   const controlsEnabled = selectControlsEnabled(s)
 
   const [reviewOpen, setReviewOpen] = useState(false)
+
+  /**
+   * The city is context on Page 04 and a distraction from Page 05 onward, so
+   * the plate is retired by the install stage rather than by the mode — the
+   * mode is 'build' for both. Completion keeps its own studio ground.
+   */
+  const isolated = (s.mode === 'build' && s.installStage !== 'overview')
+    || s.mode === 'complete'
+  // Page 04: the plate is the street behind the pole, so it is softened rather
+  // than pushed back behind a model the way the old workspace treated it.
+  const overview = s.mode === 'build' && s.installStage === 'overview'
 
   /**
    * Staged preloading.
@@ -109,28 +117,25 @@ export default function App() {
   const cfg = STAGE_CONFIG[s.buildStage] ?? STAGE_CONFIG.inspect
   const dimOpacity = s.mode === 'locate' ? 0 : cfg.dimOpacity
 
-  // The opener owns the screen until it hands over. It preloads P1 while it
-  // plays, so this is not three seconds spent, it is three seconds used.
-  // Opener, then the briefing, then the site. Both sit in front of the
+  // Page 01 owns the screen until the learner presses Begin Simulation. It
+  // preloads P1 while they read, so the wait is spent rather than added.
+  // Welcome, then the briefing, then the site. Both sit in front of the
   // simulation while P1 and P2 warm behind them, so the explanation costs the
   // learner nothing — it happens during loading that was going to happen.
   if (!s.openerDone) {
     return (
-      <MivaOpener
+      <Page01Welcome
         reducedMotion={s.reducedMotion}
-        // Replays on restart, but skippable then — a learner going round again
-        // should not have to sit through the titles.
-        skippable={Boolean(s.result)}
-        onDone={useSim.getState().openerFinished}
+        onBegin={useSim.getState().openerFinished}
       />
     )
   }
 
   if (!s.briefingDone) {
     return (
-      <MissionBriefing
+      <Page02MissionBriefing
         reducedMotion={s.reducedMotion}
-        onDone={useSim.getState().briefingFinished}
+        onBegin={useSim.getState().briefingFinished}
       />
     )
   }
@@ -138,10 +143,9 @@ export default function App() {
   if (s.mode === 'complete') {
     return (
       <>
-        <CompletionScreen
+        <Page19CommissioningComplete
           onReview={() => setReviewOpen(true)}
           onRestart={useSim.getState().restart}
-          onReturnToCourse={COURSE_URL ? () => { window.location.href = COURSE_URL } : null}
         />
         {reviewOpen && <PerformanceReview onClose={() => setReviewOpen(false)} />}
       </>
@@ -149,7 +153,7 @@ export default function App() {
   }
 
   return (
-    <main className={`hybrid-simulation mode-${s.mode}`}>
+    <main className={`hybrid-simulation mode-${s.mode}${isolated ? ' is-isolated' : ''}${overview ? ' is-overview' : ''}`}>
       <BackgroundPlate
         imageSrc={BACKGROUND_URL}
         videoSrc={BACKGROUND_VIDEO_URL}
@@ -164,32 +168,21 @@ export default function App() {
 
       {/* Coverage footprint on the network plate. Rendered under the marker,
           and only in the network view — inside the build view the same dome is
-          shown in 3D at the coverage stage instead. */}
-      {showHotspot && s.bgReady && (
+          shown in 3D at the coverage stage instead.
+
+          Gated on the install having happened. Page 03 asks the learner to
+          find one column among a dozen, and a coverage dome drawn from default
+          height and tilt is a second blue shape on the same plate saying
+          nothing — it is a consequence, so it waits until there is one. */}
+      {showHotspot && s.bgReady && s.installed && (
         <NetworkCoverageDome height={s.height} downtilt={s.downtilt} />
       )}
 
       {showHotspot && s.bgReady && (
-        <ResponsiveLP12Hotspot
+        <Page03LocateSite
           disabled={s.transitionLocked}
           completed={s.installed && s.heightOk() && s.tiltOk()}
-          onActivate={s.openBuild}
-        />
-      )}
-
-      {/* Buttons only. Gated on reduced motion: the idle cursor spins
-          continuously, which is exactly the kind of persistent motion
-          prefers-reduced-motion asks us to drop — and the component has no
-          prop to disable it, so we fall back to the native cursor. */}
-      {!s.reducedMotion && (
-        <TargetCursor
-          targetSelector=".cursor-target"
-          spinDuration={3}
-          hoverDuration={0.18}
-          parallaxOn
-          hideDefaultCursor
-          cursorColor="#35e0d0"
-          cursorColorOnTarget="#f0a63c"
+          onSelect={s.openBuild}
         />
       )}
 

@@ -86,6 +86,14 @@ export default function DowntiltKnob({ value, min = 0, max = 10, target,
     apply(value + d)
   }, [disabled, value, apply])
 
+  // Two rings: a dense fine ring every 0.25° of value for texture, and the
+  // labelled majors. Only whole degrees are selectable — the fine ring is
+  // there to make the scale read like a tuner, not to offer finer stops.
+  const fine = []
+  for (let v = min; v <= max + 1e-6; v += 0.25) {
+    const t = span > 0 ? (v - min) / span : 0
+    fine.push({ v, deg: -SWEEP / 2 + t * SWEEP })
+  }
   const ticks = []
   for (let v = min; v <= max; v += SNAP) {
     const t = span > 0 ? (v - min) / span : 0
@@ -93,12 +101,17 @@ export default function DowntiltKnob({ value, min = 0, max = 10, target,
   }
 
   const onTarget = value === target
+  const shown = String(Math.abs(Math.round(value))).padStart(2, '0')
 
   return (
     <>
-      {/* Scale, parked off the left edge of the page until the knob moves. */}
+      {/* Scale, parked off the right edge of the page until the knob moves. */}
       <div className={`tilt-dial${turning ? ' is-out' : ''}`} aria-hidden="true">
         <div className="tilt-dial-face" style={{ transform: `rotate(${-angle}deg)` }}>
+          {fine.map((t) => (
+            <div key={`f${t.v}`} className="tilt-dial-fine"
+                 style={{ transform: `rotate(${t.deg}deg)` }} />
+          ))}
           {ticks.map((t) => (
             <div key={t.v} className={`tilt-dial-tick${t.major ? ' is-major' : ''}`}
                  style={{ transform: `rotate(${t.deg}deg)` }}>
@@ -108,7 +121,18 @@ export default function DowntiltKnob({ value, min = 0, max = 10, target,
           ))}
         </div>
         <div className="tilt-dial-marker" />
-        <div className="tilt-dial-window" />
+        <div className="tilt-dial-window">
+          <i /><i /><i />
+        </div>
+
+        {/* Reference-style value block: dimmed leading digit, bright value. */}
+        <div className="tilt-dial-readout">
+          <span className="tilt-dial-label">Downtilt<em>ANGLE</em></span>
+          <b><u>{shown[0]}</u>{shown.slice(1)}<sup>°</sup></b>
+          <span className={`tilt-dial-state${onTarget ? ' is-ok' : ''}`}>
+            SET <em>TARGET {target}°</em>
+          </span>
+        </div>
       </div>
 
       <div className="panel-control tilt-knob-control">
@@ -116,7 +140,8 @@ export default function DowntiltKnob({ value, min = 0, max = 10, target,
         <div className="tilt-knob-row">
           <div
             ref={knobRef}
-            className={`tilt-knob cursor-target${disabled ? ' is-disabled' : ''}`}
+            className={`tilt-knob cursor-target${disabled ? ' is-disabled' : ''}`
+                       + (turning ? ' is-turning' : '')}
             role="slider"
             tabIndex={disabled ? -1 : 0}
             aria-labelledby="downtilt-knob-label"
@@ -127,11 +152,16 @@ export default function DowntiltKnob({ value, min = 0, max = 10, target,
             onPointerUp={(e) => e.currentTarget.releasePointerCapture(e.pointerId)}
             onKeyDown={onKeyDown}
           >
+            <span className="tilt-knob-collar" aria-hidden="true" />
             <span className="tilt-knob-body" style={{ transform: `rotate(${angle}deg)` }}>
+              <span className="tilt-knob-knurl">
+                {Array.from({ length: 36 }, (_, i) => (
+                  <i key={i} style={{ transform: `rotate(${i * 10}deg)` }} />
+                ))}
+              </span>
+              <span className="tilt-knob-cap" />
               <i className="tilt-knob-pointer" />
-              {[0, 60, 120, 180, 240, 300].map((g) => (
-                <i key={g} className="tilt-knob-grip" style={{ transform: `rotate(${g}deg)` }} />
-              ))}
+              <i className="tilt-knob-lamp" />
             </span>
           </div>
 
@@ -144,3 +174,4 @@ export default function DowntiltKnob({ value, min = 0, max = 10, target,
     </>
   )
 }
+

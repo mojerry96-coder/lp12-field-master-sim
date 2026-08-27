@@ -1,0 +1,370 @@
+/* NETWORK TEST — between Time-to-Trigger and Reporter Optimised.
+   Darker and more cinematic than the isolated white installation pages, so the
+   glass inherits the blue environment beneath it rather than sitting on white. */
+
+:root {
+  --network-blue: #4DA3FF;
+  --network-blue-hot: #77C8FF;
+  --network-success: #52E48B;
+  --network-warning: #FFCA45;
+  --network-error: #FF5C57;
+}
+
+.network-test-page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #0C1A2A;
+  font-family: "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.network-test-page canvas {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 0;
+}
+
+.network-glass {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: linear-gradient(135deg,
+    rgba(68, 84, 105, 0.53), rgba(32, 47, 66, 0.27));
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+  backdrop-filter: blur(22px) saturate(135%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 16px 48px rgba(7, 18, 34, 0.16);
+}
+
+/* ------------------------------------------------------------- top left */
+.network-test-title {
+  position: absolute;
+  z-index: 20;
+  left: 1.675%;
+  top: 3.826%;
+  width: clamp(360px, 25.3vw, 423px);
+  min-height: 133px;
+  display: flex;
+  align-items: center;
+  gap: 27px;
+  padding: 19px 27px;
+  border-radius: 22px;
+}
+
+.network-test-title__icon {
+  position: relative;
+  flex: 0 0 66px;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: linear-gradient(145deg,
+    rgba(42, 69, 99, 0.82), rgba(21, 41, 66, 0.55));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.network-test-title__icon svg {
+  width: 38px;
+  height: 38px;
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.96);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.network-test-title__status {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--network-blue);
+  box-shadow: 0 0 18px rgba(77, 163, 255, 0.85);
+}
+
+.network-test-title h1 {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.06;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+.network-test-title p {
+  margin: 9px 0 0;
+  font-size: 17px;
+  font-weight: 450;
+  letter-spacing: -0.015em;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* ------------------------------------------------------------ top right */
+.live-result-panel {
+  position: absolute;
+  z-index: 20;
+  right: 2.8%;
+  top: 12.54%;
+  width: 271px;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.result-row {
+  height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+}
+.result-row:last-child { border-bottom: 0 }
+.result-row > span {
+  font-size: 17px;
+  font-weight: 550;
+  letter-spacing: -0.022em;
+  color: rgba(255, 255, 255, 0.91);
+}
+
+.result-row__status { display: flex; align-items: center; gap: 14px }
+.result-row__status i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--network-blue);
+  box-shadow: 0 0 14px rgba(77, 163, 255, 0.65);
+}
+.result-row__icon { display: grid; place-items: center; color: rgba(255,255,255,0.72) }
+.result-row__icon svg { fill: currentColor }
+.result-row__status .sr-live { position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap }
+
+/* Colour is a second signal, never the only one — the row also says its state
+   in words to assistive tech and the final row prints a verdict. */
+.result-row.is-good .result-row__status i { background: var(--network-success);
+  box-shadow: 0 0 14px rgba(82, 228, 139, 0.6) }
+.result-row.is-good .result-row__icon { color: var(--network-success) }
+.result-row.is-warning .result-row__status i { background: var(--network-warning);
+  box-shadow: 0 0 14px rgba(255, 202, 69, 0.6) }
+.result-row.is-warning .result-row__icon { color: var(--network-warning) }
+.result-row.is-failed .result-row__status i { background: var(--network-error);
+  box-shadow: 0 0 14px rgba(255, 92, 87, 0.6) }
+.result-row.is-failed .result-row__icon { color: var(--network-error) }
+
+.result-row.is-testing .result-row__status i {
+  animation: result-pulse 1.2s ease-in-out infinite;
+}
+@keyframes result-pulse {
+  50% { opacity: 0.45; transform: scale(0.82) }
+}
+
+.result-row__verdict {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.result-row--final.is-good .result-row__verdict { color: var(--network-success) }
+.result-row--final.is-warning .result-row__verdict,
+.result-row--final.is-failed .result-row__verdict { color: var(--network-warning) }
+
+/* ---------------------------------------------------------------- bottom */
+.network-test-progress {
+  position: absolute;
+  z-index: 20;
+  left: 5.263%;
+  bottom: 3.08%;
+  width: 88.935%;
+  height: 95px;
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  align-items: center;
+  border-radius: 30px;
+  padding: 0 28px;
+}
+
+.network-test-progress__wave,
+.network-test-progress__action {
+  justify-self: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.network-test-progress__wave {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(31, 49, 70, 0.35);
+  color: var(--network-blue);
+}
+.network-test-progress__wave.is-active { animation: wave-breathe 1.8s ease-in-out infinite }
+@keyframes wave-breathe { 50% { opacity: 0.55 } }
+
+.network-test-progress__track {
+  position: relative;
+  height: 4px;
+  margin: 0 26px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.19);
+}
+.network-test-progress__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+  transform-origin: left center;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4DA3FF, #72D0FF);
+  box-shadow: 0 0 18px rgba(77, 163, 255, 0.74);
+}
+.network-test-progress__probe {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow: 0 0 5px #fff, 0 0 18px #56B7FF, 0 0 34px rgba(77, 163, 255, 0.85);
+}
+
+.network-test-progress__action {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(37, 55, 77, 0.38);
+  color: var(--network-blue);
+  cursor: pointer;
+}
+.network-test-progress__action:disabled { opacity: 0.75; cursor: default }
+.network-test-progress__action:not(:disabled) {
+  border-color: rgba(119, 200, 255, 0.5);
+  background: rgba(52, 96, 150, 0.5);
+}
+.network-test-progress__action:focus-visible {
+  outline: 2px solid var(--network-blue-hot);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .result-row.is-testing .result-row__status i,
+  .network-test-progress__wave.is-active { animation-duration: 6s }
+}
+
+/* ------------------------------------------------------------- debrief
+
+   Shown only once the corridor has finished. It replaces nothing: the live
+   result panel stays where it is, and this sits over the lower middle of the
+   scene where the trail has already been drawn, so the learner reads the
+   verdict against the road it came from. */
+
+.network-debrief {
+  position: absolute;
+  z-index: 30;
+  left: 50%;
+  bottom: 15%;
+  transform: translateX(-50%);
+  width: min(680px, 62vw);
+  max-height: 62vh;
+  overflow-y: auto;
+  padding: 22px 26px 20px;
+  border-radius: 24px;
+  animation: network-debrief-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes network-debrief-in {
+  from { opacity: 0; transform: translate(-50%, 14px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.network-debrief__head h2 {
+  margin: 0 0 4px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.network-debrief__head p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.network-debrief__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.debrief-row {
+  padding: 11px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(12, 26, 42, 0.34);
+}
+
+.debrief-row__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.debrief-row__label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.debrief-row__value {
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  font-weight: 700;
+}
+.debrief-row__value small { margin-left: 2px; font-size: 11px; opacity: 0.7 }
+
+/* State reads three ways, not one: the word, the colour, and whether the row
+   carries an explanation at all (section 55 — colour is never alone). */
+.debrief-row__state {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.debrief-row.is-good .debrief-row__state { color: var(--network-success) }
+.debrief-row.is-near .debrief-row__state { color: var(--network-warning) }
+.debrief-row.is-off  .debrief-row__state { color: var(--network-error) }
+
+.debrief-row.is-near { border-color: rgba(255, 202, 69, 0.4) }
+.debrief-row.is-off  { border-color: rgba(255, 92, 87, 0.42) }
+
+.debrief-row__note {
+  margin: 7px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.debrief-row__adjust {
+  margin-top: 9px;
+  padding: 7px 15px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--network-blue);
+  color: #06182B;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+.debrief-row__adjust:hover { transform: translateY(-1px); filter: brightness(1.08) }
+.debrief-row__adjust:active { transform: none }
+.debrief-row__adjust:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .network-debrief { animation: none }
+  .debrief-row__adjust { transition: none }
+}

@@ -51,8 +51,17 @@ export default function CompletionScreen({ onReview, onRestart, onReturnToCourse
       { k: 'Mount height', v: `${result.height} m`, ok: result.heightOk },
       { k: 'Downtilt', v: `${result.downtilt}°`, ok: result.tiltOk },
     ]
+    if (result.networkTest) {
+      out.push({ k: 'Corridor test',
+                 v: result.networkTest.overall === 'good' ? 'Passed' : 'Review',
+                 ok: result.networkTest.overall === 'good' })
+    }
     if (typeof result.wrongAttempts === 'number') {
-      out.push({ k: 'Incorrect part attempts', v: String(result.wrongAttempts),
+      // Wrong drags are scored, so the row shows what they cost rather than
+      // only how many there were.
+      const lost = result.wrongAttemptPenalty
+      out.push({ k: 'Incorrect part attempts',
+                 v: lost ? `${result.wrongAttempts} (−${lost})` : String(result.wrongAttempts),
                  ok: result.wrongAttempts === 0 })
     }
     const dur = formatDuration(result.durationMs)
@@ -60,7 +69,10 @@ export default function CompletionScreen({ onReview, onRestart, onReturnToCourse
     return out
   }, [result])
 
-  const passed = Boolean(result?.installed && result?.heightOk && result?.tiltOk)
+  const score = typeof result?.score === 'number' ? result.score : null
+  const passMark = result?.passMark ?? 70
+  const passed = Boolean(result?.installed && result?.heightOk && result?.tiltOk
+    && (score === null || score >= passMark))
 
   return (
     <div className={`completion${swept ? ' is-swept' : ''}`}>
@@ -80,6 +92,14 @@ export default function CompletionScreen({ onReview, onRestart, onReturnToCourse
           LP12 installation and network optimisation completed
         </p>
         <p className="completion-copy">{passed ? SUCCESS_COPY : PARTIAL_COPY}</p>
+
+        {score !== null && (
+          <div className={`completion-score${score >= passMark ? ' is-pass' : ''}`}>
+            <b>{score}<i>/100</i></b>
+            <span>{score >= passMark ? 'Pass' : 'Below pass'} — pass mark {passMark}</span>
+          </div>
+        )}
+
 
         {rows.length > 0 && (
           <dl className="completion-stats">
@@ -117,19 +137,66 @@ export function PerformanceReview({ onClose }) {
   if (!result) return null
 
   const steps = result.completedStages ?? []
+  const t = result.tuning
+  const tOk = result.tuningOk ?? {}
+
+  /* Older saved results (v2, before the corridor test) carry no reporter
+     values. Their two rows still render; the three new ones are simply absent
+     rather than showing as failures the learner never had a chance at. */
+  const decisions = [
+    { k: 'Mount height', v: `${result.height} m`, ok: result.heightOk },
+    { k: 'Downtilt', v: `${result.downtilt}°`, ok: result.tiltOk },
+    ...(t ? [
+      { k: 'Measurement interval', v: `${t.intervalMs} ms`, ok: tOk.interval },
+      { k: 'Hysteresis', v: `${t.hysteresisDb.toFixed(1)} dB`, ok: tOk.hysteresis },
+      { k: 'Time-to-trigger', v: `${t.timeToTriggerMs} ms`, ok: tOk.timeToTrigger },
+    ] : []),
+  ]
+
   const notes = []
   if (!result.heightOk) notes.push('Mount height was outside the 7–8 m target for this site.')
   if (!result.tiltOk) notes.push('Downtilt did not reach the 5° the site requires.')
+  if (t && !tOk.interval) {
+    notes.push('Measurement interval was off target — sampling too slowly misses '
+      + 'the handover moment, too quickly spends battery for no extra confidence.')
+  }
+  if (t && !tOk.hysteresis) {
+    notes.push('Hysteresis was off target — too narrow a margin ping-pongs at the '
+      + 'cell boundary, too wide a margin holds a weakening cell.')
+  }
+  if (t && !tOk.timeToTrigger) {
+    notes.push('Time-to-trigger was off target — firing early makes handovers fail '
+      + 'on brief fades, firing late breaks the call before the phone moves.')
+  }
   if (result.wrongAttempts > 0) {
     notes.push(`${result.wrongAttempts} part(s) were fitted out of order — components `
       + 'must go on in sequence: bands, rail, pivot, antenna, fasteners, connectors.')
   }
-  if (!notes.length) notes.push('No issues recorded. Installation order, height and downtilt were all correct.')
+  if (!notes.length) {
+    notes.push('No issues recorded. Installation order, mount height, downtilt and '
+      + 'all three reporter settings were correct.')
+  }
 
   return (
     <div className="review-sheet" role="dialog" aria-label="Performance review">
       <div className="review-inner">
         <h2>Performance review</h2>
+
+        {typeof result.score === 'number' && (
+          <>
+            <h3>Score</h3>
+            <ul className="review-deductions">
+              <li><span>Starting score</span><span>100</span></li>
+              {(result.penalties ?? []).map((p) => (
+                <li key={p.k}><span>{p.k}</span><b>−{p.points}</b></li>
+              ))}
+              <li className="is-total">
+                <span>Final score</span><span>{result.score}/100</span>
+              </li>
+            </ul>
+          </>
+        )}
+
 
         <h3>Installation steps completed</h3>
         <ul className="review-steps">
@@ -138,15 +205,29 @@ export function PerformanceReview({ onClose }) {
             : <li>No steps recorded.</li>}
         </ul>
 
+        {/* All five, because all five are now the learner's own call and all
+            five are scored. Listing only the two made on the pole was honest
+            while the reporter steps refused anything but the target value —
+            there was nothing to report. There is now. */}
         <h3>Tuning decisions</h3>
         <ul className="review-steps">
-          <li className={result.heightOk ? '' : 'is-warn'}>
-            Mount height {result.height} m
-          </li>
-          <li className={result.tiltOk ? '' : 'is-warn'}>
-            Downtilt {result.downtilt}°
-          </li>
+          {decisions.map((d) => (
+            <li key={d.k} className={d.ok ? '' : 'is-warn'}>{d.k} {d.v}</li>
+          ))}
         </ul>
+
+        {result.networkTest && (
+          <>
+            <h3>Corridor test</h3>
+            <ul className="review-steps">
+              <li className={result.networkTest.overall === 'good' ? '' : 'is-warn'}>
+                {result.networkTest.overall === 'good'
+                  ? 'Passed — the link held for the length of the corridor.'
+                  : 'Reviewed — the link did not hold for the length of the corridor.'}
+              </li>
+            </ul>
+          </>
+        )}
 
         <h3>Recommended improvements</h3>
         <ul className="review-notes">{notes.map((n) => <li key={n}>{n}</li>)}</ul>

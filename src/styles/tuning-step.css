@@ -1,0 +1,308 @@
+/* The tuning step shell — PAGES 15-17.
+   One layout for every tuning decision, because the specification requires it:
+   "keep tablet, hands, camera and screen boundaries exactly the same as Page
+   15. Only tuning content changes. This continuity is important."
+
+   The whole tablet screen: one decision, its consequences, and the way to
+   commit it. Every reference render for the sequence shows a screen with no 3D
+   panel, so the live viewport is off on these steps and the UI has the full
+   1366 x 1024 artboard. */
+
+.ts {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 96px 74px 56px;
+  font-family: "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.ts-title {
+  margin: 0;
+  font-size: 52px;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #14243D;
+}
+
+.ts-sub {
+  margin: 14px 0 0;
+  font-size: 22px;
+  color: #71809A;
+}
+
+/* ------------------------------------------------------------ the value */
+.ts-value {
+  position: relative;
+  margin-top: 46px;
+  width: 560px;
+  padding: 34px 40px 28px;
+  border-radius: 28px;
+  background: #fff;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 18px 44px rgba(40, 70, 120, 0.10);
+  text-align: center;
+}
+.ts-value strong {
+  display: block;
+  font-size: 74px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  color: #0A6BE8;
+}
+.ts-value strong small { font-size: 38px; margin-left: 6px }
+.ts-value-note {
+  display: block;
+  margin-top: 12px;
+  font-size: 20px;
+  color: #4A8CE8;
+}
+
+/* ---------------------------------------------------------- the control */
+.ts-control {
+  margin-top: 34px;
+  width: 100%;
+  max-width: 940px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 22px 26px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(150, 175, 210, 0.22);
+}
+
+.ts-step {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+  color: #3C5A85;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(40, 70, 120, 0.12);
+  transition: transform 140ms ease, background 140ms ease;
+}
+.ts-step:hover { transform: translateY(-1px) }
+.ts-step:active { transform: none }
+.ts-step:focus-visible { outline: 2px solid var(--fm-blue, #007AFF); outline-offset: 3px }
+
+.ts-track-wrap { flex: 1; min-width: 0 }
+
+.ts-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: #DCE5F0;
+}
+.ts-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2E86FF, #0A6BE8);
+}
+/* The real control, transparent over the drawn track. */
+.ts-track input[type="range"] {
+  position: absolute;
+  inset: -14px 0;
+  width: 100%;
+  height: 38px;
+  margin: 0;
+  opacity: 0;
+  cursor: grab;
+}
+.ts-track input[type="range"]:active { cursor: grabbing }
+.ts-track:focus-within { outline: 2px solid var(--fm-blue, #007AFF); outline-offset: 8px }
+
+/* The knob follows the fill's leading edge. */
+.ts-fill::after {
+  content: '';
+  position: absolute;
+  right: -13px;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
+  border-radius: 50%;
+  background: #0A6BE8;
+  box-shadow: 0 0 0 5px rgba(10, 107, 232, 0.14), 0 4px 12px rgba(20, 50, 100, 0.28);
+}
+
+.ts-stops {
+  position: relative;
+  height: 26px;
+  margin-top: 14px;
+}
+.ts-stops span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 18px;
+  color: #8494AC;
+}
+.ts-stops span.is-current { color: #0A6BE8; font-weight: 600 }
+
+/* ------------------------------------------------------------- the tiles */
+.ts-tiles {
+  margin-top: 40px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+.ts-tile {
+  padding: 24px 26px 22px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(40, 70, 120, 0.08);
+}
+.ts-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  color: #5B6C87;
+}
+.ts-tile-head svg { color: #7E93B4; flex: none }
+
+.ts-tile-value {
+  display: block;
+  margin-top: 18px;
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #17263D;
+}
+.ts-tile-value small { font-size: 22px; margin-left: 3px; font-weight: 500 }
+
+.ts-tile-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 17px;
+  color: #5B6C87;
+}
+.ts-tile-state i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--fm-blue, #007AFF);
+}
+
+/* The refusal. Reserves its line so committing a wrong value does not shift
+   the button out from under the learner's finger. */
+.ts-hint {
+  margin: 26px 0 0;
+  min-height: 26px;
+  font-size: 19px;
+  font-weight: 500;
+  color: #C2410C;
+}
+
+/* ------------------------------------------------------------- the apply */
+.ts-apply {
+  margin-top: 14px;
+  min-width: 260px;
+  height: 68px;
+  padding: 0 40px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0A84FF, #0064F0);
+  color: #fff;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(10, 100, 240, 0.28);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.ts-apply:hover { transform: translateY(-1px) }
+.ts-apply:focus-visible { outline: 3px solid #7FB6FF; outline-offset: 3px }
+
+/* The guided hand's nudge, borrowed from the existing tuning primitives so the
+   two pages cue the learner the same way. */
+.ts-control.is-nudge { animation: ts-nudge 1.4s ease-in-out infinite }
+@keyframes ts-nudge {
+  0%, 100% { transform: none }
+  50% { transform: translateX(6px) }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ts-control.is-nudge { animation: none }
+  .ts-step, .ts-apply { transition: none }
+}
+
+/* PAGE 18 — Reporter Optimised.
+   The same shell, carrying a read-back instead of a control. */
+
+.p18 { justify-content: flex-start }
+.p18-title { text-transform: uppercase; letter-spacing: -0.02em }
+
+.p18-settings {
+  margin: 56px 0 0;
+  width: 100%;
+  max-width: 900px;
+  display: grid;
+  gap: 0;
+}
+.p18-settings > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 26px 4px;
+  border-bottom: 1px solid rgba(120, 150, 190, 0.24);
+}
+.p18-settings dt { margin: 0; font-size: 26px; color: #2B3B54 }
+.p18-settings dd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #5B6C87;
+}
+/* Green only here, and only for a value that is already correct — every
+   setting on this page had to pass its own gate to be on it, so the tick is a
+   receipt rather than a status the learner has to read. */
+.p18-settings dd.is-ok { color: #1E9E63 }
+
+.p18-results {
+  margin-top: 48px;
+  width: 100%;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+}
+.p18-result {
+  padding: 30px 24px 26px;
+  border-radius: 24px;
+  background: #fff;
+  text-align: center;
+  box-shadow: 0 12px 30px rgba(40, 70, 120, 0.08);
+}
+.p18-result strong {
+  display: block;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #17263D;
+}
+.p18-result span { display: block; margin-top: 12px; font-size: 19px; color: #5B6C87 }
+
+.p18-cta { margin-top: auto; min-width: 340px }

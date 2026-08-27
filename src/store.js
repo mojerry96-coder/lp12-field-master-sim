@@ -11,6 +11,14 @@ export const MODES = ['locate', 'opening', 'build', 'complete', 'tuning']
 // Stage list and clip contract live in one place (spec s24/s25).
 export { BUILD_STAGES, OBJECTIVES } from './lib/assemblyClips'
 import { BUILD_STAGES, ASSEMBLY_CLIPS, NEXT_STAGE, CLIP_ORDER } from './lib/assemblyClips'
+import { INITIAL_TUNING, isOnTarget } from './tuning/tuning-config'
+
+/** Scoring weights. One place, so the completion screen cannot restate them. */
+export const WRONG_ATTEMPT_PENALTY = 5
+export const RIG_PENALTY = 15
+export const TUNING_PENALTY = 10
+export const INCOMPLETE_PENALTY = 40
+export const PASS_MARK = 70
 
 
 const INITIAL_BUILD = {
@@ -42,6 +50,24 @@ export const useSim = create((set, get) => ({
   wrongAttempts: 0,            // parts fitted out of order, for the review
   completedStages: [],         // stage titles, in the order they were finished
   result: null,                // frozen snapshot, survives restart for review
+
+  /**
+   * The three reporter decisions, and where the learner is in making them.
+   *
+   * These live here rather than in the tuning scene because the network test
+   * can send the learner back to the pole to change mount height or downtilt,
+   * and that excursion switches mode and unmounts the scene. Component state
+   * would not survive the trip, and the learner would come back to find their
+   * reporter settings reset to the entry values.
+   */
+  tuning: { ...INITIAL_TUNING },
+  tuningStep: 'interval',
+  /* Set while the learner is correcting one decision the test flagged. It
+     names where to return to, so a correction goes straight back to the
+     corridor rather than walking the whole sequence again. */
+  revisit: null,
+  networkTest: null,           // last corridor verdict, for the review
+
   ...INITIAL_BUILD,
   controller: null,             // survives restart; owns the GLB mixer
 
@@ -164,6 +190,18 @@ export const useSim = create((set, get) => ({
 
   openerFinished: () => set({ openerDone: true }),
   briefingFinished: () => set({ briefingDone: true }),
+
+  /**
+   * Which installation stage is on screen.
+   *
+   * Owned by InstallationPage, mirrored here because App renders the city
+   * plate and has to know when to take it away: Page 04 inspects the pole with
+   * the street still behind it, and everything from Page 05 to the downtilt is
+   * isolated (specification 2.4 / 4). Without this the plate could only be
+   * switched on `mode`, which does not change between those pages.
+   */
+  installStage: 'overview',
+  setInstallStage: (installStage) => set({ installStage }),
   noteWrongAttempt: () => set((st) => ({ wrongAttempts: st.wrongAttempts + 1 })),
   noteStageComplete: (title) => set((st) => (
     st.completedStages.includes(title)
@@ -174,17 +212,58 @@ export const useSim = create((set, get) => ({
    * Freeze the outcome. Called once when the simulation finishes, so the
    * completion screen and the review read a stable snapshot rather than live
    * state that restart is about to clear.
+   *
+   * Scoring: every refused drag or click already increments wrongAttempts, and
+   * it now costs points. Without a penalty the tray could be brute-forced —
+   * try all six and the correct one installs — which is exactly the behaviour
+   * the ordering rule exists to discourage.
    */
   finish: () => {
     const st = get()
+    const heightOk = st.heightOk()
+    const tiltOk = st.tiltOk()
+    const penalties = []
+    if (st.wrongAttempts > 0) {
+      penalties.push({
+        k: `Incorrect part attempts (${st.wrongAttempts} x ${WRONG_ATTEMPT_PENALTY})`,
+        points: st.wrongAttempts * WRONG_ATTEMPT_PENALTY,
+      })
+    }
+    if (!heightOk) penalties.push({ k: 'Mount height outside target', points: RIG_PENALTY })
+    if (!tiltOk) penalties.push({ k: 'Downtilt outside target', points: RIG_PENALTY })
+    // Nothing in the sequence refuses a wrong reporter value any more — the
+    // corridor test is what judges them, and this is where that judgement
+    // costs something. Scored one decision at a time so the review can name
+    // which dial was left wrong rather than marking "tuning" as a whole.
+    const tuningOk = st.tuningOk()
+    if (!tuningOk.interval) {
+      penalties.push({ k: 'Measurement interval outside target', points: TUNING_PENALTY })
+    }
+    if (!tuningOk.hysteresis) {
+      penalties.push({ k: 'Hysteresis outside target', points: TUNING_PENALTY })
+    }
+    if (!tuningOk.timeToTrigger) {
+      penalties.push({ k: 'Time-to-trigger outside target', points: TUNING_PENALTY })
+    }
+    if (!st.installed) penalties.push({ k: 'Installation incomplete', points: INCOMPLETE_PENALTY })
+    const lost = penalties.reduce((n, p) => n + p.points, 0)
+    const score = Math.max(0, 100 - lost)
+
     const result = {
-      version: 1,
+      version: 2,
       installed: st.installed,
       height: st.height,
       downtilt: st.downtilt,
-      heightOk: st.heightOk(),
-      tiltOk: st.tiltOk(),
+      heightOk,
+      tiltOk,
+      tuning: { ...st.tuning },
+      tuningOk,
+      networkTest: st.networkTest,
       wrongAttempts: st.wrongAttempts,
+      wrongAttemptPenalty: st.wrongAttempts * WRONG_ATTEMPT_PENALTY,
+      penalties,
+      score,
+      passMark: PASS_MARK,
       completedStages: st.completedStages,
       durationMs: st.startedAt ? Date.now() - st.startedAt : null,
       finishedAt: new Date().toISOString(),
@@ -192,7 +271,7 @@ export const useSim = create((set, get) => ({
     try {
       // Small and versioned. No images, GLBs or textures go in here — this is
       // a handful of numbers describing one attempt.
-      localStorage.setItem('lp12.result.v1', JSON.stringify(result))
+      localStorage.setItem('lp12.result.v2', JSON.stringify(result))
     } catch { /* private mode, quota: the in-memory copy still works */ }
     set({ result, mode: 'complete' })
   },
@@ -216,17 +295,50 @@ export const useSim = create((set, get) => ({
       loadError: null,
       openerDone: false,
       briefingDone: false,
+      installStage: 'overview',
       startedAt: null,
       wrongAttempts: 0,
       completedStages: [],
+      tuning: { ...INITIAL_TUNING },
+      tuningStep: 'interval',
+      revisit: null,
+      networkTest: null,
     })
   },
+
+  setTuning: (patch) => set({ tuning: { ...get().tuning, ...patch } }),
+  setTuningStep: (tuningStep) => set({ tuningStep }),
+  noteNetworkTest: (networkTest) => set({ networkTest }),
+
+  /**
+   * Send the learner back to one decision the corridor test faulted.
+   *
+   * Nothing is reset on the way: they arrive at the control holding the value
+   * they chose, because the point is to reconsider a specific choice, not to
+   * start the phase again. `revisit` remembers that the corridor is what they
+   * came from, so confirming returns them straight to it.
+   */
+  reviseRig: (which) =>
+    set({ revisit: which, mode: 'build', installStage: which }),
+  reviseTuning: (step) =>
+    set({ revisit: step, mode: 'tuning', tuningStep: step }),
+  resumeFromRevision: () =>
+    set({ revisit: null, mode: 'tuning', tuningStep: 'networkTest' }),
 
   heightOk: () => {
     const { height, limits } = get()
     return height >= limits.mount_height_correct_min && height <= limits.mount_height_correct_max
   },
   tiltOk: () => get().downtilt === get().limits.downtilt_correct,
+  /** The three reporter decisions, each judged on its own. */
+  tuningOk: () => {
+    const { tuning } = get()
+    return {
+      interval: isOnTarget('interval', tuning),
+      hysteresis: isOnTarget('hysteresis', tuning),
+      timeToTrigger: isOnTarget('timeToTrigger', tuning),
+    }
+  },
 }))
 
 /** Derived display state — no competing booleans (brief: Recommended shell state). */

@@ -1,0 +1,152 @@
+/* The assembly workspace — PAGES 05-10.
+   One shell for every assembly step, because the specification forbids
+   redesigning it between them. City gone, pole isolated, three things over the
+   model: the instruction, the target region on the column, and the tray. */
+
+.as-page {
+  /* The supplied isolation ground. The WebGL context clears to the same studio
+     grey the model is lit against and covers the whole page, so what the
+     learner actually sees is the 3D studio; this is the ground the page falls
+     back to before the canvas paints, and it is the reason the two match. */
+  background:
+    url('/assets/lp12/studio-isolation-gradient.png') center / cover no-repeat,
+    radial-gradient(circle at 50% 35%, #fff 0%, #f6f6f3 46%, #eceef1 100%);
+}
+
+.as-viewport { position: absolute; inset: 0 }
+
+/* ------------------------------------------------------------ instruction */
+.as-instruction {
+  position: absolute;
+  left: 5.5vw;
+  top: 10vh;
+  z-index: 10;
+  max-width: 46vw;
+}
+
+/* The step count is a quiet pill, not a badge: it says where the learner is,
+   and it is the only number on the page. */
+.as-step {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  margin: 0 0 24px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(0, 122, 255, 0.18);
+  font-size: 17px;
+  color: #8792A6;
+  letter-spacing: 0.02em;
+}
+.as-step b { font-weight: 600; font-size: 19px; color: var(--fm-blue) }
+
+.as-title {
+  color: #123E90;
+  text-transform: uppercase;
+  /* No per-title measure. Page 05's reference breaks its title after the verb
+     and Page 06's sets a title of the same length on one line, and no single
+     rule produces both — but the specification forbids redesigning the shell
+     between steps, and a measure that changes per page is exactly that. So the
+     block is wide enough for these titles to set on one line, which is what
+     the later reference shows and what every remaining step's title fits. */
+  text-wrap: balance;
+}
+
+.as-helper { max-width: 30ch }
+
+/* -------------------------------------------------------------------- tray */
+.as-tray {
+  position: absolute;
+  left: 50%;
+  bottom: 3.5vh;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 18px 22px;
+  /* Constant width, whatever the step offers. The tray shrink-wrapped its
+     tiles until the last step, where one remaining component collapsed it to a
+     narrow pill — the shell visibly changing between steps, which is the one
+     thing the specification forbids across these pages. The reference renders
+     draw the same wide tray on every step, and 720px is the value the
+     handoff's own stylesheet carries. */
+  min-width: min(720px, 88vw);
+}
+
+.as-part {
+  display: grid;
+  place-items: center;
+  width: 148px;
+  height: 126px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.64);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.18);
+  cursor: grab;
+  transition:
+    border-color 180ms var(--fm-ease),
+    background 180ms var(--fm-ease),
+    transform 180ms var(--fm-ease);
+}
+.as-part img { width: 100px; height: 100px; object-fit: contain; pointer-events: none }
+.as-part:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.3) }
+.as-part:active { cursor: grabbing }
+.as-part.is-dragging { opacity: 0.45 }
+.as-part:focus-visible { outline: 2px solid var(--fm-blue); outline-offset: 3px }
+
+/* No marking on the correct tile. It used to carry the 2px blue, which meant
+   the page asked the learner to recognise a component and then pointed at the
+   answer — and with wrong attempts scored, the tell was worth marks. */
+
+/* --------------------------------------------------------------- feedback */
+.as-feedback {
+  position: absolute;
+  left: 50%;
+  bottom: calc(3.5vh + 190px);
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  color: #285790;
+}
+
+/* The whole page is the drop surface — the component goes onto the pole, and
+   the pole is the scene. A rim rather than a panel, so nothing new appears
+   over the model at the moment of the drop. */
+.as-page.is-over::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  z-index: 8;
+  border: 2px solid var(--fm-blue);
+  border-radius: 28px;
+  background: rgba(0, 122, 255, 0.04);
+  pointer-events: none;
+}
+
+/* The projected target region, drawn by the canvas layer. Positioned by
+   transform in the rAF loop, so it takes no layout position here. */
+.lp12-stage-target {
+  left: 0;
+  top: 0;
+  z-index: 6;
+  opacity: 0;
+  transition: opacity 220ms var(--fm-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .as-part, .lp12-stage-target { transition: none }
+  .as-part:hover { transform: none }
+}
+
+@media (orientation: portrait), (max-width: 900px) {
+  .as-instruction { left: 5.5vw; right: 5.5vw; top: 6vh; max-width: none }
+  .as-tray { gap: 12px; padding: 14px 16px; min-width: min(560px, 92vw) }
+  .as-part { width: 104px; height: 92px }
+  .as-part img { width: 74px; height: 74px }
+  .as-feedback { bottom: calc(3.5vh + 150px) }
+}

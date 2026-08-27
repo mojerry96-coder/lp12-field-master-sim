@@ -1,0 +1,193 @@
+/* PAGE 12 — Set Downtilt + Live Coverage Mini View.
+   Close mechanical view, dial on the left, coverage panel anchored inside the
+   3D area at the lower right. */
+
+.p12 {
+  background:
+    url('/assets/lp12/studio-isolation-gradient.png') center / cover no-repeat,
+    radial-gradient(circle at 50% 35%, #fff 0%, #f6f6f3 46%, #eceef1 100%);
+}
+
+.p12-viewport { position: absolute; inset: 0 }
+
+.p12-title {
+  position: absolute;
+  left: 5vw;
+  top: 10vh;
+  z-index: 8;
+  margin: 0;
+  color: #2B62C4;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+
+/* ------------------------------------------------------------------ dial */
+.p12-dial {
+  position: absolute;
+  left: 4.5vw;
+  top: 34vh;
+  z-index: 10;
+  width: 240px;
+  height: 240px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--fm-glass-fill), var(--fm-glass-fill-2));
+  border: 1px solid var(--fm-glass-line);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 18px 54px rgba(40, 70, 120, 0.10),
+    0 0 46px rgba(0, 122, 255, 0.14);
+}
+
+/* The ring the needle runs around. Not a tick scale: whole degrees only, and
+   ten of them, so a scale would be ten labels competing with the value. */
+.p12-dial-face {
+  position: absolute;
+  inset: 16px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(0, 122, 255, 0.22);
+}
+
+.p12-dial-needle {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: var(--fm-blue);
+  box-shadow: 0 0 14px rgba(0, 122, 255, 0.55);
+  transform-origin: 50% 98px;
+  transition: transform 220ms var(--fm-ease);
+}
+
+.p12-value {
+  position: relative;
+  font-size: 74px;
+  line-height: 1;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  color: #0969E9;
+}
+.p12-value sup { font-size: 34px; top: -0.5em; margin-left: 2px }
+
+.p12-label {
+  position: absolute;
+  bottom: 52px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #5C6E8D;
+}
+
+/* The real control, transparent across the dial: native range semantics —
+   arrows, Home/End, drag — without re-implementing them on a div. */
+.p12-input {
+  position: absolute;
+  left: 26px;
+  right: 26px;
+  bottom: 26px;
+  width: calc(100% - 52px);
+  margin: 0;
+  opacity: 0;
+  cursor: grab;
+}
+.p12-input:active { cursor: grabbing }
+.p12-dial:focus-within { outline: 2px solid var(--fm-blue); outline-offset: 5px }
+
+/* ------------------------------------------------------- coverage preview */
+.cmv {
+  position: absolute;
+  right: 3vw;
+  bottom: 6vh;
+  z-index: 12;
+  width: clamp(320px, 31vw, 430px);
+  padding: 18px 20px 12px;
+  transform-origin: 100% 100%;
+  transition:
+    opacity 380ms var(--fm-ease),
+    transform 380ms var(--fm-ease);
+}
+/* Contracts into its own corner rather than fading on the spot — it is
+   returning to the scene it came from. */
+.cmv.is-leaving { opacity: 0; transform: scale(0.86) }
+
+.cmv-title { color: #2B62C4; margin-bottom: 12px }
+
+/* The live scene. Bigger than a thumbnail on purpose: the thing being judged
+   is the shape of a volume against a street, and below about this size the
+   difference between a wide footprint and a tight one stops being visible,
+   which is the whole content of the panel. */
+.cmv-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 18px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #F4F7FC 0%, #E7EEF7 100%);
+  box-shadow: inset 0 0 0 1px rgba(150, 175, 210, 0.28);
+}
+.cmv-canvas { position: absolute !important; inset: 0 }
+
+.cmv-reach {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+  font-weight: 600;
+  color: #285790;
+}
+
+.cmv-aligned {
+  margin: 12px 0 0;
+  min-height: 18px;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1E9E63;
+  opacity: 0;
+  transition: opacity 240ms var(--fm-ease);
+}
+.cmv.is-aligned .cmv-aligned { opacity: 1 }
+
+/* ---------------------------------------------------------------- chrome */
+.p12-notice {
+  position: absolute;
+  left: 50%;
+  bottom: 5vh;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  color: #285790;
+}
+
+.p12-confirm {
+  position: absolute;
+  right: 3vw;
+  bottom: calc(6vh + 30vw * 0.75 + 120px);
+  z-index: 20;
+  min-width: 250px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p12-dial-needle, .cmv, .cmv-aligned { transition: none }
+}
+
+@media (orientation: portrait), (max-width: 900px) {
+  .p12-title { left: 5vw; right: 5vw; top: 5vh }
+  .p12-dial { left: 5vw; top: 20vh; width: 190px; height: 190px }
+  .p12-value { font-size: 56px }
+  .cmv { right: 4vw; left: 4vw; bottom: 3vh; width: auto }
+  .p12-confirm { right: 4vw; left: 4vw; bottom: calc(3vh + 230px); min-width: 0 }
+}

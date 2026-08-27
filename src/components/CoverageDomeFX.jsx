@@ -27,8 +27,16 @@ import * as THREE from 'three'
  * stage gates enforce, shown as a property of the coverage itself.
  */
 
-const TEAL = new THREE.Color('#21e0d0')
-const GREEN = new THREE.Color('#3fdc6a')
+/* One accent, in two weights.
+ *
+ * The dome used to run teal and switch to green once the rig was correct. Both
+ * are accents the redesign's per-page colour rules do not allow — every page
+ * that shows this dome permits exactly #007AFF — and a hue change is a poor
+ * carrier for "correct" anyway, since it says nothing to a learner who cannot
+ * separate the two. So the state change is now weight and pulse inside one
+ * colour, and the words on the page say the rest. */
+const BLUE_UNSET = new THREE.Color('#4E9BFF')
+const BLUE_SETTLED = new THREE.Color('#007AFF')
 
 const vert = /* glsl */`
   varying vec3 vLocal;
@@ -80,7 +88,7 @@ function makeMaterial(isWire) {
     wireframe: isWire,
     blending: THREE.NormalBlending,
     uniforms: {
-      uColor: { value: TEAL.clone() },
+      uColor: { value: BLUE_UNSET.clone() },
       uTime: { value: 0 },
       uPulse: { value: 0 },
       uOpacity: { value: 0.16 },
@@ -93,7 +101,7 @@ function makeMaterial(isWire) {
  * @param domeNode  the Coverage_Dome Object3D from the GLB
  * @param radius    metres, already resolved from height/downtilt
  * @param active    whether the dome should be shown at all
- * @param settled   rig is correct — switches teal to green and starts the pulse
+ * @param settled   rig is correct — deepens the blue and starts the pulse
  */
 export default function CoverageDomeFX({ domeNode, radius, active, settled }) {
   const shellMat = useMemo(() => makeMaterial(false), [])
@@ -129,7 +137,7 @@ export default function CoverageDomeFX({ domeNode, radius, active, settled }) {
     if (!domeNode) return
     domeNode.scale.setScalar(radius)
     domeNode.visible = !!active
-    const target = settled ? GREEN : TEAL
+    const target = settled ? BLUE_SETTLED : BLUE_UNSET
     shellMat.uniforms.uColor.value.copy(target)
     wireMat.uniforms.uColor.value.copy(target)
     shellMat.uniforms.uPulse.value = settled ? 1 : 0

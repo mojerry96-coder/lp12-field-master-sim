@@ -1,0 +1,146 @@
+/* PAGE 19 — Commissioning Complete.
+   The site fills the screen; one glass panel on the left carries the score and
+   the only two things left to do. No build or tuning control survives here. */
+
+.p19 { background: var(--fm-bg-cool) }
+
+/* Enough wash under the panel for the score to hold at any hero exposure,
+   clearing by the time it reaches the hardware. */
+.p19-wash {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.62),
+    rgba(255, 255, 255, 0.28) 44%,
+    rgba(255, 255, 255, 0) 70%
+  );
+}
+
+.p19-hero {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 46vw;
+  height: 100%;
+  object-fit: cover;
+  object-position: 52% 44%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 24%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 24%);
+}
+
+.p19-panel {
+  position: absolute;
+  left: 4.5vw;
+  top: 50%;
+  z-index: 4;
+  width: clamp(380px, 38vw, 560px);
+  max-width: 90vw;
+  padding: 42px 46px 40px;
+  opacity: 0;
+  transform: translateY(calc(-50% + 14px));
+  transition:
+    opacity 600ms var(--fm-ease),
+    transform 600ms var(--fm-ease);
+}
+.p19.is-shown .p19-panel { opacity: 1; transform: translateY(-50%) }
+
+.p19-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #1555C7;
+}
+/* Slot for the approved MIVA mark, the same reserved box the other pages keep. */
+.p19-mark { width: 26px; height: 26px }
+
+.p19-title {
+  margin: 30px 0 0;
+  font-size: clamp(38px, 3.6vw, 56px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: #123E90;
+}
+.p19-title span { display: block }
+
+.p19-score-label { margin-top: 34px; color: #4A5D7A }
+
+.p19-score {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-top: 10px;
+}
+.p19-score strong {
+  font-size: clamp(72px, 7vw, 104px);
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  color: #1B62D8;
+}
+
+/* A seal, not a traffic light: it says the attempt was assessed, and its shape
+   says which way it went. The number beside it carries the detail. */
+.p19-seal {
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  color: #8CA6C8;
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 0 0 2px rgba(140, 166, 200, 0.5),
+    0 0 26px rgba(120, 160, 220, 0.24);
+}
+.p19-seal.is-pass {
+  color: var(--fm-blue);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 122, 255, 0.45),
+    0 0 30px rgba(0, 122, 255, 0.28);
+}
+
+.p19-where {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 22px 0 0;
+  font-size: 18px;
+  color: #67758D;
+}
+.p19-where svg { color: #8797B4; flex: none }
+
+.p19-actions {
+  margin-top: 34px;
+  display: grid;
+  gap: 14px;
+}
+.p19-action { width: 100%; justify-content: flex-start }
+/* Restarting is the quieter of the two: the learner has just finished, and the
+   thing worth doing first is looking at how it went. */
+.p19-restart { background: rgba(255, 255, 255, 0.18); color: #46587A }
+.p19-restart .fm-btn-glyph {
+  background: linear-gradient(135deg, rgba(120, 145, 180, 0.18), rgba(120, 145, 180, 0.08));
+  color: #46587A;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p19-panel { transition: none; opacity: 1; transform: translateY(-50%) }
+}
+
+@media (orientation: portrait), (max-width: 900px) {
+  .p19-panel { left: 4.5vw; right: 4.5vw; width: auto; padding: 30px 26px }
+  .p19-wash {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.86) 40%,
+      rgba(255, 255, 255, 0.3) 100%
+    );
+  }
+}

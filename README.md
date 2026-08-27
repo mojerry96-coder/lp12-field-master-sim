@@ -55,9 +55,18 @@ rather than loading a second copy: geometry, materials and textures are shared, 
 nothing is re-downloaded.
 
 **The tablet is a fixed artboard inside a photograph.** The UI is authored at
-1366×1024 and clipped into the tablet's screen in the plate image, so the whole scene
-scales as one unit. Anything that scales independently drifts out from behind the
-bezel.
+1366×1024 and clipped into an aperture measured on the plate image, so the plate, the
+screen and the guided hand share one transform. Anything in that group that scales or
+moves independently drifts out from behind the bezel. The street behind it is the one
+plane that is free — nothing is registered against it, and two planes travelling at
+different rates is what reads as depth. See `PARALLAX_LIMITS` and
+`TABLET_ARTBOARD.screen` in `src/tuning/tuning-config.js`.
+
+**The score is defined once.** `store.js` holds the penalty weights and the pass
+mark, and `finish()` freezes one versioned result object from them. The completion
+screen and the performance review both read that snapshot, so neither can restate the
+arithmetic and drift from it. Every refused drag costs points — without that, the tray
+could be brute-forced, which is the behaviour the ordering rule exists to discourage.
 
 **Every readout on a tuning page is derived from that page's control.** Cards that
 could only ever show one number were replaced by quantities the control genuinely

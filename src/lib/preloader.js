@@ -43,16 +43,35 @@ function gltfLoader() {
 const done = new Set()          // urls already prepared, across the session
 const inflight = new Map()      // url -> promise, so two callers share one load
 
+/* A decode that cannot hang the band it belongs to.
+ *
+ * `img.decode()` does not settle at all while the document is hidden — it does
+ * not reject, it simply never resolves, because a hidden page has nothing to
+ * decode into. A learner who opens the simulation in a background tab would
+ * therefore sit on "Preparing simulation - 2%" until they focused the tab,
+ * with no error and no way to tell what was wrong.
+ *
+ * The image is already downloaded by the time we get here, so the only thing
+ * decoding buys is avoiding a first-paint stall. That is worth waiting for
+ * when it can happen and worth nothing when it cannot, so: skip it outright
+ * on a hidden page, and put a ceiling on it everywhere else. */
+const DECODE_CEILING_MS = 2000
+
+function decodeSoon(img) {
+  if (!img.decode || document.hidden) return Promise.resolve()
+  return Promise.race([
+    // decode() rejects on some browsers for images already decoded; a
+    // resolved load is good enough in that case.
+    img.decode().catch(() => {}),
+    new Promise((r) => setTimeout(r, DECODE_CEILING_MS)),
+  ])
+}
+
 function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image()
     img.decoding = 'async'
-    img.onload = () => {
-      // decode() rejects on some browsers for images already decoded; a
-      // resolved load is good enough in that case.
-      if (img.decode) img.decode().then(resolve).catch(() => resolve())
-      else resolve()
-    }
+    img.onload = () => { decodeSoon(img).then(resolve) }
     img.onerror = () => reject(new Error(`image failed: ${url}`))
     img.src = url
   })

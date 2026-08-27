@@ -1,0 +1,71 @@
+/* PAGE 13 — Network Coverage.
+   The city is back and the coverage dominates it. Two pieces of chrome, both
+   in the left margin, both out of the dome's way. */
+
+.p13 { background: none }
+
+.p13-viewport { position: absolute; inset: 0 }
+
+/* ------------------------------------------------------------------ chip */
+.p13-chip {
+  position: absolute;
+  left: 4.5vw;
+  top: 5.5vh;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 26px;
+}
+
+/* Four rising bars. Drawn rather than iconised: it is one glyph, and an icon
+   set imported for one glyph is a dependency for a rectangle. */
+.p13-bars { display: flex; align-items: flex-end; gap: 3px; height: 22px }
+.p13-bars i {
+  width: 4px;
+  border-radius: 1px;
+  background: var(--fm-blue);
+}
+.p13-bars i:nth-child(1) { height: 7px }
+.p13-bars i:nth-child(2) { height: 12px }
+.p13-bars i:nth-child(3) { height: 17px }
+.p13-bars i:nth-child(4) { height: 22px }
+
+.p13-chip-text { display: grid; gap: 5px }
+.p13-chip-text b {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #285790;
+}
+
+.p13-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #075FD8;
+}
+.p13-state i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--fm-blue);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.16);
+}
+
+/* -------------------------------------------------------------- continue */
+.p13-continue {
+  position: absolute;
+  left: 4.5vw;
+  bottom: 7vh;
+  z-index: 10;
+  min-width: 210px;
+}
+
+@media (orientation: portrait), (max-width: 900px) {
+  .p13-chip { left: 4.5vw; right: 4.5vw; padding: 14px 18px }
+  .p13-continue { left: 4.5vw; right: 4.5vw; bottom: 4vh; min-width: 0 }
+}

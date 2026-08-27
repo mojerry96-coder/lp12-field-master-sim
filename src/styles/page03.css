@@ -1,0 +1,363 @@
+/* PAGE 03 — Locate the LP12 Site.
+   The city plate itself is BackgroundPlate, unfocused and undimmed in locate
+   mode, so this file owns only what sits on top of it: the instruction capsule
+   and the target. No sidebar, no footer, nothing persistent. */
+
+.p03-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  /* The layer is a measuring surface, not a shield — only its two children
+     take the pointer. */
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------- the capsule */
+/* The instruction and the reason for it, stacked in one column so the second
+   never pushes the first off its authored position. */
+.p03-brief {
+  position: absolute;
+  left: 4.5vw;
+  top: 5.5vh;
+  z-index: 12;
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  width: min(420px, 44vw);
+  pointer-events: auto;
+}
+
+.p03-capsule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 26px;
+  pointer-events: auto;
+}
+.p03-capsule strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--fm-ink);
+}
+.p03-capsule span {
+  display: block;
+  margin-top: 5px;
+  font-size: 14px;
+  color: #697790;
+}
+
+.p03-capsule-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  color: var(--fm-blue);
+}
+
+/* ------------------------------------------------------------ the target */
+/* One accent. The old marker glowed cyan and carried an amber hover state,
+   which this page's colour rules do not allow — every value here is the blue
+   or the 13% fill from the token set. */
+.p03-target {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  /* The ring sits on the ground under the column, outside the button box, so
+     it must not be clipped. */
+  overflow: visible;
+}
+
+.p03-target-column {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--fm-blue);
+  border-radius: 999px;
+  /* The flat 13% fill is the token, but on its own over a pale isometric city
+     it reads as an empty wireframe capsule floating on the road. Grading it
+     towards the base — where the column meets the ground and the ring sits —
+     makes the same fill read as light on the column, which is what the
+     reference shows. The token value is still the strongest point. */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0, 122, 255, 0.04) 0%,
+      rgba(0, 122, 255, 0.10) 55%,
+      var(--fm-blue-soft) 100%
+    );
+  box-shadow: 0 0 32px rgba(0, 122, 255, 0.22);
+  transition:
+    background-color 200ms var(--fm-ease),
+    box-shadow 200ms var(--fm-ease);
+}
+
+/* A slow breath, not a strobe: enough to draw the eye to a column among a
+   dozen identical ones, small enough that it never reads as an alarm. */
+.p03-target-column { animation: p03-breathe 2.6s var(--fm-ease) infinite }
+@keyframes p03-breathe {
+  0%, 100% { box-shadow: 0 0 26px rgba(0, 122, 255, 0.18) }
+  50% { box-shadow: 0 0 40px rgba(0, 122, 255, 0.32) }
+}
+
+.p03-target-ring {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  /* Sat on the ground plane at the foot of the column, and centred on it. The
+     plate is isometric, so the ring's own perspective is baked into the
+     artwork — it must not be squashed here. */
+  transform: translate(-50%, 42%);
+  pointer-events: none;
+  user-select: none;
+}
+
+.p03-target:hover .p03-target-column,
+.p03-target:focus-visible .p03-target-column {
+  background: rgba(0, 122, 255, 0.20);
+  box-shadow: 0 0 44px rgba(0, 122, 255, 0.36);
+}
+.p03-target:focus-visible { outline: none }
+.p03-target:focus-visible .p03-target-column {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+}
+.p03-target:disabled { cursor: default; opacity: 0.5 }
+
+/* Returning to the site after the install: the column is fitted, so the
+   highlight stops asking to be pressed. */
+.p03-target.is-complete .p03-target-column { animation: none }
+
+@media (prefers-reduced-motion: reduce) {
+  .p03-target-column { animation: none; transition: none }
+}
+
+/* Portrait: the capsule would sit under the browser chrome at 5.5vh on a
+   tall screen, and the copy needs the full width. */
+@media (orientation: portrait), (max-width: 760px) {
+  .p03-capsule { padding: 16px 18px }
+  .p03-capsule strong { font-size: 17px }
+}
+
+
+/* ------------------------------------------------------------- dead zone */
+/* Summary and trigger in one control. Sized from the reference frame:
+   410 x 105 at 4.545% / 16.472% of a 1672 x 941 canvas. */
+.p03-deadzone {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--fm-glass-line);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.p03-deadzone:focus-visible { outline: 2px solid var(--fm-blue); outline-offset: 3px }
+
+/* The same red the diagram uses, so the row and the volume in it are
+   recognisably one thing. Red is a second accent on a page whose rules allow
+   one — taken deliberately, because the handoff specifies it and because a
+   fault state drawn in the interaction colour would read as something to
+   press rather than something wrong. */
+.p03-dz-swatch {
+  flex: none;
+  margin-top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(233, 90, 84, 0.22);
+  box-shadow: inset 0 0 0 2px #E95A54;
+}
+
+.p03-dz-head { flex: 1; display: grid; gap: 3px; min-width: 0 }
+.p03-dz-head strong { font-size: 15px; font-weight: 600; color: var(--fm-ink) }
+.p03-dz-head span { font-size: 12.5px; line-height: 1.35; color: #70819A }
+
+.p03-dz-chevron {
+  flex: none;
+  margin-top: 3px;
+  color: #7E8FA8;
+  transition: transform 200ms var(--fm-ease);
+}
+.p03-dz-chevron.is-open { transform: rotate(180deg) }
+
+/* ------------------------------------------------------------- explainer */
+/* Lower-left, at the reference's 662 x 431 of a 1672 x 941 canvas. */
+.p03-explainer {
+  position: absolute;
+  left: 1.615%;
+  top: 49.841%;
+  width: 39.593%;
+  min-width: 420px;
+  max-width: 700px;
+  z-index: 14;
+  padding: 16px 16px 14px;
+  pointer-events: auto;
+  animation: p03-explainer-in 420ms var(--fm-ease) both;
+}
+
+.p03-explainer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 4px 12px;
+}
+.p03-explainer-head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fm-ink);
+}
+.p03-explainer-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  color: #5B6C87;
+  cursor: pointer;
+}
+.p03-explainer-close:hover { background: rgba(255, 255, 255, 0.9) }
+.p03-explainer-close:focus-visible { outline: 2px solid var(--fm-blue); outline-offset: 2px }
+
+/* The diagram's own space, with its own camera and its own coordinates. */
+.p03-explainer-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 640 / 285;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #C8D2D5;
+}
+.dead-zone-3d { position: absolute; inset: 0 }
+.dead-zone-3d canvas { display: block; width: 100% !important; height: 100% !important }
+
+.p03-no-service {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px 6px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #B3413B;
+}
+.p03-no-service span {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #E95A54;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.p03-explainer-foot { padding: 12px 4px 0 }
+.p03-explainer-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+}
+.p03-explainer-legend span {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: rgba(233, 90, 84, 0.28);
+  box-shadow: inset 0 0 0 2px #E95A54;
+}
+.p03-explainer-legend strong { font-size: 13.5px; color: var(--fm-ink) }
+.p03-explainer-foot p { margin: 0; font-size: 13px; line-height: 1.5; color: #70819A }
+
+@keyframes p03-explainer-in {
+  from { opacity: 0; transform: translateY(10px) }
+  to { opacity: 1; transform: none }
+}
+
+
+/* ------------------------------------------------------------- the callout */
+/* A leader line from the top of the highlight out to a label. The line is what
+   makes the pill point at something rather than float over the city. */
+.p03-callout {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: flex-start;
+  transform: translate(-100%, -100%);
+  pointer-events: none;
+  animation: p03-callout-in 620ms var(--fm-ease) both 260ms;
+}
+
+.p03-callout-line {
+  width: 120px;
+  height: 90px;
+  color: var(--fm-blue);
+  order: 2;
+  /* Drawn on, once: the line arriving is what carries the eye down it to the
+     column. A loop would make it decoration. */
+  stroke-dasharray: 170;
+  animation: p03-draw 620ms var(--fm-ease) both 300ms;
+}
+
+.p03-callout-pill {
+  order: 1;
+  align-self: flex-start;
+  margin-top: 16px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #075FD8;
+  white-space: nowrap;
+  /* A slow breath on the label only. The learner has to notice it; the line it
+     hangs off should stay still once drawn. */
+  animation: p03-pill-pulse 2.4s var(--fm-ease) infinite 1s;
+}
+
+@keyframes p03-callout-in {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
+@keyframes p03-draw {
+  from { stroke-dashoffset: 170 }
+  to { stroke-dashoffset: 0 }
+}
+@keyframes p03-pill-pulse {
+  0%, 100% { transform: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 8px 22px rgba(40,70,120,.10) }
+  50% { transform: translateX(-4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 8px 26px rgba(0,122,255,.28) }
+}
+
+/* Once the column is fitted the callout has nothing left to say. */
+.p03-target.is-complete ~ .p03-callout,
+.p03-layer:has(.p03-target.is-complete) .p03-callout { display: none }
+
+@media (prefers-reduced-motion: reduce) {
+  .p03-callout, .p03-callout-line, .p03-callout-pill, .p03-explainer { animation: none }
+  .p03-callout-line { stroke-dasharray: none }
+  .p03-dz-chevron { transition: none }
+}
+
+@media (orientation: portrait), (max-width: 760px) {
+  .p03-brief { width: auto; right: 4.5vw }
+  .p03-callout { transform: translate(-100%, -100%) scale(0.85) }
+}

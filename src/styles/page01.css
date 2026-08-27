@@ -1,0 +1,165 @@
+/* PAGE 01 — Welcome.
+   Layout positions come from the specification: brand at 5.5vw / 6vh, title
+   block at 5.5vw / 22vh, CTA at 5.5vw / bottom 12vh, hero on the right 35-42%.
+   No glass card around the title — the wash does that job, and a card here
+   would put a border between the learner and the object. */
+
+.p01 { background: var(--fm-bg-cool) }
+
+/* Left-to-right white wash. Opaque enough to carry the title at the left edge,
+   gone by the time it reaches the hardware. */
+.p01-wash {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.95),
+    rgba(255, 255, 255, 0.48) 46%,
+    rgba(255, 255, 255, 0.05) 76%
+  );
+}
+
+/* The sharpest object on the page, and the only one that is not washed.
+   Full-bleed to the right edge rather than an inset card: the supplied
+   reference render carries the pole continuously to the frame, and the QA gate
+   for this page is a side-by-side against that render. The left edge is masked
+   into the background instead of being cut, so the two plates read as one
+   photograph rather than a panel dropped on top of one. */
+.p01-hero {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 42vw;
+  height: 100%;
+  object-fit: cover;
+  object-position: 52% 46%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+  mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+}
+
+.p01-brand {
+  position: absolute;
+  left: 5.5vw;
+  top: 6vh;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #1555C7;
+}
+/* Slot for the approved MIVA mark. Reserves its box so dropping the real
+   asset in shifts nothing. */
+.p01-brandmark { width: 30px; height: 30px }
+
+.p01-stack {
+  position: absolute;
+  left: 5.5vw;
+  top: 22vh;
+  z-index: 3;
+  max-width: 46vw;
+}
+
+.p01-title {
+  margin: 0;
+  font-size: clamp(64px, 7vw, 104px);
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+  font-weight: 500;
+  /* The reference runs the title from deep to bright blue across the two
+     words; one gradient does that without splitting the text into spans. */
+  background: linear-gradient(100deg, #12408F 0%, #1B62D8 52%, #2F86FF 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.p01-title span { display: block }
+
+.p01-sub {
+  margin: 26px 0 0;
+  font-size: clamp(21px, 1.9vw, 28px);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  color: #425069;
+}
+
+.p01-where {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 22px 0 0;
+  font-size: 18px;
+  color: #67758D;
+}
+.p01-where svg { color: #8797B4; flex: none }
+
+.p01-action {
+  position: absolute;
+  left: 5.5vw;
+  bottom: 12vh;
+  z-index: 3;
+}
+
+/* Sits under the button, exactly the width of it, and only while the learner
+   is waiting on the preload. */
+.p01-progress {
+  display: block;
+  width: 320px;
+  max-width: 100%;
+  height: 2px;
+  margin-top: 14px;
+  border-radius: 2px;
+  background: rgba(21, 85, 199, 0.14);
+  overflow: hidden;
+}
+.p01-progress i {
+  display: block;
+  height: 100%;
+  background: var(--fm-blue);
+  transform-origin: 0 50%;
+  transition: transform 240ms var(--fm-ease);
+}
+
+/* One entrance, once. Nothing here loops. */
+.p01-brand,
+.p01-stack,
+.p01-action { animation: p01-rise 720ms var(--fm-ease) both }
+.p01-stack { animation-delay: 90ms }
+.p01-action { animation-delay: 180ms }
+.p01-hero { animation: p01-hero-in 900ms var(--fm-ease) both }
+
+@keyframes p01-rise {
+  from { opacity: 0; transform: translateY(14px) }
+  to { opacity: 1; transform: none }
+}
+@keyframes p01-hero-in {
+  from { opacity: 0; transform: scale(1.03) }
+  to { opacity: 1; transform: none }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p01-brand, .p01-stack, .p01-action, .p01-hero { animation: none }
+  .p01-progress i { transition: none }
+}
+
+/* Portrait and small landscape: the hero stops being a side panel and becomes
+   the ground the title sits on, rather than shrinking to a stripe. */
+@media (max-width: 900px), (orientation: portrait) {
+  .p01-hero {
+    width: 100%;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  .p01-wash {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.96) 30%,
+      rgba(255, 255, 255, 0.68) 62%,
+      rgba(255, 255, 255, 0.12) 100%
+    );
+    z-index: 2;
+  }
+  .p01-stack { max-width: none; right: 5.5vw }
+  .p01-action { bottom: 8vh }
+}

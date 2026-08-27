@@ -100,24 +100,29 @@ fieldset.dockinner[disabled]{opacity:.55}
 .canvas-dim-layer{position:absolute;inset:0;z-index:3;pointer-events:none;background:#040a14;opacity:0;transition:opacity 350ms ease}
 @media (prefers-reduced-motion:reduce){.canvas-dim-layer{transition-duration:80ms}}
 
-/* --- TargetCursor integration ------------------------------------------- */
-/* hideDefaultCursor sets `cursor:none` on <body>, but any element with its own
-   cursor rule opts back in — which would show a pointer on top of the custom
-   cursor. Suppress it on the targets. */
-.cursor-target{cursor:none}
-/* Restore a real cursor where precision matters: dragging the height slider
-   without one is measurably worse, and the canvas needs a normal pointer. */
+/* --- cursor ------------------------------------------------------------- */
+/* The custom spinning crosshair is gone: it hid the system cursor behind a
+   cyan reticle with an amber hover state, which is a second and third accent
+   on pages whose rules allow one, and it cost precision on every slider it
+   passed over. `.cursor-target` is left as a hook the old markup still carries
+   — it now simply means "this is pressable". */
+.cursor-target{cursor:pointer}
 .dockinner input[type=range]{cursor:grab}
 .dockinner input[type=range]:active{cursor:grabbing}
 .lp12-canvas-layer{cursor:default}
-@media (prefers-reduced-motion:reduce){.cursor-target{cursor:pointer}}
 
-/* --- white studio takes over once the model opens ----------------------- */
-/* The photo stays for locate (that is where LP12 is found); build and complete
-   hand over to the studio, so the backdrop and blur are retired there. */
+/* --- white studio takes over once the assembly starts -------------------- */
+/* The photo stays for locate (that is where LP12 is found) and for the pole
+   overview (the street is what the pole is being inspected against). It is
+   retired the moment the assembly begins, and stays gone until the coverage
+   page brings the city back — see `isolated` in App.jsx. */
 .mode-build, .mode-complete { background: #edece9; }  /* = studio backdrop */
-.mode-build .background-image-layer,
-.mode-complete .background-image-layer { opacity: 0; transition: opacity 420ms ease; }
+.hybrid-simulation.is-isolated .background-image-layer {
+  opacity: 0;
+  /* Specification 6: the city goes to zero over 200-650ms after a short hold,
+     rather than cross-dissolving with the studio. */
+  transition: opacity 450ms cubic-bezier(.22,1,.36,1) 200ms;
+}
 .mode-build .background-focus-overlay,
 .mode-complete .background-focus-overlay { background: rgba(4,10,20,0); }
 .mode-build .canvas-dim-layer,

@@ -1,0 +1,111 @@
+/* PAGE 02 — Mission Briefing.
+   One glass sheet at left 6vw, vertically centred, per the specification. The
+   supplied reference render draws that sheet roughly twice this wide; the
+   spec's own layout note and its replication code both say 520px, and a sheet
+   covering nearly half the frame would make the glass the subject instead of
+   the site. Two sources agree on 520, so 520 it is — clamped so it does not
+   crowd a small laptop or float in the middle of a large display. */
+
+.p02 { background: var(--fm-bg-cool) }
+
+.p02-sheet {
+  position: absolute;
+  left: 6vw;
+  top: 50%;
+  width: clamp(420px, 36vw, 520px);
+  max-width: 88vw;
+  padding: 44px 46px;
+  z-index: 2;
+  /* Rest state is the entrance state: it rises 12px into place on mount. */
+  opacity: 0;
+  transform: translateY(calc(-50% + 12px));
+  transition:
+    opacity 520ms var(--fm-ease),
+    transform 520ms var(--fm-ease);
+}
+
+.p02-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #2A5DB8;
+}
+/* Slot for the approved MIVA mark, the same reserved box Page 01 keeps, so
+   both pages fill on the day the real asset arrives. */
+.p02-mark { width: 22px; height: 22px }
+
+.p02-site {
+  margin: 18px 0 4px;
+  font-size: clamp(40px, 3.8vw, 54px);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  font-weight: 500;
+  color: #123E90;
+}
+
+.p02-place {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 400;
+  color: #697790;
+}
+
+.p02-rule {
+  height: 1px;
+  margin: 30px 0;
+  border: 0;
+  background: rgba(73, 98, 140, 0.18);
+}
+
+.p02-task {
+  margin: 0;
+  font-size: clamp(23px, 1.9vw, 27px);
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  color: var(--fm-ink);
+  /* Wraps after "one" at the design width, as the reference does, but wraps
+     somewhere sensible at every other width — which a hard <br> would not. */
+  max-width: 22ch;
+}
+
+.p02-note {
+  margin: 18px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #6F7E97;
+  max-width: 34ch;
+}
+
+.p02-cta { margin-top: 34px; min-width: 210px }
+
+/* One entrance, once. */
+.p02.is-shown .p02-sheet { opacity: 1; transform: translateY(-50%) }
+.p02.is-leaving .p02-sheet { opacity: 0; transform: translateY(calc(-50% - 8px)) }
+
+/* The plate follows the sheet out, so the handover to the site is a dissolve
+   rather than a cut. */
+.p02 .fm-media { transition: opacity 320ms var(--fm-ease) }
+.p02.is-leaving .fm-media { opacity: 0 }
+
+@media (prefers-reduced-motion: reduce) {
+  .p02-sheet {
+    opacity: 1;
+    transform: translateY(-50%);
+    transition: none;
+  }
+  .p02 .fm-media { transition: none }
+}
+
+/* Portrait: the sheet stops being a left-hand column and becomes the page. */
+@media (orientation: portrait), (max-width: 760px) {
+  .p02-sheet {
+    left: 50%;
+    width: min(520px, 88vw);
+    transform: translate(-50%, -50%);
+    padding: 34px 30px;
+  }
+  .p02.is-shown .p02-sheet { transform: translate(-50%, -50%) }
+  .p02.is-leaving .p02-sheet { transform: translate(-50%, calc(-50% - 8px)) }
+  .p02-task, .p02-note { max-width: none }
+}

@@ -63,7 +63,7 @@ export default function StageGate({
       <div className={`stage-reveal${shown ? ' is-shown' : ''}`}
            aria-hidden={shown ? undefined : 'true'}
            // Nothing behind the curtain may be clicked, tabbed to or read out.
-           inert={shown ? undefined : ''}>
+           inert={!shown}>
         {children}
       </div>
 

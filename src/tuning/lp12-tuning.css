@@ -83,7 +83,9 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: blur(17px) saturate(72%) brightness(1.06);
+  /* Enough to push the street behind the tablet without turning it into a
+     colour field — at 17px the site stopped reading as a place. */
+  filter: blur(9px) saturate(88%) brightness(1.04);
   /* Blur samples past the element's edge and returns transparent there, which
      draws a pale border around the whole plate. Scaling up hides the seam. */
   transform: scale(1.06);
@@ -325,6 +327,10 @@
 .lp12-meta-bars i { width: 3px; background: rgba(255,255,255,.9); border-radius: 1px; }
 
 /* --------------------------------------------------------- bento panel */
+/* Full artboard on the redesigned steps, where the live viewport is off and
+   the UI owns the whole screen. */
+.lp12-bento-panel.is-full { left: 0; width: 1366px; padding: 0 }
+
 .lp12-bento-panel {
   position: absolute;
   left: 598px;

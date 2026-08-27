@@ -1,0 +1,105 @@
+/* PAGE 18 — Reporter Optimised.
+   The same full artboard as the tuning steps, because the specification asks
+   for perfect continuity across 15-18 and this is the page that pays it off. */
+
+.p18 {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 104px 118px 64px;
+  font-family: "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.p18-title {
+  margin: 0 0 54px;
+  font-size: 56px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: #14243D;
+}
+
+/* ---------------------------------------------------------- the settings */
+/* A dl, not rows of paragraphs: these are term/value pairs and assistive tech
+   should read them as such. */
+.p18-settings { width: 100%; margin: 0; display: grid; gap: 0 }
+.p18-settings > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 4px;
+  border-bottom: 1px solid rgba(120, 150, 190, 0.26);
+}
+.p18-settings dt { margin: 0; font-size: 26px; color: #33455F }
+.p18-settings dd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  /* Green, and only here. The redesign allows one accent per page and it
+     belongs to the CTA below; these three are a different statement — not
+     "press me" but "this one is right" — and the reference draws them in
+     green for exactly that reason. Rendering them in the interaction blue
+     would make three settled facts look like three more things to do. */
+  color: #1B8F53;
+}
+.p18-settings dd small { font-size: 20px; font-weight: 600 }
+.p18-settings dd svg { color: #1B8F53 }
+
+/* ----------------------------------------------------------- the results */
+.p18-results {
+  width: 100%;
+  margin-top: 56px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+}
+
+.p18-result {
+  padding: 30px 24px 26px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(40, 70, 120, 0.08);
+  text-align: center;
+}
+.p18-result strong {
+  display: block;
+  font-size: 44px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #14243D;
+}
+.p18-result strong small { font-size: 26px; font-weight: 600; margin-left: 2px }
+.p18-result span { display: block; margin-top: 12px; font-size: 20px; color: #6A7C99 }
+
+/* ---------------------------------------------------------------- the CTA */
+.p18-cta {
+  margin-top: auto;
+  min-width: 380px;
+  height: 74px;
+  padding: 0 46px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0A84FF, #0064F0);
+  color: #fff;
+  font: inherit;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(10, 100, 240, 0.28);
+  transition: transform 140ms ease;
+}
+.p18-cta:hover { transform: translateY(-1px) }
+.p18-cta:focus-visible { outline: 3px solid #7FB6FF; outline-offset: 3px }
+
+@media (prefers-reduced-motion: reduce) {
+  .p18-cta { transition: none }
+}

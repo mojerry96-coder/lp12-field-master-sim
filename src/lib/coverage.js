@@ -84,10 +84,12 @@ export function effectiveCoverageRadiusM(heightM, downtiltDeg) {
  */
 export const MAP_METRES_PER_PIXEL = 0.19
 
-/** Natural size of background.jpg, matching Hotspot.jsx's SOURCE_SIZE. */
+/** Natural size of background.jpg. The iso plate's own size lives in
+    plateAnchor.js as ISO_SOURCE_SIZE; this is the older aerial. */
 export const MAP_SOURCE_SIZE = { width: 1672, height: 941 }
 
-/** Where the LP12 sits on the plate, matching Hotspot.jsx's anchor. */
+/** Where the LP12 sits on that aerial. See plateAnchor.js for the
+    isometric render's own projected anchor. */
 export const MAP_LP12_ANCHOR = { x: 0.698, y: 0.64 }
 
 /**

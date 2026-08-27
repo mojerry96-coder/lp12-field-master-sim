@@ -1,0 +1,30 @@
+/* Apple-glass design tokens.
+   Section 3 of the LP12 build specification, verbatim. Every page in the
+   redesign draws its colour, radius, spacing and easing from here, so a value
+   restated in a component is a value that will drift — put it in this file or
+   derive it from one of these. */
+:root {
+  --fm-blue: #007AFF;
+  --fm-blue-active: #0A84FF;
+  --fm-blue-soft: rgba(0, 122, 255, 0.13);
+
+  --fm-ink: #142033;
+  --fm-muted: #657086;
+  --fm-muted-2: #9199A8;
+
+  --fm-bg-warm: #F6F6F3;
+  --fm-bg-cool: #EEF0F3;
+  --fm-white: #FFFFFF;
+
+  --fm-glass-fill: rgba(255, 255, 255, 0.30);
+  --fm-glass-fill-2: rgba(255, 255, 255, 0.12);
+  --fm-glass-line: rgba(255, 255, 255, 0.55);
+
+  --fm-radius-lg: 28px;
+  --fm-radius-md: 22px;
+
+  --fm-safe-x: 5vw;
+  --fm-safe-y: 5vh;
+
+  --fm-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}

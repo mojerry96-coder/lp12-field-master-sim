@@ -1,0 +1,144 @@
+/* Shared Apple-glass primitives.
+ *
+ * Only the pieces section 3 of the specification calls global live here: the
+ * page ground, the media plate, the glass material, the button, and the four
+ * type roles. Page-specific furniture — the component tray, the coverage
+ * preview, the tuning pages — belongs to the page that owns it and is added
+ * when that page is built, because the build method is one page at a time and
+ * a stylesheet full of classes for unbuilt pages is a stylesheet nobody can
+ * safely delete from.
+ *
+ * Glass is secondary to the 3D scene. Nothing in here may grow a shadow, a
+ * fill or a border heavy enough to compete with the object being manipulated.
+ */
+
+/* The page ground. Fixed rather than the reference's `position: relative`,
+   because these pages are full-screen states inside an app whose #root is
+   already fixed, not documents that scroll. */
+.fm-page {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: var(--fm-ink);
+  font-family: Manrope, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  background: var(--fm-bg-cool);
+}
+
+/* Full-bleed background media. `--soft` is the defocused treatment used
+   wherever the environment is context rather than subject. */
+.fm-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.fm-media--soft {
+  filter: blur(6px) saturate(0.88) brightness(1.08);
+  /* Scaled past the frame so the blur never samples the page edge. */
+  transform: scale(1.025);
+}
+
+/* The studio ground the installation pages sit on once the city is gone. */
+.fm-studio {
+  background: radial-gradient(circle at 50% 35%, #fff 0%, #f6f6f3 46%, #eceef1 100%);
+}
+
+/* The one glass material. */
+.fm-glass {
+  background: linear-gradient(135deg, var(--fm-glass-fill), var(--fm-glass-fill-2));
+  border: 1px solid var(--fm-glass-line);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 18px 54px rgba(40, 70, 120, 0.10);
+  border-radius: var(--fm-radius-lg);
+}
+
+/* ------------------------------------------------------------------ button */
+.fm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  padding: 0 30px 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 18px 54px rgba(40, 70, 120, 0.10);
+  color: #075FD8;
+  font: inherit;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: transform 0.18s var(--fm-ease), background 0.18s var(--fm-ease);
+}
+.fm-btn:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.42); }
+.fm-btn:active { transform: translateY(0); }
+.fm-btn:focus-visible { outline: 2px solid var(--fm-blue); outline-offset: 3px; }
+.fm-btn[disabled] { cursor: default; transform: none; opacity: 0.72; }
+
+/* Trailing rather than leading ornament: the arrow sits after the label and is
+   pushed to the far edge, so the pill reads as "go" rather than "play". */
+.fm-btn--trailing { padding: 0 22px 0 32px; justify-content: space-between; gap: 34px }
+.fm-btn-arrow { display: grid; place-items: center; color: var(--fm-blue) }
+.fm-btn-arrow svg { display: block }
+
+/* The leading disc. A single glyph, not an icon set. */
+.fm-btn-glyph {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.20), rgba(0, 122, 255, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  color: var(--fm-blue);
+}
+.fm-btn-glyph svg { display: block }
+
+/* --------------------------------------------------------------- type roles */
+.fm-eyebrow {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5C6E8D;
+  font-weight: 700;
+}
+.fm-stage-title {
+  margin: 0;
+  font-size: clamp(42px, 4.2vw, 64px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  font-weight: 500;
+}
+.fm-helper {
+  margin: 18px 0 0;
+  max-width: 460px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--fm-muted);
+}
+
+/* The active-object highlight. Two pixels of blue and a 13% fill — never a
+   neon glow, which is the failure mode this token exists to prevent. */
+.fm-target-highlight {
+  position: absolute;
+  border: 2px solid var(--fm-blue);
+  background: var(--fm-blue-soft);
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fm-btn { transition: none }
+  .fm-btn:hover { transform: none }
+}

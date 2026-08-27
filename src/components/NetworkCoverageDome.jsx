@@ -3,7 +3,7 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { LP12_MODEL_URL } from '../store'
-import { mapCoverPointToContainer } from './Hotspot'
+import { mapCoverPointToContainer } from '../lib/plateAnchor'
 import {
   effectiveCoverageRadiusM, MAP_METRES_PER_PIXEL, MAP_SOURCE_SIZE,
   MAP_LP12_ANCHOR, MAP_VIEW_ELEVATION_DEG,

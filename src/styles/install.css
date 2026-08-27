@@ -1,6 +1,5 @@
 /* LP12 installation shell — spec sections 3-11 */
 .installation-shell{
-  --tool-rail-width:96px;
   --information-panel-width:clamp(360px,24vw,420px);
   /* Matched to the 3D studio backdrop (MAT_Studio_Background, #EDECE9).
      The canvas fills this column, so any difference between the two shows
@@ -12,36 +11,54 @@
   --lp12-periwinkle:#6f8eff;
   --rail-divider:#e4e8ef;
   display:grid;
-  grid-template-columns:var(--tool-rail-width) var(--information-panel-width) minmax(0,1fr);
+  /* The workspace rail is gone: it held one icon that only marked the page
+     you were already on, so the panel now starts at the window edge. */
+  grid-template-columns:var(--information-panel-width) minmax(0,1fr);
   width:100vw;height:100dvh;overflow:hidden;
   background:var(--workspace-background);
   font-family:"Helvetica Neue",Manrope,Inter,system-ui,-apple-system,sans-serif;
   color:#0d1b2a;
 }
-.tool-rail{background:#fff;border-right:1px solid var(--rail-divider);
-  padding:24px 14px;display:flex;flex-direction:column;justify-content:space-between;align-items:center}
-.rail-group{display:flex;flex-direction:column;gap:16px}
-.rail-btn{width:56px;height:56px;border-radius:8px;border:1.5px solid var(--lp12-blue);
-  background:#fff;color:var(--lp12-blue);display:grid;place-items:center;cursor:pointer;
-  transition:background .15s,color .15s}
-.rail-btn.is-active{background:var(--lp12-blue);color:#fff}
-.rail-btn:disabled{opacity:.55;cursor:default}
 
+/* The panel is two regions, not one long scroll: the brief can scroll, the
+   parts tray is pinned so all six components are always on screen. */
 .info-panel{background:linear-gradient(162deg,#075cff 0%,#266eff 46%,#6f8eff 100%);
-  color:#fff;padding:28px 30px 24px;display:flex;flex-direction:column;gap:14px;
-  overflow-y:auto;overscroll-behavior:contain}
+  color:#fff;padding:22px 24px 20px;display:flex;flex-direction:column;gap:14px;
+  min-height:0;overflow:hidden}
+.panel-brief{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  display:flex;flex-direction:column;gap:12px}
 .panel-back{background:none;border:0;color:#fff;font-size:16px;font-weight:450;
   display:flex;align-items:center;gap:6px;padding:0;cursor:pointer;align-self:flex-start}
-.panel-eyebrow{margin:0;font-size:15px;font-weight:400;opacity:.92}
-.panel-title{margin:0;font-size:clamp(26px,2.1vw,34px);font-weight:640;line-height:1.12;letter-spacing:-.01em}
-.panel-hero{width:100%;max-height:150px;object-fit:contain;margin:2px 0 0}
+.panel-eyebrow{margin:0;font-size:11px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;opacity:.78}
+.panel-title{margin:0;font-size:clamp(24px,2vw,32px);font-weight:640;line-height:1.12;
+  letter-spacing:-.015em;display:flex;align-items:baseline;gap:10px}
+.panel-step{font-size:.62em;font-weight:600;letter-spacing:.06em;opacity:.7;
+  font-variant-numeric:tabular-nums}
+.panel-instruction{margin:-4px 0 0;font-size:14px;line-height:1.35;font-weight:400;
+  color:rgba(255,255,255,.86)}
+/* The hero render and the wireframe thumb are gone: they duplicated the tray
+   card and the 3D view, and their height was what pushed the parts below the
+   fold. */
+.panel-busy,.panel-dragcue{width:100%;min-height:44px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:14px;font-weight:500;color:rgba(255,255,255,.92);
+  background:rgba(255,255,255,.14);backdrop-filter:blur(12px);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);padding:10px 14px;text-align:center}
+.panel-busy-dot{width:9px;height:9px;border-radius:50%;background:#fff;
+  animation:panelBusyPulse 1s ease-in-out infinite}
+@keyframes panelBusyPulse{0%,100%{opacity:.35}50%{opacity:1}}
 .panel-status{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
 .panel-status .dot{width:11px;height:11px;border-radius:50%;border:1.5px solid #fff;display:inline-block}
-.panel-cta{width:100%;height:56px;border:0;border-radius:8px;background:#fff;color:var(--lp12-blue);
-  font-size:17px;font-weight:560;cursor:pointer;box-shadow:0 6px 18px rgba(7,42,120,.18)}
+.panel-cta{width:100%;min-height:52px;border:0;border-radius:12px;background:#fff;color:var(--lp12-blue);
+  font-size:17px;font-weight:560;cursor:pointer;box-shadow:0 6px 18px rgba(7,42,120,.18);
+  transition:transform .18s ease,box-shadow .18s ease}
+.panel-cta:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 24px rgba(7,42,120,.24)}
 .panel-cta:disabled{opacity:.72;cursor:default}
-.panel-secondary{width:100%;height:52px;border-radius:8px;display:grid;place-items:center;
-  background:rgba(255,255,255,.18);color:#fff;font-size:15px;font-weight:450;text-align:center;padding:0 12px}
+.panel-secondary{width:100%;min-height:48px;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;gap:8px;
+  background:rgba(255,255,255,.16);color:#fff;font-size:14px;font-weight:450;text-align:center;
+  padding:10px 14px;backdrop-filter:blur(12px);transition:background .2s ease}
 .panel-secondary.is-warning{background:rgba(255,86,86,.28);box-shadow:inset 0 0 0 1px rgba(255,150,150,.6)}
 
 /* --- rig controls (mount height / downtilt) ------------------------------- */
@@ -87,32 +104,92 @@
 .viewport.is-drop-over::after{border-color:rgba(7,92,255,.95);
   background:rgba(7,92,255,.11)}
 
+/* A refused drop lights the viewport red and says why, on the model the
+   learner was looking at — a message in the side panel is off their gaze. */
+.viewport.is-drop-error::after{content:"";position:absolute;inset:0;z-index:4;
+  pointer-events:none;border-radius:0;
+  border:3px solid rgba(255,64,64,.85);
+  background:radial-gradient(ellipse at center,rgba(255,40,40,0) 42%,rgba(255,40,40,.3) 100%);
+  animation:lp12-error-flash .45s ease}
+@keyframes lp12-error-flash{0%{opacity:0}30%{opacity:1}}
+.drop-error{position:absolute;left:50%;top:50%;z-index:6;transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:12px;max-width:min(420px,72%);
+  padding:14px 18px;border-radius:14px;color:#fff;text-align:left;
+  background:rgba(120,12,18,.72);backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:0 12px 34px rgba(60,4,8,.4),inset 0 0 0 1px rgba(255,150,150,.45);
+  pointer-events:none}
+.drop-error > svg{flex:0 0 auto;color:#ffb3b3}
+.drop-error div{display:flex;flex-direction:column;gap:2px}
+.drop-error b{font-size:15px;font-weight:600}
+.drop-error span{font-size:13.5px;line-height:1.35;color:rgba(255,255,255,.9)}
+
 .drop-hint{position:absolute;left:50%;bottom:26px;z-index:5;transform:translateX(-50%);
   pointer-events:none}
-.drop-hint-pill{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;
+.drop-hint-pill{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;
   border-radius:999px;font:600 14px/1 inherit;color:#fff;white-space:nowrap;
-  background:rgba(9,26,64,.86);box-shadow:0 8px 26px rgba(4,18,60,.34);
+  background:rgba(9,26,64,.72);backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:0 8px 26px rgba(4,18,60,.34);
   transition:background .16s ease,transform .16s ease}
 .drop-hint-pill.is-over{background:var(--lp12-blue);transform:scale(1.04)}
 
 /* --- downtilt knob + edge dial -------------------------------------------- */
-.tilt-knob-row{display:flex;align-items:center;gap:16px}
-.tilt-knob{position:relative;width:88px;height:88px;flex:0 0 88px;border-radius:999px;
+/* Local tokens for the machined control. Kept here with the rest of the
+   panel's hard-coded values rather than promoted to the global palette —
+   this is one instrument, not a theme. */
+.tilt-knob-row{--knob-metal:#2c3440;--knob-metal-hi:#7f8ea3;--knob-lamp:#ffb44d;
+  display:flex;align-items:center;gap:16px}
+
+.tilt-knob{position:relative;width:92px;height:92px;flex:0 0 92px;border-radius:999px;
   cursor:grab;touch-action:none;outline:none;
-  background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.28),rgba(255,255,255,.06) 58%),
-             rgba(255,255,255,.14);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 6px 18px rgba(4,14,40,.28)}
+  /* contact shadow: the control sits ON the panel */
+  filter:drop-shadow(0 10px 16px rgba(2,10,32,.45))}
 .tilt-knob:active{cursor:grabbing}
-.tilt-knob:focus-visible{box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 0 0 3px #fff}
-.tilt-knob.is-disabled{opacity:.45;cursor:default}
+.tilt-knob:active .tilt-knob-cap{transform:scale(.985);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.6),inset 0 -1px 0 rgba(255,255,255,.1)}
+.tilt-knob:focus-visible{box-shadow:0 0 0 3px #fff}
+.tilt-knob.is-disabled{filter:grayscale(.6) brightness(.8);opacity:.5;cursor:default}
+
+/* Fixed outer collar — machined ring the cap turns inside of. */
+.tilt-knob-collar{position:absolute;inset:0;border-radius:999px;
+  background:
+    conic-gradient(from 210deg,#0f151f,#4a5768 18%,#1a2029 34%,#5c6b7f 52%,
+                   #141b25 70%,#3d4959 86%,#0f151f);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),
+             inset 0 1px 0 rgba(255,255,255,.5),
+             inset 0 -2px 6px rgba(0,0,0,.55)}
+
 .tilt-knob-body{position:absolute;inset:0;border-radius:999px;
   transition:transform .16s cubic-bezier(.2,.7,.3,1)}
-/* The pointer is the only part that has to be unambiguous at a glance, so it
-   runs from the rim to the centre rather than being a dot on the edge. */
-.tilt-knob-pointer{position:absolute;left:50%;top:7px;width:3px;height:30px;margin-left:-1.5px;
-  border-radius:2px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.55)}
-.tilt-knob-grip{position:absolute;left:50%;top:3px;width:2px;height:7px;margin-left:-1px;
-  border-radius:2px;background:rgba(255,255,255,.4);transform-origin:50% 41px}
+
+/* Knurled rim: each ridge lit on one side, shaded on the other. */
+.tilt-knob-knurl{position:absolute;inset:4px;border-radius:999px}
+.tilt-knob-knurl i{position:absolute;left:50%;top:2px;width:3px;height:9px;margin-left:-1.5px;
+  border-radius:1px;transform-origin:50% 40px;
+  background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(255,255,255,.55))}
+
+/* Inner cap: inset, darker, brushed, lit from the top-left. */
+.tilt-knob-cap{position:absolute;inset:13px;border-radius:999px;
+  transition:transform .12s ease,box-shadow .12s ease;
+  background:
+    radial-gradient(circle at 32% 26%,rgba(255,255,255,.34),rgba(255,255,255,0) 52%),
+    repeating-conic-gradient(from 0deg,rgba(255,255,255,.045) 0deg 2deg,
+                             rgba(0,0,0,.05) 2deg 4deg),
+    radial-gradient(circle at 50% 50%,#2f3846,#171d27 78%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),
+             inset 0 -6px 12px rgba(0,0,0,.5),
+             0 2px 6px rgba(0,0,0,.45)}
+
+/* Recessed indicator groove, from cap edge out to the rim. */
+.tilt-knob-pointer{position:absolute;left:50%;top:9px;width:4px;height:26px;margin-left:-2px;
+  border-radius:2px;
+  background:linear-gradient(180deg,#fff,rgba(255,255,255,.6));
+  box-shadow:0 0 8px rgba(255,255,255,.5),inset 0 0 0 1px rgba(0,0,0,.35)}
+/* Lamp at the rim tip — brightens while the knob is being turned. */
+.tilt-knob-lamp{position:absolute;left:50%;top:3px;width:6px;height:6px;margin-left:-3px;
+  border-radius:999px;background:var(--knob-lamp);opacity:.45;
+  transition:opacity .2s ease,box-shadow .2s ease}
+.tilt-knob.is-turning .tilt-knob-lamp{opacity:1;box-shadow:0 0 12px var(--knob-lamp)}
+
 .tilt-knob-readout{display:grid;gap:2px}
 .tilt-knob-readout b{font:700 34px/1 inherit;letter-spacing:-.02em}
 .tilt-knob-readout b sup{font-size:.46em;vertical-align:super;margin-left:1px}
@@ -121,102 +198,180 @@
 .tilt-knob-readout span{font:500 12px/1.2 inherit;color:rgba(255,255,255,.72)}
 
 /* The scale. Parked outside the viewport and brought in only while the knob is
-   moving — it is a readout for the gesture, not permanent furniture. */
-/* Comes in from the WORKSPACE edge, not the panel edge. The information panel
-   already owns the left of the page — a dial sliding in there lands on top of
-   the very control it is reporting. */
-.tilt-dial{position:fixed;right:0;top:50%;z-index:7;width:420px;height:420px;
-  margin-top:-210px;pointer-events:none;
+   moving — it is a readout for the gesture, not permanent furniture.
+   Comes in from the WORKSPACE edge, not the panel edge: the information panel
+   already owns the left of the page. Tuner-black ground so the fine ticks
+   read against a near-white workspace. */
+.tilt-dial{position:fixed;right:0;top:50%;z-index:7;width:460px;height:460px;
+  margin-top:-230px;pointer-events:none;
   transform:translateX(74%);opacity:0;
-  transition:transform .42s cubic-bezier(.2,.75,.25,1),opacity .3s ease;
-  /* The workspace behind this is near-white (--workspace-background), so a
-     scale drawn in white on nothing is invisible. The dial brings its own
-     ground: the panel blue, fading out at the rim so it reads as a plate
-     sliding in rather than a circle stuck to the page. */
+  transition:transform .46s cubic-bezier(.18,.9,.28,1.06),opacity .3s ease;
   border-radius:999px;
   background:radial-gradient(circle at 50% 50%,
-    rgba(7,42,140,.94) 62%, rgba(7,42,140,.86) 82%, rgba(7,42,140,0) 100%);
-  box-shadow:0 18px 60px rgba(4,18,60,.34)}
-.tilt-dial.is-out{transform:translateX(46%);opacity:1}
+    rgba(9,11,14,.97) 58%, rgba(9,11,14,.9) 82%, rgba(9,11,14,0) 100%);
+  box-shadow:0 24px 70px rgba(2,8,24,.5)}
+.tilt-dial.is-out{transform:translateX(44%);opacity:1}
 .tilt-dial-face{position:absolute;inset:0;border-radius:999px;
   transition:transform .22s cubic-bezier(.2,.7,.3,1)}
+
 /* -90deg base so tick 0 points at the marker on the left rather than up. */
-.tilt-dial-tick{position:absolute;left:50%;top:0;width:0;height:50%;transform-origin:50% 100%;
-  rotate:-90deg}
-.tilt-dial-tick i{position:absolute;left:-1px;top:18px;width:2px;height:16px;border-radius:2px;
-  background:rgba(255,255,255,.45)}
-.tilt-dial-tick.is-major i{height:28px;width:3px;left:-1.5px;background:#fff}
-.tilt-dial-tick span{position:absolute;left:-20px;top:52px;width:40px;text-align:center;
-  font:700 20px/1 inherit;color:#fff;text-shadow:0 1px 6px rgba(4,18,60,.5)}
+.tilt-dial-fine,.tilt-dial-tick{position:absolute;left:50%;top:0;width:0;height:50%;
+  transform-origin:50% 100%;rotate:-90deg}
+/* Dense inner ring — texture only, no value attached. */
+.tilt-dial-fine{}
+.tilt-dial-fine::after{content:'';position:absolute;left:-.5px;top:34px;width:1px;height:11px;
+  background:rgba(255,255,255,.22)}
+.tilt-dial-tick i{position:absolute;left:-1px;top:14px;width:2px;height:14px;border-radius:2px;
+  background:rgba(255,255,255,.4)}
+.tilt-dial-tick.is-major i{height:26px;width:2px;left:-1px;background:rgba(255,255,255,.85)}
+.tilt-dial-tick span{position:absolute;left:-24px;top:50px;width:48px;text-align:center;
+  font:600 21px/1 inherit;letter-spacing:.06em;color:rgba(255,255,255,.72)}
 /* Fixed marker the face turns against — the value is whatever is under it. */
-/* Marker sits on the inward edge, which is the side facing the page. */
-.tilt-dial-marker{position:absolute;left:6px;top:50%;width:30px;height:3px;margin-top:-1.5px;
-  border-radius:2px;background:#ffb44d;box-shadow:0 0 12px rgba(255,180,77,.75)}
-.tilt-dial-window{position:absolute;left:0;top:50%;width:70px;height:58px;margin-top:-29px;
-  border-radius:12px;border:1.5px solid rgba(255,255,255,.55);
-  background:rgba(8,22,58,.42);backdrop-filter:blur(4px)}
+.tilt-dial-marker{position:absolute;left:10px;top:50%;width:0;height:0;margin-top:-7px;
+  border-top:7px solid transparent;border-bottom:7px solid transparent;
+  border-left:12px solid var(--lp12-amber,#ffb44d);
+  filter:drop-shadow(0 0 8px rgba(255,180,77,.7))}
+.tilt-dial-window{position:absolute;left:26px;top:50%;width:78px;height:74px;margin-top:-37px;
+  border-radius:14px;border:1px solid rgba(255,255,255,.4);
+  background:rgba(255,255,255,.03);
+  box-shadow:inset 0 0 18px rgba(255,255,255,.08);
+  display:flex;flex-direction:column;justify-content:center;gap:9px;padding:0 12px;
+  transition:box-shadow .3s ease,border-color .3s ease}
+.tilt-dial.is-out .tilt-dial-window{border-color:rgba(255,255,255,.62);
+  box-shadow:inset 0 0 26px rgba(255,255,255,.14)}
+.tilt-dial-window i{display:block;height:1.5px;border-radius:2px;background:rgba(255,255,255,.75)}
+.tilt-dial-window i:nth-child(2){background:#fff;height:2px}
+
+/* Tuner-style value block sitting on the plate, right of the lens. */
+.tilt-dial-readout{position:absolute;left:132px;top:50%;transform:translateY(-50%);
+  display:grid;gap:4px}
+.tilt-dial-label{font:500 13px/1 inherit;letter-spacing:.02em;color:rgba(255,255,255,.62)}
+.tilt-dial-label em{font-style:normal;font-size:10px;letter-spacing:.14em;margin-left:8px;
+  color:rgba(255,255,255,.34)}
+.tilt-dial-readout b{display:inline-flex;align-items:baseline;
+  font:600 62px/1 inherit;letter-spacing:-.02em;color:#fff;
+  padding:6px 20px;border-radius:999px;background:rgba(255,255,255,.07)}
+.tilt-dial-readout b u{text-decoration:none;color:rgba(255,255,255,.28)}
+.tilt-dial-readout b sup{font-size:.34em;vertical-align:super;margin-left:2px;
+  color:rgba(255,255,255,.6)}
+.tilt-dial-state{font:600 13px/1 inherit;letter-spacing:.1em;color:rgba(255,255,255,.4)}
+.tilt-dial-state em{font-style:normal;margin-left:8px;color:var(--lp12-amber,#ffb44d)}
+.tilt-dial-state.is-ok{color:#8ef0b4}
+.tilt-dial-state.is-ok em{color:rgba(255,255,255,.4)}
+
 @media (prefers-reduced-motion:reduce){
-  .tilt-dial,.tilt-dial-face,.tilt-knob-body{transition:none}
+  .tilt-dial,.tilt-dial-face,.tilt-knob-body,.tilt-knob-cap,
+  .tilt-knob-lamp,.tilt-dial-window{transition:none}
 }
+
 
 .panel-control-readout{display:flex;align-items:baseline;gap:8px;font:500 12px/1.2 inherit;
   color:rgba(255,255,255,.78)}
 .panel-control-readout b{font:700 16px/1 inherit}
 .panel-control-readout b.is-ok{color:#8ef5c8}
 .panel-control-readout b.is-warn{color:#ffd28a}
-.panel-wire{width:100%;aspect-ratio:16/8.5;border:1px solid rgba(255,255,255,.42);
-  border-radius:8px;background:rgba(150,175,255,.22);display:grid;place-items:center;overflow:hidden}
-.panel-wire img{width:100%;height:100%;object-fit:contain}
 .panel-location{margin:0;font-size:15px;opacity:.95}
-.panel-section{margin:2px 0 0;font-size:18px;font-weight:520}
+.panel-section{margin:0;font-size:11px;font-weight:600;letter-spacing:.14em;
+  text-transform:uppercase;color:rgba(255,255,255,.78)}
 
-/* All of them, at once. This was a horizontally scrolling flex row with a
-   110px minimum per card, so the third card was always clipped at the panel
-   edge and the learner had to scroll a three-item list to see what they were
-   allowed to drag. A stage offers at most three parts — they fit. */
-.parts-row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
-  gap:8px;padding-bottom:4px}
-.part-card{position:relative;min-width:0;height:132px;border-radius:7px;
-  border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-  cursor:pointer;padding:8px}
-.part-card img{width:66px;height:66px;object-fit:contain}
-.part-card span{font-size:13px;font-weight:450;text-align:center;line-height:1.2}
-.part-card.is-selected{border-color:#fff;border-width:1.5px;background:rgba(255,255,255,.2)}
-.part-card.is-done{opacity:.62}
-.part-tick{position:absolute;top:6px;right:8px;font-style:normal;font-size:13px}
+/* The tray is pinned to the bottom of the panel and never scrolls: a part you
+   have to scroll to find is a part you do not know you can drag. */
+.parts-tray{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;
+  padding-top:12px;border-top:1px solid rgba(255,255,255,.22)}
+
+/* Three columns, two rows, compact cards — all six components fit the fixed
+   tray height. Their order is shuffled each stage so the correct card is
+   recognised, not remembered by position. */
+.parts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.part-card{position:relative;min-width:0;border-radius:12px;
+  border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.12);color:#fff;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px;
+  cursor:pointer;padding:8px 6px;backdrop-filter:blur(10px);
+  box-shadow:0 4px 14px rgba(4,18,60,.14);
+  transition:transform .18s ease,border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.part-card:hover:not(.is-done){transform:translateY(-2px);background:rgba(255,255,255,.18)}
+.part-thumb{width:100%;height:52px;display:grid;place-items:center;
+  border-radius:9px;background:rgba(255,255,255,.9)}
+.part-thumb img{max-width:88%;max-height:46px;object-fit:contain}
+.part-name{font-size:11px;font-weight:500;text-align:center;line-height:1.2}
+.part-card.is-selected{border-color:#fff;border-width:1.5px;background:rgba(255,255,255,.22);
+  box-shadow:0 0 0 3px rgba(255,255,255,.22),0 8px 20px rgba(4,18,60,.22)}
+.part-card.is-done{opacity:.58}
+.part-tick{position:absolute;top:8px;right:8px;color:#66e29a}
+.part-drag{position:absolute;top:8px;right:8px;color:rgba(255,255,255,.85)}
 .part-card.is-shake{animation:lp12-shake .42s ease}
 @keyframes lp12-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}
   40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
-.complete-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;font-size:15px}
-.complete-list i{font-style:normal;margin-right:8px}
+.complete-card{border-radius:14px;padding:16px;display:grid;gap:10px;justify-items:start;
+  background:rgba(102,226,154,.16);box-shadow:inset 0 0 0 1px rgba(150,240,190,.45);
+  backdrop-filter:blur(12px);color:#fff}
+.complete-card > svg{color:#8ef0b4}
+.complete-card h3{margin:0;font-size:17px;font-weight:600}
+.complete-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.complete-list li{display:flex;align-items:center;gap:8px}
+.complete-list li svg{color:#8ef0b4;flex:0 0 auto}
 
 .viewport{position:relative;min-width:0;background:var(--workspace-background)}
 .viewport canvas{display:block}
 .position-tracker{position:absolute;top:22px;right:28px;width:126px;height:188px;z-index:20;
-  border-radius:8px;border:1px solid #dfe4ec;background:rgba(255,255,255,.72);
-  box-shadow:0 2px 10px rgba(20,32,56,.08);overflow:hidden}
+  border-radius:14px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.6);
+  backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:0 8px 24px rgba(20,32,56,.12);overflow:hidden}
 .tracker-pole{width:100%;height:100%;object-fit:contain;filter:invert(1) opacity(.62)}
 .tracker-window{position:absolute;left:12%;width:76%;border:2px solid var(--lp12-blue);
   border-radius:2px;background:rgba(7,92,255,.08);
   transition:top 850ms cubic-bezier(.22,1,.36,1),height 850ms cubic-bezier(.22,1,.36,1)}
 .view-toggle{position:absolute;top:228px;right:28px;z-index:20;display:grid;
-  grid-template-columns:1fr 1fr;width:126px;height:38px;border:1px solid #dfe4ec;
-  border-radius:7px;overflow:hidden;background:#fff}
+  grid-template-columns:repeat(3,1fr);width:150px;height:44px;
+  border:1px solid rgba(255,255,255,.6);
+  border-radius:12px;overflow:hidden;background:rgba(255,255,255,.62);
+  backdrop-filter:blur(18px) saturate(160%);box-shadow:0 8px 24px rgba(20,32,56,.12)}
 .view-toggle button{border:0;background:transparent;color:var(--lp12-blue);
-  font-size:13px;font-weight:500;cursor:pointer}
+  font-size:13px;font-weight:500;cursor:pointer;transition:background .16s ease,color .16s ease}
 .view-toggle button.is-active{background:var(--lp12-blue);color:#fff}
 .view-toggle button:disabled{opacity:.5;cursor:default}
-.stage-counter{position:absolute;left:28px;bottom:22px;z-index:20;font-size:13px;
-  letter-spacing:.06em;color:#6b7a8d;text-transform:uppercase}
+.stage-counter{position:absolute;left:28px;bottom:22px;z-index:20;font-size:12px;
+  display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;
+  letter-spacing:.08em;color:#48566b;text-transform:uppercase;
+  background:rgba(255,255,255,.62);backdrop-filter:blur(18px) saturate(160%);
+  box-shadow:0 6px 18px rgba(20,32,56,.1)}
 
 @media (max-width:1180px){
-  .installation-shell{--tool-rail-width:76px;--information-panel-width:clamp(320px,26vw,350px)}
-  .rail-btn{width:48px;height:48px}
-  .info-panel{padding:22px 22px 18px;gap:12px}
-  .panel-hero{max-height:112px}
+  .installation-shell{--information-panel-width:clamp(320px,26vw,350px)}
+  .info-panel{padding:18px 18px 16px;gap:12px}
+  .part-thumb{height:44px}
+  .part-thumb img{max-height:40px}
 }
 @media (prefers-reduced-motion:reduce){
   .tracker-window{transition-duration:80ms}
-  .part-card.is-shake{animation:none}
+  .part-card.is-shake,.viewport.is-drop-error::after{animation:none}
+  .part-card,.panel-cta,.drop-hint-pill{transition:none}
+  .part-card:hover:not(.is-done),.panel-cta:hover:not(:disabled){transform:none}
+}
+
+/* --- selected component preview ------------------------------------------
+   The panel used to have a dead band of blue between the brief and the tray.
+   Fixed height so the tray below it never shifts when the selection changes. */
+.part-preview{margin:0;display:grid;grid-template-columns:96px minmax(0,1fr);gap:14px;
+  align-items:center;padding:12px 14px;border-radius:14px;
+  background:rgba(255,255,255,.14);backdrop-filter:blur(14px) saturate(150%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.2);
+  transition:box-shadow .2s ease,background .2s ease}
+.part-preview.is-next{background:rgba(255,255,255,.2);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+.part-preview.is-blocked{box-shadow:inset 0 0 0 1px rgba(255,170,170,.55)}
+.part-preview img{width:96px;height:96px;object-fit:contain;
+  filter:drop-shadow(0 6px 14px rgba(4,18,60,.35))}
+.part-preview figcaption{display:grid;gap:3px;min-width:0}
+.part-preview b{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.part-preview-desc{font-size:12.5px;line-height:1.3;color:rgba(255,255,255,.84)}
+.part-preview-where{font-size:12px;line-height:1.3;color:rgba(255,255,255,.66)}
+.part-preview-state{display:flex;align-items:center;gap:6px;margin-top:2px;
+  font-size:11.5px;font-weight:600;color:rgba(255,255,255,.92)}
+.part-preview.is-blocked .part-preview-state{color:#ffc9c9}
+.part-preview.is-done .part-preview-state{color:#9df0bd}
+@media (max-height:760px){
+  .part-preview{grid-template-columns:64px minmax(0,1fr);padding:10px}
+  .part-preview img{width:64px;height:64px}
+  .part-preview-where{display:none}
 }

@@ -62,9 +62,15 @@ export default function PartCallouts({ viewRef, modelRoot, installed = [], hidde
     return CALLOUTS
       .filter((c) => installed.includes(c.part))
       .map((c) => {
-        let node = null
-        modelRoot.traverse((o) => { if (!node && o.name === c.node) node = o })
-        return node ? { ...c, node } : null
+        let object = null
+        modelRoot.traverse((o) => { if (!object && o.name === c.node) object = o })
+        // `object`, not `node`. Spreading the resolved Object3D over `c.node`
+        // used to replace the node's NAME with the object itself, and the name
+        // is what keys the list below — so every callout keyed as
+        // "[object Object]" and React warned about duplicate keys from the
+        // second installed part onward. The name is also the only stable
+        // identity here: the object is re-resolved whenever the model reloads.
+        return object ? { ...c, object } : null
       })
       .filter(Boolean)
   }, [modelRoot, installed])
@@ -85,7 +91,7 @@ export default function PartCallouts({ viewRef, modelRoot, installed = [], hidde
         if (!g) return
         // Centre of the part, not its node origin: a GLB origin is wherever the
         // exporter left it, which for the bands is out on the pole axis.
-        box.setFromObject(item.node)
+        box.setFromObject(item.object)
         if (box.isEmpty()) { g.style.display = 'none'; return }
         box.getCenter(vec).project(camera)
         if (vec.z > 1) { g.style.display = 'none'; return }   // behind the camera
@@ -122,7 +128,12 @@ export default function PartCallouts({ viewRef, modelRoot, installed = [], hidde
   if (!items.length) return null
 
   return (
-    <svg ref={svgRef} className="part-callouts" aria-hidden="true">
+    /* Hidden declaratively, not only inside the rAF loop below. The loop is
+       the right place for a value that changes every frame; whether the layer
+       exists at all is not one, and leaving it to the loop meant the labels
+       stayed on screen for as long as frames were not being delivered. */
+    <svg ref={svgRef} className="part-callouts" aria-hidden="true"
+         style={hidden ? { opacity: 0 } : undefined}>
       {items.map((item, i) => (
         <g key={item.node} ref={(el) => { groups.current[i] = el }}>
           <polyline className="cal-line" fill="none" points="0,0" />

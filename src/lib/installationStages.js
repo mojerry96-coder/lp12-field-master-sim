@@ -128,6 +128,28 @@ export const PART_LABELS = {
 export const PART_ORDER = ['pole-bands', 'mounting-rail', 'pivot-bracket',
                            'antenna-unit', 'fastener-set', 'connector-set']
 
+/**
+ * Preview copy: what the component is, and where it goes. Labels only — no
+ * behaviour reads these, so adding a part here cannot change the assembly.
+ */
+export const PART_DESCRIPTION = {
+  'pole-bands': 'Stainless steel bands that clamp the assembly to the pole.',
+  'mounting-rail': 'Load-bearing rail the antenna assembly hangs from.',
+  'pivot-bracket': 'Hinged bracket that sets and holds the downtilt angle.',
+  'antenna-unit': 'The LP12 radio unit itself, with its radome and ports.',
+  'fastener-set': 'Bolts and washers that lock the antenna to the bracket.',
+  'connector-set': 'Weather-sealed RF jumpers and the earth bond.',
+}
+
+export const PART_PLACEMENT = {
+  'pole-bands': 'Around the pole, at mount height.',
+  'mounting-rail': 'Across the fitted pole bands.',
+  'pivot-bracket': 'On the face of the mounting rail.',
+  'antenna-unit': 'Onto the pivot bracket.',
+  'fastener-set': 'Through the antenna and bracket lugs.',
+  'connector-set': 'Into the antenna ports underneath.',
+}
+
 export const PART_PREREQ_MESSAGE = {
   'mounting-rail': 'Install the pole bands first.',
   'pivot-bracket': 'Install the mounting rail first.',
@@ -148,3 +170,21 @@ export const COMPLETED_PART_BY_STAGE = {
 
 /** Studio anchor per installation stage (studio manifest camera names). */
 export const STAGE_CAMERA = Object.fromEntries(STAGES.map((s) => [s.id, s.camera]))
+
+/**
+ * One-line instruction shown under the stage title. Labels only — the stage
+ * table above still owns every behavioural field.
+ */
+export const STAGE_INSTRUCTION = {
+  overview: 'Review the site, then begin the assembly.',
+  bands: 'Drag the pole bands onto the pole.',
+  rail: 'Drag the mounting rail onto the bands.',
+  pivot: 'Drag the pivot bracket onto the rail.',
+  antenna: 'Drag the antenna unit onto the bracket.',
+  fasteners: 'Drag the fastener set onto the antenna.',
+  connectors: 'Drag the connector set onto the antenna ports.',
+  height: 'Set the mount height for this site.',
+  downtilt: 'Turn the knob to the correct downtilt.',
+  coverage: 'Check the resulting network coverage.',
+  complete: 'All components installed and secured.',
+}

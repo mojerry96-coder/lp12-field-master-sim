@@ -1,0 +1,160 @@
+/* PAGE 11 — Set Mount Height.
+   Isolated studio, full pole centred, instruction on glass at the left and one
+   vertical control at the right. Nothing else. */
+
+.p11 {
+  background:
+    url('/assets/lp12/studio-isolation-gradient.png') center / cover no-repeat,
+    radial-gradient(circle at 50% 35%, #fff 0%, #f6f6f3 46%, #eceef1 100%);
+}
+
+.p11-viewport { position: absolute; inset: 0 }
+
+/* ----------------------------------------------------------------- sheet */
+.p11-sheet {
+  position: absolute;
+  left: 5.5vw;
+  top: 18vh;
+  z-index: 10;
+  width: clamp(320px, 30vw, 420px);
+  padding: 38px;
+}
+
+.p11-title {
+  color: #2B62C4;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+}
+/* Three words, three lines, as the reference sets them. Block spans rather
+   than a <br> so the accessible name keeps its spaces. */
+.p11-title span { display: block }
+
+.p11-helper { color: #6A7C99 }
+
+/* --------------------------------------------------------------- control */
+.p11-control {
+  position: absolute;
+  right: 7vw;
+  top: 14vh;
+  height: 72vh;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
+
+.p11-track {
+  position: relative;
+  width: 34px;
+  height: 100%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow:
+    inset 0 0 0 1px var(--fm-glass-line),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 18px 54px rgba(40, 70, 120, 0.10);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+}
+
+/* Filled from the bottom: the quantity is a height. */
+.p11-fill {
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--fm-blue) 0%, rgba(0, 122, 255, 0.35) 100%);
+  box-shadow: 0 0 22px rgba(0, 122, 255, 0.35);
+  pointer-events: none;
+}
+
+.p11-knob {
+  position: absolute;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  margin-bottom: -13px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(0, 122, 255, 0.28),
+    0 6px 16px rgba(20, 40, 80, 0.22);
+  pointer-events: none;
+}
+
+/* Rides with the knob rather than sitting at a fixed corner: the number and
+   the position it describes have to be readable as one thing. */
+.p11-value {
+  position: absolute;
+  right: calc(100% + 22px);
+  margin-bottom: -26px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: #0868EA;
+  pointer-events: none;
+}
+.p11-value small { font-size: 17px; color: #75849A; margin-left: 2px }
+
+/* The real control. Transparent and on top, so every native range behaviour —
+   arrows, Page Up/Down, Home/End, pointer drag — is the one the browser
+   provides rather than something re-implemented on a div. */
+.p11-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: grab;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  appearance: slider-vertical;
+}
+.p11-input:active { cursor: grabbing }
+.p11-input:disabled { cursor: default }
+/* The visible focus ring belongs to the track, since the input itself is
+   invisible. */
+.p11-input:focus-visible + * { outline: none }
+.p11-track:focus-within {
+  outline: 2px solid var(--fm-blue);
+  outline-offset: 4px;
+}
+
+/* ---------------------------------------------------------------- notice */
+.p11-notice {
+  position: absolute;
+  left: 50%;
+  bottom: 5vh;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  color: #285790;
+}
+
+.p11-confirm {
+  position: absolute;
+  right: 5vw;
+  bottom: 5vh;
+  z-index: 20;
+  min-width: 230px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p11-fill, .p11-knob, .p11-value { transition: none }
+}
+
+@media (orientation: portrait), (max-width: 900px) {
+  .p11-sheet { left: 5.5vw; right: 5.5vw; top: 6vh; width: auto }
+  .p11-control { right: 6vw; top: 34vh; height: 46vh }
+  .p11-value { font-size: 24px; padding: 10px 16px }
+  .p11-confirm { right: 50%; transform: translateX(50%); bottom: 3vh }
+  .p11-notice { bottom: calc(3vh + 76px) }
+}
