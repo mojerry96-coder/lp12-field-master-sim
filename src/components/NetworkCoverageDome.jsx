@@ -5,12 +5,9 @@ import * as THREE from 'three'
 import { LP12_MODEL_URL } from '../store'
 import {
   mapCoverPointToContainer, ISO_SOURCE_SIZE, ISO_LP12_GROUND_ANCHOR,
-  ISO_VIEW_ELEVATION_DEG,
+  ISO_VIEW_ELEVATION_DEG, ISO_METRES_PER_PIXEL,
 } from '../lib/plateAnchor'
-import {
-  effectiveCoverageRadiusM, MAP_METRES_PER_PIXEL, MAP_SOURCE_SIZE,
-  MAP_LP12_ANCHOR, MAP_VIEW_ELEVATION_DEG,
-} from '../lib/coverage'
+import { effectiveCoverageRadiusM } from '../lib/coverage'
 
 /**
  * The cell's coverage footprint, drawn over the aerial plate around the LP12
@@ -30,10 +27,17 @@ import {
  * the plate then clips at the edge of the view, which is the honest reading:
  * the coverage really does run off the frame.
  *
- * Scale honesty: the radius is real metres from lib/coverage.js, converted to
- * pixels by MAP_METRES_PER_PIXEL — an estimate off the carriageway width, and
- * the weakest number in the chain. The dome's size on the street is indicative,
- * not surveyed.
+ * Scale: the radius is real metres from lib/coverage.js, converted to plate
+ * pixels by ISO_METRES_PER_PIXEL — which is not an estimate. It comes out of
+ * the isometric camera's own ortho_scale, and the derivation is checked by
+ * projecting the LP12's world anchor and landing on the recorded plate anchor.
+ * See plateAnchor.js.
+ *
+ * This used to be pinned to the OLD aerial plate — a different image, a
+ * different anchor, a different camera elevation and a metres-per-pixel
+ * estimated off the carriageway width — while the page behind it had long
+ * since become the isometric render. The dome was drawn confidently in the
+ * wrong place. Everything here now refers to the plate actually on screen.
  */
 
 /** World units are CSS pixels: ortho zoom stays 1 and the dome scales in px. */
@@ -179,41 +183,42 @@ function DomeLayer({ layerRef, geom, radiusPx, elevationDeg, ...rest }) {
 }
 
 export default function NetworkCoverageDome({ height, downtilt, visible = true }) {
-  const [layerRef, geom] = usePlateGeometry(MAP_SOURCE_SIZE, MAP_LP12_ANCHOR)
+  // The ground anchor, for the reason the dead zone uses it: a hemisphere hung
+  // off the mount point floats with its flat face in mid-air.
+  const [layerRef, geom] = usePlateGeometry(ISO_SOURCE_SIZE, ISO_LP12_GROUND_ANCHOR)
   const radiusM = effectiveCoverageRadiusM(height, downtilt)
-  const radiusPx = geom ? (radiusM / MAP_METRES_PER_PIXEL) * geom.scale : 0
+  const radiusPx = geom ? (radiusM / ISO_METRES_PER_PIXEL) * geom.scale : 0
 
   return (
     <DomeLayer layerRef={layerRef} geom={visible ? geom : null}
-               radiusPx={radiusPx} elevationDeg={MAP_VIEW_ELEVATION_DEG} />
+               radiusPx={radiusPx} elevationDeg={ISO_VIEW_ELEVATION_DEG} />
   )
 }
 
 /**
  * The dead zone, over the pole on the isometric plate.
  *
- * SCALE. The radius is in plate pixels, not metres. The isometric render
- * carries no surveyed scale — it is the reason this page stopped shading a
- * stretch of carriageway, because a polygon in metres over it claims a
- * footprint nobody measured — so the dome is sized against the plate the same
- * way the pole highlight is, and scales with it. It says "roughly this much of
- * this street", which is true, rather than "85 metres", which would not be.
+ * SCALE. In metres, against the isometric camera's own ortho_scale. The
+ * earlier objection to drawing a dead zone on this plate at all was that the
+ * render carried no surveyed scale, so a polygon over it claimed a footprint
+ * nobody measured. site_look.json turns out to record the camera, so the plate
+ * does have a scale and the objection no longer holds.
  *
  * ANCHOR. The ground anchor, not the mount point: a hemisphere hung off the
  * antenna floats above the road with its flat face in mid-air, where one
  * centred at the foot of the column sits on the street the way a real
  * propagation volume does.
  */
-/* Sized against the plate, and against the highlight it sits behind: the
-   column highlight is 480 source pixels tall, so a 380px radius reads as a
-   volume around this junction rather than a wash over the whole district. Big
-   enough to be a zone, small enough that the pole it is centred on stays the
-   thing the learner is looking for. */
-const DEAD_ZONE_RADIUS_SOURCE_PX = 380
+/* In metres, like the coverage dome, now that the plate has a scale that came
+   out of the camera rather than a guess. 28 m is the size this was accepted at
+   when it was expressed in plate pixels — a volume around this junction rather
+   than a wash over the district, big enough to be a zone and small enough that
+   the pole at its centre stays the thing the learner is looking for. */
+const DEAD_ZONE_RADIUS_M = 28
 
 export function DeadZoneDome({ visible = true, reducedMotion = false }) {
   const [layerRef, geom] = usePlateGeometry(ISO_SOURCE_SIZE, ISO_LP12_GROUND_ANCHOR)
-  const radiusPx = geom ? DEAD_ZONE_RADIUS_SOURCE_PX * geom.scale : 0
+  const radiusPx = geom ? (DEAD_ZONE_RADIUS_M / ISO_METRES_PER_PIXEL) * geom.scale : 0
 
   return (
     <DomeLayer

@@ -36,14 +36,26 @@ export const ISO_LP12_ANCHOR = { x: 0.5447, y: 0.6281 }
 export const ISO_LP12_GROUND_ANCHOR = { x: ISO_LP12_ANCHOR.x, y: 0.735 }
 
 /**
- * Camera elevation of the isometric render, in degrees above the horizon.
+ * The isometric render's camera, read off the scene rather than guessed.
  *
- * The plate is CAM_ENV_ISOMETRIC out of Blender, whose default isometric
- * inclination is 30 degrees. A dome drawn at any other elevation would sit on
- * a ground plane tilted differently from the one in the picture, and the base
- * ellipse would visibly disagree with the road it is lying on.
+ * site_look.json records CAM_ENV_ISOMETRIC as an ORTHO camera with
+ * ortho_scale 190 and rotation [58, 0, 45] degrees. Blender's ortho_scale is
+ * the world size spanned by the render's LARGER axis, which for a 2560 x 1440
+ * plate is the width, so 190 m covers 2560 px. Its X rotation is measured from
+ * straight down, so 58 degrees from vertical is 32 above the horizon.
+ *
+ * Both figures are verified rather than assumed: projecting the LP12's world
+ * anchor (18, 0, 0) through that camera puts it at u = 0.5447, which is
+ * ISO_LP12_ANCHOR to four decimal places. A wrong ortho_scale or a cropped
+ * plate would not reproduce that.
+ *
+ * An overlay drawn at any other elevation sits on a ground plane tilted
+ * differently from the one in the picture, and its base ellipse visibly
+ * disagrees with the road it is lying on.
  */
-export const ISO_VIEW_ELEVATION_DEG = 30
+export const ISO_VIEW_ELEVATION_DEG = 32
+export const ISO_ORTHO_SCALE_M = 190
+export const ISO_METRES_PER_PIXEL = ISO_ORTHO_SCALE_M / ISO_SOURCE_SIZE.width
 
 /**
  * object-fit: cover crops the image, so a plain percentage drifts as the
