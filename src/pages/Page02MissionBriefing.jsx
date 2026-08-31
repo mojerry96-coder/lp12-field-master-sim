@@ -45,10 +45,9 @@ export default function Page02MissionBriefing({ reducedMotion, onBegin }) {
       <img className="fm-media fm-media--soft" src={urlFor('iso-background')} alt="" />
 
       <div className="fm-glass p02-sheet">
-        <p className="fm-eyebrow p02-eyebrow">
-          <span className="p02-mark" aria-hidden="true" />
-          Field assignment
-        </p>
+        {/* No mark slot: see Page01Welcome. The eyebrow sits on the sheet's
+            own left edge, with the site name and place line below it. */}
+        <p className="fm-eyebrow p02-eyebrow">Field assignment</p>
 
         <h1 className="p02-site">Awolowo Way</h1>
         <p className="p02-place">Ikeja · Lagos</p>

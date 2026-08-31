@@ -88,17 +88,24 @@
 
 /* The real control, transparent across the dial: native range semantics —
    arrows, Home/End, drag — without re-implementing them on a div. */
+/* The whole knob is the handle. The grab cursor belongs to the dial, not to a
+   strip inside it, so hovering anywhere on the face says "this turns". */
+.p12-dial { cursor: grab }
+.p12-dial.is-turning { cursor: grabbing }
+.p12-dial > * { cursor: inherit }
+
+/* Kept for the keyboard and for assistive tech, and taken out of the pointer's
+   way so the dial's own angular drag is what the mouse reaches. Still
+   focusable: an opacity-0 control is not an inert one. */
 .p12-input {
   position: absolute;
-  left: 26px;
-  right: 26px;
-  bottom: 26px;
-  width: calc(100% - 52px);
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
   opacity: 0;
-  cursor: grab;
+  pointer-events: none;
 }
-.p12-input:active { cursor: grabbing }
 .p12-dial:focus-within { outline: 2px solid var(--fm-blue); outline-offset: 5px }
 
 /* ------------------------------------------------------- coverage preview */

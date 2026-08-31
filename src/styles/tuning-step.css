@@ -102,13 +102,49 @@
   border-radius: 999px;
   background: #DCE5F0;
 }
+/**
+ * The slider reads its own accuracy in three colours: off, close, correct.
+ *
+ * The hues are the ones the corridor test already uses for failed / marginal /
+ * good, so red, amber and green mean the same thing on both screens. The
+ * VALUES differ because the surfaces do: the test's #FF5C57 / #FFCA45 /
+ * #52E48B are mixed for a dark sky and go pale and low-contrast on this white
+ * card, so these are the same hues at weights that hold up on it.
+ *
+ * The state is set on .ts-track, and the fill and its knob follow, so there is
+ * one place that decides what colour the control is.
+ */
+.ts-track {
+  --ts-accent: #0A6BE8;
+  --ts-accent-soft: #2E86FF;
+  --ts-accent-ring: rgba(10, 107, 232, 0.14);
+}
+.ts-track.is-off {
+  --ts-accent: #E5484D;
+  --ts-accent-soft: #FF7A7E;
+  --ts-accent-ring: rgba(229, 72, 77, 0.16);
+}
+.ts-track.is-close {
+  --ts-accent: #E08A0B;
+  --ts-accent-soft: #FFC24D;
+  --ts-accent-ring: rgba(224, 138, 11, 0.18);
+}
+.ts-track.is-correct {
+  --ts-accent: #12A16A;
+  --ts-accent-soft: #45D79C;
+  --ts-accent-ring: rgba(18, 161, 106, 0.18);
+}
+
 .ts-fill {
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2E86FF, #0A6BE8);
+  background: linear-gradient(90deg, var(--ts-accent-soft), var(--ts-accent));
+  /* Long enough to read as the colour changing rather than snapping, short
+     enough to keep up with a dragged knob. */
+  transition: background 200ms ease;
 }
 /* The real control, transparent over the drawn track. */
 .ts-track input[type="range"] {
@@ -133,8 +169,9 @@
   height: 26px;
   margin-top: -13px;
   border-radius: 50%;
-  background: #0A6BE8;
-  box-shadow: 0 0 0 5px rgba(10, 107, 232, 0.14), 0 4px 12px rgba(20, 50, 100, 0.28);
+  background: var(--ts-accent);
+  box-shadow: 0 0 0 5px var(--ts-accent-ring), 0 4px 12px rgba(20, 50, 100, 0.28);
+  transition: background 200ms ease, box-shadow 200ms ease;
 }
 
 .ts-stops {
@@ -239,6 +276,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .ts-fill, .ts-fill::after { transition: none }
   .ts-control.is-nudge { animation: none }
   .ts-step, .ts-apply { transition: none }
 }

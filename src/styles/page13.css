@@ -57,15 +57,47 @@
 }
 
 /* -------------------------------------------------------------- continue */
-.p13-continue {
+/* Continue keeps the position it was accepted at; Orbit joins it as a sibling
+   rather than a second floating control somewhere else on the page. */
+.p13-actions {
   position: absolute;
   left: 4.5vw;
   bottom: 7vh;
   z-index: 10;
-  min-width: 210px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
+
+.p13-continue { min-width: 210px }
+
+/* Orbit is a toggle, so it has to read as on. The 13% fill is the same token
+   the 3D target highlight uses — pressed is the active-object state, not a
+   different colour. */
+.p13-orbit.is-on {
+  background: var(--fm-blue-soft);
+  border-color: rgba(0, 122, 255, 0.42);
+}
+
+.p13-hint {
+  position: absolute;
+  right: 3vw;
+  top: 4.5vh;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: #527099;
+}
+.p13-hint svg { color: var(--fm-blue); flex: none }
 
 @media (orientation: portrait), (max-width: 900px) {
   .p13-chip { left: 4.5vw; right: 4.5vw; padding: 14px 18px }
-  .p13-continue { left: 4.5vw; right: 4.5vw; bottom: 4vh; min-width: 0 }
+  .p13-actions { left: 4.5vw; right: 4.5vw; bottom: 4vh }
+  .p13-continue { flex: 1; min-width: 0 }
+  /* Clear of the back control, which owns the top-right corner. */
+  .p13-hint { right: 50%; transform: translateX(50%); top: calc(4.5vh + 46px) }
 }

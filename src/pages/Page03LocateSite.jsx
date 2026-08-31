@@ -1,5 +1,4 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import DeadZoneViewport from '../components/DeadZoneViewport'
 import { urlFor } from '../lib/assetManifest'
 import {
   ISO_SOURCE_SIZE, ISO_LP12_ANCHOR, mapCoverPointToContainer,
@@ -8,16 +7,26 @@ import {
  * PAGE 03 — Locate the LP12 Site.
  *
  * The city fills the viewport and stays sharp: this is the one page whose job
- * is reading the environment. The map has exactly two of them — understand the
- * location, and identify the right column — so the dead zone is NOT drawn on
- * it. An earlier pass shaded a stretch of the carriageway, and it could only
- * ever be an approximation: the isometric plate carries no surveyed scale, so
- * a polygon over it claims a footprint nobody measured.
+ * is reading the environment. It has two things to say — where the dead zone
+ * is, and which column fixes it — and it now says both in the same space.
  *
- * The dead zone gets its own explainer instead — a real 3D diagram in the
- * lower-left panel, with its own camera and its own coordinate system, where a
- * red hemisphere over a pole means exactly what it looks like. The two spaces
- * stay separate, which is what stops either of them lying.
+ * THE DEAD ZONE IS ON THE MAP AGAIN, as a red pulsing hemisphere over the
+ * pole. It replaces two glass panels that used to carry it: a collapsible
+ * summary and a separate diagram in its own viewport. Between them they said
+ * in about forty words and a second 3D scene what one red volume over the
+ * right piece of street says at a glance — and the diagram's pole was not this
+ * pole, so the learner had to map one space onto the other themselves.
+ *
+ * The old objection to drawing it here was scale: an earlier pass shaded a
+ * stretch of carriageway in metres, and the isometric plate carries no
+ * surveyed scale, so the polygon claimed a footprint nobody measured. The dome
+ * answers that by being sized in plate pixels rather than metres — see
+ * DeadZoneDome. It shows roughly this much of this street, which is true,
+ * instead of a figure that would not be.
+ *
+ * The column highlight and its "Click me" leader stay exactly as they were.
+ * They no longer wait on an explainer being dismissed, because there is no
+ * longer an explainer to dismiss.
  */
 
 // The specification's own replication code hardcodes the target at left 55.8%
@@ -62,11 +71,6 @@ function TargetIcon() {
 export default function Page03LocateSite({ disabled, completed, onSelect }) {
   const layerRef = useRef(null)
   const [box, setBox] = useState(null)
-  /* Open on arrival. The learner is being told what is wrong with this street
-     before being asked to fix it, and the explainer is that telling; closing it
-     is the acknowledgement, which is why the column only becomes selectable
-     afterwards. */
-  const [explainerOpen, setExplainerOpen] = useState(true)
 
   useLayoutEffect(() => {
     const layer = layerRef.current
@@ -112,71 +116,22 @@ export default function Page03LocateSite({ disabled, completed, onSelect }) {
           </div>
         </div>
 
-        {/* Summary and trigger in one control. It states the problem in the
-            three lines the brief specifies and toggles the diagram that
-            explains it. */}
-        <button
-          type="button"
-          className="fm-glass p03-deadzone"
-          aria-expanded={explainerOpen}
-          onClick={() => setExplainerOpen((open) => !open)}
-        >
-          <span className="p03-dz-swatch" aria-hidden="true" />
-          <span className="p03-dz-head">
-            <strong>Network dead zone</strong>
-            <span>LP12 requires line-of-sight to the network.</span>
-            <span>Structures and distance can block the signal,</span>
-            <span>creating a dead zone.</span>
-          </span>
-          <svg className={`p03-dz-chevron${explainerOpen ? ' is-open' : ''}`}
-               viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <path fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
-                  strokeLinejoin="round" d="m7 10 5 5 5-5" />
-          </svg>
-        </button>
       </div>
 
-      {/* The diagram, and the whole of what the map is not asked to carry. */}
-      {explainerOpen && (
-        <aside className="fm-glass p03-explainer"
-               aria-label="Understanding the network dead zone">
-          <header className="p03-explainer-head">
-            <h2>Understanding the network dead zone</h2>
-            <button type="button" className="p03-explainer-close"
-                    onClick={() => setExplainerOpen(false)}
-                    aria-label="Close network dead zone explanation">
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                <path d="M6 6 18 18M18 6 6 18" fill="none" stroke="currentColor"
-                      strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </button>
-          </header>
-
-          <div className="p03-explainer-stage">
-            <DeadZoneViewport />
-            <div className="p03-no-service" aria-hidden="true">
-              <span>×</span> No service
-            </div>
-          </div>
-
-          <footer className="p03-explainer-foot">
-            <p className="p03-explainer-legend">
-              <span aria-hidden="true" /> <strong>Dead zone</strong>
-            </p>
-            <p>
-              Obstructions and distance prevent a reliable network connection.
-              <br />
-              Install LP12 at a location with clear line-of-sight.
-            </p>
-          </footer>
-        </aside>
-      )}
-
-      {/* The column becomes findable once the explainer has been read and
-          dismissed. Both of them competing for the same attention is what the
-          brief separates. */}
-      {box && !explainerOpen && (
+      {/* Unchanged, and no longer gated on an explainer being dismissed. */}
+      {box && (
         <>
+          {/* The leader stays decorative; the pill it ends in does not.
+              A label that says "Click me" and then ignores the click is worse
+              than no label — the words sit 190px left and 74px above the
+              column strip that was actually taking the click, so following the
+              instruction literally did nothing. It now triggers the same
+              selection the column does.
+
+              aria-hidden with tabIndex -1: this is a second pointer affordance
+              for an action assistive tech already reaches through the column
+              button below, so it is deliberately not a second tab stop or a
+              second announcement. */}
           <div
             className="p03-callout"
             style={{ left: box.left, top: box.top - height * ANCHOR_DOWN_TARGET }}
@@ -187,7 +142,15 @@ export default function Page03LocateSite({ disabled, completed, onSelect }) {
                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="118" cy="88" r="4" fill="currentColor" />
             </svg>
-            <span className="fm-glass p03-callout-pill">Click me</span>
+            <button
+              type="button"
+              className="fm-glass p03-callout-pill"
+              tabIndex={-1}
+              disabled={disabled}
+              onClick={onSelect}
+            >
+              Click me
+            </button>
           </div>
 
           <button

@@ -19,7 +19,19 @@ import { urlFor } from '../lib/assetManifest'
  *
  * NO LOGO FILE EXISTS IN THIS PROJECT. The wordmark is typographic for the same
  * reason it always was — inventing a mark would put an unapproved one in front
- * of every learner. `.p01-brandmark` is the slot the real asset drops into.
+ * of every learner.
+ *
+ * There used to be an empty 30px span here reserving the mark's box, so that
+ * dropping the real asset in would shift nothing. It cost more than it saved:
+ * with no asset the slot is invisible, and it pushed the wordmark 42px right of
+ * the title, the subtitle and the location line, which all sit on the same left
+ * edge. Reserving space for a file nobody has is not worth a visible
+ * misalignment on the first screen of the simulation.
+ *
+ * When the approved mark does arrive it goes back in as a flex item, and that
+ * is the moment to decide which edge holds the column — the mark's, with the
+ * text indented as a normal lockup, or the text's, with the mark hanging into
+ * the margin. Either is defensible; guessing now is what produced this.
  */
 
 export default function Page01Welcome({ reducedMotion, onBegin }) {
@@ -64,10 +76,7 @@ export default function Page01Welcome({ reducedMotion, onBegin }) {
         alt="An LP12 small-cell antenna mounted on a roadside pole above Awolowo Way"
       />
 
-      <div className="p01-brand">
-        <span className="p01-brandmark" aria-hidden="true" />
-        MIVA OPEN UNIVERSITY
-      </div>
+      <div className="p01-brand">MIVA OPEN UNIVERSITY</div>
 
       <div className="p01-stack">
         {/* Two block spans rather than a <br>: the break has to be visual only,

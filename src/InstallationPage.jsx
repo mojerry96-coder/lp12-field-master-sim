@@ -8,6 +8,7 @@ import Page12SetDowntilt from './pages/Page12SetDowntilt'
 import Page13NetworkCoverage from './pages/Page13NetworkCoverage'
 import Page14InstallationComplete from './pages/Page14InstallationComplete'
 import LP12BuildCanvas from './components/LP12BuildCanvas'
+import BackButton from './components/BackButton'
 import { createOrbitInput } from './lib/constrainedOrbit'
 import {
   STAGES, stageIndex, stageById, COMPLETED_PART_BY_STAGE, STAGE_CAMERA,
@@ -68,8 +69,14 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
    * belong to the other route and are not stages here.
    */
   const [stageId, setStageId] = useState(() => {
-    const pending = useSim.getState().revisit
-    return pending === 'height' || pending === 'downtilt' ? pending : 'overview'
+    const st = useSim.getState()
+    // A correction requested from the corridor test wins; otherwise resume
+    // wherever this route was last, so Back out of the tuning sequence lands on
+    // the completion page rather than at the top of the install again.
+    const pending = st.revisit === 'height' || st.revisit === 'downtilt'
+      ? st.revisit
+      : st.installStage
+    return stageById(pending) ? pending : 'overview'
   })
   // Front by default. Orbit used to be the default because it was automatic,
   // and an automatic turntable at least showed the far side of the pole. Now
@@ -84,7 +91,22 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
   // half-turned camera behind a controller that no longer exists.
   const orbitInput = useMemo(() => createOrbitInput(), [])
   const [busy, setBusy] = useState(false)
-  const [installed, setInstalled] = useState([])
+  /**
+   * Which parts are on the pole.
+   *
+   * Derived from the stage rather than accumulated, because the learner can now
+   * step backwards: an array that only ever grew would keep refusing a part as
+   * "already installed" after Back had taken it off the pole again, and would
+   * come back empty when this route remounts on the way back from tuning. The
+   * canvas already derives the assembled pose from the stage the same way.
+   */
+  const installed = useMemo(() => {
+    const here = stageIndex(stageId)
+    return STAGES
+      .filter((st) => stageIndex(st.id) < here)
+      .map((st) => COMPLETED_PART_BY_STAGE[st.id])
+      .filter(Boolean)
+  }, [stageId])
   const [notice, setNotice] = useState(null)
   // The Blender look, fetched once. SiteLighting rebuilds the rig and the view
   // transform from it, so the two ends cannot drift apart the way a rig
@@ -177,8 +199,6 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
       if (!controller) throw new Error('Animation controller not ready')
       await controller.playOnce(stage.clip,
         { timeScale: useSim.getState().reducedMotion ? 2 : 1 })
-      const part = COMPLETED_PART_BY_STAGE[stageId]
-      if (part) setInstalled((prev) => prev.includes(part) ? prev : [...prev, part])
       useSim.getState().noteStageComplete(stage.title)
       // s6: only advance once the animation has clearly completed
       setStageId(STAGES[Math.min(idx + 1, STAGES.length - 1)].id)
@@ -235,6 +255,17 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
     setRefusal({ text: reason, n: (refusal?.n ?? 0) + 1 })
   }, [busy, stage.activePart, installed, runStage, refusal])
 
+  /**
+   * One step back through the installation.
+   *
+   * Nothing has to be undone by hand: the pose, the visible parts and the
+   * installed list are all derived from `stageId`, so moving it is the whole
+   * operation. Scoring is safe too — `noteStageComplete` dedupes on title, so
+   * redoing a stage cannot count it twice.
+   *
+   * From the first stage this leaves the installation altogether and returns
+   * the learner to the site.
+   */
   const goBack = () => {
     if (busy) return
     const idx = stageIndex(stageId)
@@ -284,14 +315,26 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
       </Suspense>
   )
 
+  /**
+   * Every redesigned page gets the same back control, in the same place.
+   *
+   * It is rendered here rather than passed into each page because it is fixed
+   * to the viewport — its position in the tree is irrelevant — and because
+   * threading an onBack prop through six page components would put a
+   * navigation concern into six specs that do not mention one.
+   */
+  const withBack = (node) => (
+    <>
+      {node}
+      <BackButton onBack={goBack} busy={busy} />
+    </>
+  )
+
   // The overview is Page 04 of the redesign and owns its own chrome; the
   // assembly stages still run through the shell until their pages are built.
   if (stageId === 'overview') {
-    return (
+    return withBack(
       <Page04PoleOverview
-        orbitInput={orbitInput}
-        orbitEnabled={orbitOn}
-        onOrbit={toggleOrbit}
         onBeginInstallation={beginInstallation}
         busy={busy}
       >
@@ -303,7 +346,7 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
   /* Pages 05-10 share one shell. Enabled a step at a time, in step order, so
      an unbuilt page cannot be reached before it has been through its gate. */
   if (ASSEMBLY_PAGES.includes(stageId)) {
-    return (
+    return withBack(
       <AssemblyStagePage
         step={String(INSTALL_STEP_OF[stageId]).padStart(2, '0')}
         steps={String(INSTALL_STEP_COUNT).padStart(2, '0')}
@@ -326,7 +369,7 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
 
   if (stageId === 'height') {
     const l = s.limits
-    return (
+    return withBack(
       <Page11SetMountHeight
         value={s.height}
         min={l.mount_height_min}
@@ -344,7 +387,7 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
 
   if (stageId === 'downtilt') {
     const l = s.limits
-    return (
+    return withBack(
       <Page12SetDowntilt
         value={s.downtilt}
         min={0}
@@ -363,15 +406,21 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
   }
 
   if (stageId === 'coverage') {
-    return (
-      <Page13NetworkCoverage onContinue={runStage} busy={busy}>
+    return withBack(
+      <Page13NetworkCoverage
+        orbitInput={orbitInput}
+        orbitEnabled={orbitOn}
+        onOrbit={toggleOrbit}
+        onContinue={runStage}
+        busy={busy}
+      >
         {canvas}
       </Page13NetworkCoverage>
     )
   }
 
   if (stageId === 'complete') {
-    return (
+    return withBack(
       <Page14InstallationComplete
         height={s.height}
         downtilt={s.downtilt}

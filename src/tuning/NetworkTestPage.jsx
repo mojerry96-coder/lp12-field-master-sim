@@ -152,6 +152,7 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
   }, [phase])
 
   const complete = phase === 'complete'
+  const percent = Math.round(progress * 100)
 
   // Handed up so the score and the end-of-run review can quote the same
   // verdict the learner just watched, rather than recomputing it later and
@@ -222,50 +223,47 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
         </section>
       )}
 
-      <section className="network-test-progress network-glass">
-        <div className={`network-test-progress__wave${complete ? '' : ' is-active'}`}>
-          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-            <path d="M2 12h3.5l2.5-6 3.5 12 2.5-6H22" fill="none" stroke="currentColor"
-                  strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+      {/* The bottom control, rebuilt to the revised spec.
+          The old full-width bar spanned 89% of the viewport and swallowed the
+          road behind it; the waveform disc on its left carried no information
+          and made it taller still, and Continue was a circular icon buried in
+          its far edge. Now: a compact readout with the percentage the learner
+          actually wants, and Continue as its own button beside it. */}
+      <div className="network-test-dock">
+        <section className="network-test-progress network-glass">
+          <div className="network-test-progress__head">
+            <span className="network-test-progress__label">Network test</span>
+            <b className="network-test-progress__percent">{percent}%</b>
+          </div>
 
-        <div
-          className="network-test-progress__track"
-          role="progressbar"
-          aria-label="Network test progress"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(progress * 100)}
-        >
-          <div className="network-test-progress__fill"
-               style={{ transform: `scaleX(${progress})` }} />
-          <span className="network-test-progress__probe"
-                style={{ left: `${progress * 100}%` }} />
-        </div>
+          <div
+            className="network-test-progress__track"
+            role="progressbar"
+            aria-label="Network test progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+          >
+            <div className="network-test-progress__fill"
+                 style={{ transform: `scaleX(${progress})` }} />
+            <span className="network-test-progress__probe"
+                  style={{ left: `${progress * 100}%` }} />
+          </div>
+        </section>
 
         <button
           type="button"
-          className="network-test-progress__action"
+          className="network-test-continue network-glass"
           disabled={!complete}
           onClick={onContinue}
-          aria-label={!complete ? 'Network test running'
-            : faults.length ? 'Commission the cell as it stands'
-            : 'Continue to commissioning'}
         >
-          {complete ? (
-            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-              <path d="M4 12h15m-6-6 6 6-6 6" fill="none" stroke="currentColor"
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
-              <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.7" />
-              <circle cx="12" cy="12" r="2.6" fill="currentColor" />
-            </svg>
-          )}
+          Continue
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M4 12h14m-5-6 6 6-6 6" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
-      </section>
+      </div>
 
       <p className="sr-live" aria-live="polite">
         {complete ? `Network test complete. Result ${verdictLabel(outcome.overall)}.` : ''}

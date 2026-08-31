@@ -60,6 +60,37 @@ const WORLD_UP = new THREE.Vector3(0, 1, 0)
  * Sliding the TARGET right slides the subject left, so the camera keeps its
  * authored position and only its aim changes.
  */
+/**
+ * Composition bias for the redesigned assembly pages.
+ *
+ * The authored anchors carry subjectBias 0.08, which slides the subject 8% of
+ * the frame width LEFT of centre. That was composed against the old workspace,
+ * where the canvas was the layout's right-hand column and the instruction
+ * panel sat beside it rather than over it. The redesigned assembly pages are
+ * full-bleed with the step title as a left-hand overlay, so the authored bias
+ * now pushes the pole underneath the very text it needs to stay clear of —
+ * "INSTALL POLE BANDS" ends about 44% across and the pole centres at 42%.
+ *
+ * Negating and deepening it seats the subject right of centre. The binding
+ * case is 'antenna': its title is one long line and the stage pushes the
+ * camera in, so the bracket is both wide and far right of the text — 0.13 is
+ * what clears it, and the shorter stages simply gain more room. It stays a
+ * fraction of frame width, so the gap between pole and text holds at every
+ * resolution instead of drifting the way a pixel offset would.
+ *
+ * Nothing about the model changes. This moves where the camera aims; the pole,
+ * its anchors, the drop target and the assembly clips are all untouched, which
+ * is why the target highlight stays glued to the pole as it moves.
+ */
+const ASSEMBLY_STAGE_IDS = new Set([
+  'bands', 'rail', 'pivot', 'antenna', 'fasteners', 'connectors',
+])
+const ASSEMBLY_SUBJECT_BIAS = -0.13
+
+const subjectBiasFor = (stage, authored) => (
+  ASSEMBLY_STAGE_IDS.has(stage) ? ASSEMBLY_SUBJECT_BIAS : authored
+)
+
 const applySubjectBias = (pos, tgt, bias, vFovDeg, aspect) => {
   if (!bias) return tgt
   const dist = pos.distanceTo(tgt)
@@ -209,7 +240,7 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
     // to push it off centre. Overlays that have to sit ON the hardware need
     // this one; the camera needs the biased one below.
     state.subject = v.tgt.clone()
-    let tgt = applySubjectBias(v.pos, v.tgt, v.bias, fov, aspect)
+    let tgt = applySubjectBias(v.pos, v.tgt, subjectBiasFor(stage, v.bias), fov, aspect)
 
     // Pull back until the stage's subject fits, if it does not already.
     const fit = STAGE_FIT[stage]
@@ -260,25 +291,28 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
     modelRoot.traverse((o) => { if (!node && o.name === spec.node) node = o })
     if (!node) return undefined
     const id = setTimeout(() => {
-      const tgt = new THREE.Vector3()
-      node.getWorldPosition(tgt)
+      const subject = new THREE.Vector3()
+      node.getWorldPosition(subject)
       // Keep the current bearing and dolly along it, so the push reads as the
       // same camera moving closer rather than a cut to somewhere else.
-      const dir = (state.pos || camera.position).clone().sub(tgt)
+      const dir = (state.pos || camera.position).clone().sub(subject)
       if (dir.lengthSq() < 1e-6) return
       dir.normalize()
       const aspect = size.width / size.height
       const fov = fitFovToViewport(spec.lensMM, STUDIO_AUTHORED_ASPECT, aspect)
+      // Same off-centre composition as the stage anchor, or the push-in would
+      // re-centre the part under the title for the length of the clip.
+      const pos = subject.clone().add(dir.clone().multiplyScalar(spec.distance))
+      const tgt = applySubjectBias(pos, subject, subjectBiasFor(stage, 0), fov, aspect)
       state.anim = {
         t: 0, fromPos: (state.pos || camera.position).clone(),
         fromTgt: (state.tgt || tgt).clone(), fromFov: camera.fov,
-        to: { pos: tgt.clone().add(dir.multiplyScalar(spec.distance)),
-              tgt, fov, near: camera.near, far: camera.far },
+        to: { pos, tgt, fov, near: camera.near, far: camera.far },
       }
       state.focus = activeClip
     }, spec.delayMs)
     return () => clearTimeout(id)
-  }, [activeClip, modelRoot, camera, size, state])
+  }, [activeClip, modelRoot, camera, size, state, stage])
 
   useFrame((_, dt) => {
     // The stage's look-at point, published for the DOM overlays. It is the

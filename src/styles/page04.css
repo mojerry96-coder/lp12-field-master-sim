@@ -51,17 +51,12 @@
   position: absolute;
   left: 5vw;
   top: 6vh;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: #1555C7;
   z-index: 4;
 }
-/* Slot for the approved MIVA mark, as on Pages 01 and 02. */
-.p04-brandmark { width: 30px; height: 30px }
 
 .p04-stack {
   position: absolute;
@@ -100,21 +95,6 @@
 .p04-where svg { color: #8797B4; flex: none }
 
 /* ------------------------------------------------------------------- hint */
-.p04-hint {
-  position: absolute;
-  right: 3vw;
-  top: 4.5vh;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 15px 20px;
-  border-radius: 999px;
-  font-size: 14px;
-  color: #527099;
-}
-.p04-hint svg { color: var(--fm-blue); flex: none }
-
 /* ---------------------------------------------------------------- actions */
 /* One floating group, and only the two controls this page performs. */
 .p04-actions {
@@ -135,18 +115,6 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
-/* Orbit is a toggle, so it has to read as on. The 13% fill is the same token
-   the 3D target highlight uses — pressed is the active-object state, not a
-   different colour. */
-.p04-orbit.is-on {
-  background: var(--fm-blue-soft);
-  border-color: rgba(0, 122, 255, 0.42);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .p04-hint { transition: none }
-}
-
 /* Portrait: the model takes the lower half and the title sits above it, rather
    than the two fighting over a narrow frame. */
 @media (orientation: portrait), (max-width: 900px) {
@@ -161,5 +129,4 @@
   .p04-title { font-size: clamp(40px, 11vw, 64px) }
   .p04-where { margin-top: 26px }
   .p04-actions { bottom: 3vh }
-  .p04-hint { right: 50%; transform: translateX(50%); top: 3vh }
 }

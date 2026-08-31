@@ -7,6 +7,7 @@ import { TUNING_STEPS } from './tuning-steps'
 import Page18ReporterOptimised from './Page18ReporterOptimised'
 import NetworkTestPage from './NetworkTestPage'
 import GuidedHandOverlay from './GuidedHandOverlay'
+import BackButton from '../components/BackButton'
 import {
   TABLET_ARTBOARD, LOGICAL_SCREEN, PARALLAX_LIMITS,
   deriveDomeState,
@@ -154,6 +155,10 @@ function LogicalScreenScaler({ hostWidth, hostHeight, children }) {
   )
 }
 
+/* The bar keeps its glyphs and drops its wording: three lines of near-white
+   chrome text — the wordmark, the module label and the operator's name and
+   connection state — that named things the learner can already see and that
+   competed with the setting the page is actually asking about. */
 function TopNavigation() {
   return (
     <header className="lp12-topbar">
@@ -163,7 +168,6 @@ function TopNavigation() {
           <path d="M5 9a9 9 0 0 1 14 0M8 12.5a5 5 0 0 1 8 0" />
           <circle cx="12" cy="16.5" r="1.6" fill="currentColor" stroke="none" />
         </svg>
-        <span>FIELD MASTER</span>
       </div>
 
       <nav className="lp12-top-actions" aria-label="Tuning navigation">
@@ -177,7 +181,6 @@ function TopNavigation() {
             <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </button>
-        <span className="lp12-current-module">LP12 Network Tuning</span>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <rect x="3" y="14" width="3" height="6" rx="1" opacity=".55" />
           <rect x="8" y="11" width="3" height="9" rx="1" opacity=".7" />
@@ -188,7 +191,6 @@ function TopNavigation() {
 
       <div className="lp12-operator">
         <span className="lp12-avatar" aria-hidden="true" />
-        <span>Operator<small><i />Connected</small></span>
       </div>
     </header>
   )
@@ -312,6 +314,32 @@ export default function LP12TabletTuningScene({ onExit }) {
     useSim.getState().noteNetworkTest(outcome)
   }, [])
 
+  /**
+   * One step back through the tuning sequence.
+   *
+   * The steps are a chain, so back is the chain read the other way. From the
+   * first one there is nowhere left inside tuning to go, so it leaves the
+   * sequence and returns to the installation's completion page — the store's
+   * installStage still says 'complete', and the install route resumes there.
+   *
+   * Nothing is unwound on the way: the learner's five values live in the store
+   * and are deliberately left alone, so stepping back and forward again shows
+   * them exactly what they chose.
+   */
+  const BACK_STEP = {
+    hysteresis: 'interval',
+    timeToTrigger: 'hysteresis',
+    networkTest: 'timeToTrigger',
+    complete: 'networkTest',
+  }
+
+  const goBack = () => {
+    const previous = BACK_STEP[step]
+    if (previous) return setStep(previous)
+    // Out of tuning altogether, back to Page 14.
+    return useSim.setState({ mode: 'build', installStage: 'complete' })
+  }
+
   /* The debrief's way back. Two of the five decisions were made on the pole
      rather than on the tablet, so they route through the install stages; the
      other three are steps of this scene. Either way the learner lands on the
@@ -337,6 +365,9 @@ export default function LP12TabletTuningScene({ onExit }) {
         <div className="lp12-rotate-prompt">
           <p>Rotate your device to landscape to continue the LP12 tuning sequence.</p>
         </div>
+        {/* The corridor test is the one page over a dark sky, so the control
+            takes the inverted glass or it vanishes into it. */}
+        <BackButton onBack={goBack} onDark />
       </>
     )
   }
@@ -431,6 +462,8 @@ export default function LP12TabletTuningScene({ onExit }) {
       </div>
 
       <p className="lp12-sr-only" role="status" aria-live="polite">{announce}</p>
+
+      <BackButton onBack={goBack} />
 
       <div className="lp12-rotate-prompt">
         <p>Rotate your device to landscape to continue the LP12 tuning sequence.</p>

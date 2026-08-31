@@ -41,10 +41,9 @@ export default function Page19CommissioningComplete({ onReview, onRestart }) {
       <div className="p19-wash" aria-hidden="true" />
 
       <div className="fm-glass p19-panel">
-        <p className="p19-brand">
-          <span className="p19-mark" aria-hidden="true" />
-          MIVA OPEN UNIVERSITY
-        </p>
+        {/* No mark slot: see Page01Welcome. Inside the panel the wordmark
+            shares the title's left edge rather than sitting in from it. */}
+        <p className="p19-brand">MIVA OPEN UNIVERSITY</p>
 
         <h1 className="p19-title"><span>Commissioning</span> <span>complete</span></h1>
 

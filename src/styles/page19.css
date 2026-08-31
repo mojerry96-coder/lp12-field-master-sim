@@ -46,17 +46,12 @@
 .p19.is-shown .p19-panel { opacity: 1; transform: translateY(-50%) }
 
 .p19-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin: 0;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: #1555C7;
 }
-/* Slot for the approved MIVA mark, the same reserved box the other pages keep. */
-.p19-mark { width: 26px; height: 26px }
 
 .p19-title {
   margin: 30px 0 0;

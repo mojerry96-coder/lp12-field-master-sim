@@ -1,4 +1,3 @@
-import { useEffect, useRef } from 'react'
 
 /**
  * PAGE 04 — Pole Overview / Manual Orbit.
@@ -8,55 +7,22 @@ import { useEffect, useRef } from 'react'
  * last page before isolation, and the point of inspecting the column here is
  * that it is still standing in the street it serves.
  *
- * Orbit is the learner's. The simulation used to turn the hardware on a 22
- * second clock whether anyone was looking or not; now nothing moves unless the
- * wheel moves, and it stops the moment the wheel does. The camera work belongs
- * to CameraDirector — this page only routes wheel events into the shared orbit
- * input and says whether orbit is on.
+ * Orbit used to live here and now lives on Page 13. Inspecting a bare column
+ * from every side teaches little; the coverage dome is the thing whose shape
+ * only reads once you can walk around it, so the control moved to the page
+ * that rewards it.
  */
 
-function OrbitGlyph() {
+export default function Page04PoleOverview({ onBeginInstallation, busy, children }) {
   return (
-    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-      <ellipse cx="12" cy="12" rx="9.2" ry="4.4" fill="none"
-               stroke="currentColor" strokeWidth="1.6"
-               transform="rotate(-28 12 12)" />
-      <circle cx="12" cy="12" r="3" fill="currentColor" />
-      <path d="M18.4 7.6l1.5.9-.9 1.5M5.6 16.4l-1.5-.9.9-1.5"
-            fill="none" stroke="currentColor" strokeWidth="1.6"
-            strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-export default function Page04PoleOverview({
-  orbitInput, orbitEnabled, onOrbit, onBeginInstallation, busy, children,
-}) {
-  const hostRef = useRef(null)
-
-  // Non-passive, because the handler calls preventDefault when orbit is on —
-  // a passive listener cannot, and the page would scroll under the model.
-  // Attached for the life of the page rather than only while orbit is enabled:
-  // the input itself ignores wheel events when disabled, so there is one place
-  // that decides, not two.
-  useEffect(() => {
-    const host = hostRef.current
-    if (!host || !orbitInput) return undefined
-    const onWheel = (e) => orbitInput.onWheel(e)
-    host.addEventListener('wheel', onWheel, { passive: false })
-    return () => host.removeEventListener('wheel', onWheel)
-  }, [orbitInput])
-
-  return (
-    <section ref={hostRef} className="fm-page p04" aria-label="Pole overview">
+    <section className="fm-page p04" aria-label="Pole overview">
       {/* The live model. Held to the right 62% so the pole composes against
           the title rather than sitting under it. */}
       <div className="p04-viewport">{children}</div>
 
-      <div className="p04-brand">
-        <span className="p04-brandmark" aria-hidden="true" />
-        MIVA OPEN UNIVERSITY
-      </div>
+      {/* No mark slot: see Page01Welcome. The wordmark sits on the same left
+          edge as the title, subtitle and location line below it. */}
+      <div className="p04-brand">MIVA OPEN UNIVERSITY</div>
 
       <div className="p04-stack">
         <h1 className="p04-title"><span>POLE</span> <span>OVERVIEW</span></h1>
@@ -70,26 +36,7 @@ export default function Page04PoleOverview({
         </p>
       </div>
 
-      {/* Temporary, and only while orbit is on — it is a hint, not a status
-          bar, so it has nothing to say the rest of the time. */}
-      {orbitEnabled && (
-        <div className="fm-glass p04-hint" role="status">
-          <OrbitGlyph />
-          Orbit enabled · Scroll to inspect
-        </div>
-      )}
-
       <div className="fm-glass p04-actions">
-        <button
-          type="button"
-          className={`fm-btn p04-orbit${orbitEnabled ? ' is-on' : ''}`}
-          aria-pressed={orbitEnabled}
-          onClick={onOrbit}
-        >
-          <span className="fm-btn-glyph" aria-hidden="true"><OrbitGlyph /></span>
-          Orbit
-        </button>
-
         <button type="button" className="fm-btn p04-begin"
                 onClick={onBeginInstallation} disabled={busy}>
           <span className="fm-btn-glyph" aria-hidden="true">

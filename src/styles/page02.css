@@ -26,13 +26,8 @@
 
 .p02-eyebrow {
   display: flex;
-  align-items: center;
-  gap: 11px;
   color: #2A5DB8;
 }
-/* Slot for the approved MIVA mark, the same reserved box Page 01 keeps, so
-   both pages fill on the day the real asset arrives. */
-.p02-mark { width: 22px; height: 22px }
 
 .p02-site {
   margin: 18px 0 4px;

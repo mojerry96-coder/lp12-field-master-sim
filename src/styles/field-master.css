@@ -142,3 +142,53 @@
   .fm-btn { transition: none }
   .fm-btn:hover { transform: none }
 }
+
+/* -------------------------------------------------------------------- back */
+
+/**
+ * The back control, identical on every page that renders one.
+ *
+ * Fixed to the viewport rather than placed in each page's flow: the pages have
+ * nothing in common structurally — some are full-bleed 3D, some are a glass
+ * sheet over a plate — and the one thing this control must be is in the same
+ * place every time. Top-right because the top-left corner is already spoken
+ * for on Page 03, the assembly stages and the network test; see BackButton.jsx.
+ *
+ * z-index sits below the stage gate (60) so a loading overlay still covers it,
+ * and above ordinary page chrome.
+ */
+.fm-back {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 15px 9px 12px;
+  border-radius: 999px;
+  font: 600 13px/1 var(--fm-font, "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif);
+  letter-spacing: 0.01em;
+  color: var(--fm-ink, #10243F);
+  cursor: pointer;
+  transition: transform 140ms ease, opacity 140ms ease, box-shadow 140ms ease;
+}
+.fm-back:hover:not(:disabled) { transform: translateX(-2px) }
+.fm-back:active:not(:disabled) { transform: none }
+.fm-back:focus-visible { outline: 2px solid var(--fm-blue, #007AFF); outline-offset: 3px }
+.fm-back:disabled { opacity: 0.4; cursor: default }
+
+/* The dark pages — the network test and its debrief — need the light glass
+   inverted or the control disappears into the sky. */
+.fm-back.is-onDark {
+  background: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.20),
+    0 12px 40px rgba(0, 0, 0, 0.14);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+@media (max-width: 900px), (orientation: portrait) {
+  .fm-back { top: 14px; right: 14px; padding: 8px 13px 8px 10px; font-size: 12px }
+}

@@ -25,6 +25,27 @@ export const ISO_SOURCE_SIZE = { width: 2560, height: 1440 }
 export const ISO_LP12_ANCHOR = { x: 0.5447, y: 0.6281 }
 
 /**
+ * Where the pole meets the ground on the same plate.
+ *
+ * A hemisphere drawn around the mount point floats with its flat face up in
+ * the air; drawn around the base it sits on the street, which is what a
+ * coverage or dead-zone volume actually does. Measured off the plate against
+ * the same column the highlight is sized from — 0.735 of image height is the
+ * foot of the column, and x is unchanged because the column is vertical.
+ */
+export const ISO_LP12_GROUND_ANCHOR = { x: ISO_LP12_ANCHOR.x, y: 0.735 }
+
+/**
+ * Camera elevation of the isometric render, in degrees above the horizon.
+ *
+ * The plate is CAM_ENV_ISOMETRIC out of Blender, whose default isometric
+ * inclination is 30 degrees. A dome drawn at any other elevation would sit on
+ * a ground plane tilted differently from the one in the picture, and the base
+ * ellipse would visibly disagree with the road it is lying on.
+ */
+export const ISO_VIEW_ELEVATION_DEG = 30
+
+/**
  * object-fit: cover crops the image, so a plain percentage drifts as the
  * viewport shape changes. Recompute the rendered image rectangle instead.
  *

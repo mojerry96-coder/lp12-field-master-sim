@@ -5,7 +5,7 @@ import {
 } from './store'
 import BackgroundPlate from './components/BackgroundPlate'
 import Page03LocateSite from './pages/Page03LocateSite'
-import NetworkCoverageDome from './components/NetworkCoverageDome'
+import NetworkCoverageDome, { DeadZoneDome } from './components/NetworkCoverageDome'
 import LP12BuildCanvas from './components/LP12BuildCanvas'
 import InstallationPage from './InstallationPage'
 import LP12TabletTuningScene from './tuning/LP12TabletTuningScene'
@@ -14,6 +14,7 @@ import { STAGE_CONFIG, detectPerformanceTier, prefersReducedMotion } from './lib
 import Page01Welcome from './pages/Page01Welcome'
 import Page02MissionBriefing from './pages/Page02MissionBriefing'
 import StageGate from './components/StageGate'
+import BackButton from './components/BackButton'
 import { PerformanceReview } from './components/CompletionScreen'
 import Page19CommissioningComplete from './pages/Page19CommissioningComplete'
 import { P2, P3, warm } from './lib/preloader'
@@ -133,10 +134,16 @@ export default function App() {
 
   if (!s.briefingDone) {
     return (
-      <Page02MissionBriefing
-        reducedMotion={s.reducedMotion}
-        onBegin={useSim.getState().briefingFinished}
-      />
+      <>
+        <Page02MissionBriefing
+          reducedMotion={s.reducedMotion}
+          onBegin={useSim.getState().briefingFinished}
+        />
+        {/* Back to the welcome. The opener is a flag rather than a route, so
+            stepping back is clearing it — and it replays skippably, exactly as
+            it does after a restart. */}
+        <BackButton onBack={() => useSim.setState({ openerDone: false })} />
+      </>
     )
   }
 
@@ -174,16 +181,27 @@ export default function App() {
           find one column among a dozen, and a coverage dome drawn from default
           height and tilt is a second blue shape on the same plate saying
           nothing — it is a consequence, so it waits until there is one. */}
-      {showHotspot && s.bgReady && s.installed && (
-        <NetworkCoverageDome height={s.height} downtilt={s.downtilt} />
+      {/* One volume over the pole, and which one says whether the street is
+          still broken. Red and pulsing while the dead zone is the situation;
+          the installed cell's own footprint once there is one to draw. */}
+      {showHotspot && s.bgReady && (
+        s.installed
+          ? <NetworkCoverageDome height={s.height} downtilt={s.downtilt} />
+          : <DeadZoneDome reducedMotion={s.reducedMotion} />
       )}
 
       {showHotspot && s.bgReady && (
-        <Page03LocateSite
-          disabled={s.transitionLocked}
-          completed={s.installed && s.heightOk() && s.tiltOk()}
-          onSelect={s.openBuild}
-        />
+        <>
+          <Page03LocateSite
+            disabled={s.transitionLocked}
+            completed={s.installed && s.heightOk() && s.tiltOk()}
+            onSelect={s.openBuild}
+          />
+          <BackButton
+            onBack={() => useSim.setState({ briefingDone: false })}
+            busy={s.transitionLocked}
+          />
+        </>
       )}
 
       {/* The tablet tuning sequence replaces the installation workspace once

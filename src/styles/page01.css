@@ -41,17 +41,11 @@
   position: absolute;
   left: 5.5vw;
   top: 6vh;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: #1555C7;
 }
-/* Slot for the approved MIVA mark. Reserves its box so dropping the real
-   asset in shifts nothing. */
-.p01-brandmark { width: 30px; height: 30px }
 
 .p01-stack {
   position: absolute;

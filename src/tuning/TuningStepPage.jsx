@@ -65,6 +65,11 @@ export const IconBars = (
   </svg>
 )
 
+/* How much of the control's travel still counts as "close". A tenth either
+   side: near enough to read as nearly-there, narrow enough that most of the
+   track is not it. */
+const CLOSE_BAND = 0.10
+
 export default function TuningStepPage({ step, value, onChange, onApply }) {
   const l = step.limits
   const id = useId()
@@ -72,6 +77,28 @@ export default function TuningStepPage({ step, value, onChange, onApply }) {
 
   const span = l.max - l.min
   const progress = ((value - l.min) / span) * 100
+
+  /**
+   * How near the setting is, in three bands, for the slider's colour.
+   *
+   * The band is measured as a fraction of the control's FULL TRAVEL rather
+   * than in its own unit, because the three steps are not comparable in units
+   * — a millisecond of interval, a decibel of hysteresis and a millisecond of
+   * time-to-trigger mean completely different amounts of "nearly". A tenth of
+   * the journey means the same thing on all three, and it is what the learner
+   * actually perceives, since all they can see is how far along the track the
+   * knob has moved.
+   *
+   * `tolerance` is the step's own: the interval and the trigger want an exact
+   * value, while hysteresis moves in 0.1 dB and cannot be compared exactly —
+   * 1.2 + 0.1 is 1.3000000000000003 — so it carries a small one.
+   */
+  const distance = Math.abs(value - l.target)
+  const proximity = distance <= (l.tolerance || 0)
+    ? 'correct'
+    : distance <= span * CLOSE_BAND
+      ? 'close'
+      : 'off'
 
   const nudgeBy = useCallback((delta) => {
     const next = Math.min(l.max, Math.max(l.min, value + delta))
@@ -103,7 +130,7 @@ export default function TuningStepPage({ step, value, onChange, onApply }) {
         </button>
 
         <div className="ts-track-wrap">
-          <div className="ts-track">
+          <div className={`ts-track is-${proximity}`}>
             <span className="ts-fill" style={{ width: `${progress}%` }} aria-hidden="true" />
             <input
               id={id}
