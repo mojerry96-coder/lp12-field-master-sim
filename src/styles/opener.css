@@ -86,6 +86,35 @@
   background:linear-gradient(90deg,#2f6ee0,#6aa4ff);transition:transform 200ms ease-out}
 .stage-gate-pct{font:500 11px/1 inherit;letter-spacing:.16em;color:rgba(178,205,255,.6)}
 
+/* The scene phase: no percentage to report, so the bar stops measuring and
+   sweeps instead. The fill is narrowed to a travelling band rather than being
+   scaled by React, so nothing has to drive it frame by frame. */
+.stage-gate-line.is-preparing i{
+  width:38%;transform:none;transition:none;
+  border-radius:2px;
+  animation:stage-gate-sweep 1250ms cubic-bezier(.55,0,.45,1) infinite}
+
+/* The band is 38% of the track, so translateX is in units of ITS width, not
+   the track's: -85% puts its trailing edge just inside the left end and 245%
+   puts its leading edge just past the right. Wider travel than that and the
+   track sits empty for a third of every cycle, which reads as a stutter rather
+   than as work in progress. */
+@keyframes stage-gate-sweep{
+  0%{transform:translateX(-85%)}
+  100%{transform:translateX(245%)}
+}
+
+/* Reduced motion still needs to say "working", so the band breathes in place
+   rather than travelling. */
+@media (prefers-reduced-motion: reduce){
+  .stage-gate-line.is-preparing i{
+    width:100%;animation:stage-gate-pulse 1.6s ease-in-out infinite}
+  @keyframes stage-gate-pulse{
+    0%,100%{opacity:.32}
+    50%{opacity:.85}
+  }
+}
+
 .stage-gate-error{max-width:380px;display:grid;gap:14px;justify-items:center}
 .stage-gate-error p{margin:0;font:500 14px/1.5 inherit;color:#e8eef7}
 .stage-gate-actions{display:flex;gap:10px}

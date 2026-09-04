@@ -24,6 +24,19 @@ import { preload } from '../lib/preloader'
 
 const TIMEOUT_MS = 25_000
 
+/**
+ * How long the SCENE phase may take before it is treated as hung.
+ *
+ * Separate from TIMEOUT_MS, and longer, because it covers different work. The
+ * asset timeout guards a fetch; this one guards parsing a 1.5 MB GLB, building
+ * its materials and compiling twenty shader programs, which on a cold cache
+ * and a modest GPU genuinely takes tens of seconds. Without it the scene phase
+ * was unbounded: the asset timer is cleared the moment the fetch settles, so a
+ * stage that never reported ready left the learner on a loading screen with no
+ * error, no retry and nothing to read, indefinitely.
+ */
+const SCENE_TIMEOUT_MS = 60_000
+
 export default function StageGate({
   name, priority, ready = true, onRetreat, children,
 }) {
@@ -52,6 +65,14 @@ export default function StageGate({
     return () => { cancelled = true; clearTimeout(timer.current) }
   }, [priority, attempt])
 
+  /* The scene phase, guarded. Starts when the assets are in and the stage has
+     still not reported ready, and is cleared the moment it does. */
+  useEffect(() => {
+    if (!assetsOk || ready || error) return undefined
+    const id = setTimeout(() => setError(new Error('scene timeout')), SCENE_TIMEOUT_MS)
+    return () => clearTimeout(id)
+  }, [assetsOk, ready, error])
+
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
   const shown = assetsOk && ready && !error
 
@@ -70,26 +91,41 @@ export default function StageGate({
       {!shown && (
         error
           ? <GateError name={name} onRetry={retry} onRetreat={onRetreat} />
-          : <GateLoading name={name} progress={progress} ready={ready} />
+          : <GateLoading name={name} progress={progress}
+                         preparing={assetsOk && !ready} />
       )}
     </StageErrorBoundary>
   )
 }
 
-function GateLoading({ name, progress, ready }) {
-  // Assets are most of the wait, so they own most of the bar. The last tenth
-  // is the scene preparing itself — parse, materials, shader compile — which
-  // has no progress to report but is not instant either.
-  const shown = ready ? progress : Math.min(progress, 0.9)
+/**
+ * Two phases, and the bar is honest about which one it is in.
+ *
+ * It used to be one bar: assets drove it to 90% and then it was clamped there
+ * — `Math.min(progress, 0.9)` — while the scene parsed the GLB and compiled
+ * its shaders. On a cold start that is twenty to thirty seconds of a precise
+ * number sitting perfectly still, which is the single most convincing way an
+ * interface can say "I have crashed" while working correctly. The percentage
+ * was also a lie by then: the assets were at 100.
+ *
+ * So the percentage belongs to the phase that HAS a percentage. Once the
+ * assets are in, the bar stops pretending to measure and starts sweeping, and
+ * the label says what is actually happening. An indeterminate bar makes no
+ * claim it cannot keep — which is the point, because the shader compile
+ * genuinely has no progress to report — and a moving one reads as alive.
+ */
+function GateLoading({ name, progress, preparing }) {
   return (
     <div className="stage-gate" role="status" aria-live="polite">
       <div className="stage-gate-inner">
         <div className="miva-mark" aria-hidden="true" />
         <p className="stage-gate-name">{name}</p>
-        <span className="stage-gate-line">
-          <i style={{ transform: `scaleX(${shown})` }} />
+        <span className={`stage-gate-line${preparing ? ' is-preparing' : ''}`}>
+          <i style={preparing ? undefined : { transform: `scaleX(${progress})` }} />
         </span>
-        <span className="stage-gate-pct">{Math.round(shown * 100)}%</span>
+        <span className="stage-gate-pct">
+          {preparing ? 'Preparing the scene' : `${Math.round(progress * 100)}%`}
+        </span>
       </div>
     </div>
   )
