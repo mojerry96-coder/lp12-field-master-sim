@@ -46,9 +46,15 @@ const INSTALL_STEP_OF = Object.fromEntries(INSTALL_STEPS.map((s, i) => [s.id, i 
  */
 const ASSEMBLY_PAGES = ['bands', 'rail', 'pivot', 'antenna', 'fasteners', 'connectors']
 
-/** How long the powered-on status holds before the rig stage loads. Long
- *  enough to read six words without becoming a wait. */
-const POWER_ON_HOLD_MS = 2200
+/**
+ * How long the run pauses on the finished assembly before the rig stage loads.
+ *
+ * It has two jobs and the figure covers both: the camera ease is 1.25s (see
+ * CameraDirector), and the pull-back is worth nothing if it arrives just as the
+ * page cuts away — so the rest is the beat the learner actually spends looking
+ * at what they built, with the status lit green beside it.
+ */
+const POWER_ON_HOLD_MS = 2800
 
 /**
  * Every stage the redesign has reached, assembly or not.
@@ -345,19 +351,38 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
           showEnvironment={stageId === 'coverage' || stageId === 'complete'}
           /* Where this stage's component belongs on the column. The stage
              table already carries it as the position tracker's window. */
-          targetRegion={stage.clip ? stage.tracker : null}
+          /* No drop target during the hold: the step is finished, and a
+             region outlined on a completed assembly reads as another task. */
+          targetRegion={!powerOn && stage.clip ? stage.tracker : null}
           hideCallouts={REDESIGNED_STAGES.includes(stageId)}
           flow={flow} studio={studio} look={look}
           installedParts={installed}
-          stage={stageId} view={view}
-          camera={STAGE_CAMERA[stageId]}
+          /**
+           * HOLD ON WHAT THEY BUILT.
+           *
+           * The last clip ends with the camera pushed in hard on the coupling
+           * nuts — CLIP_FOCUS drives ANIM_06 in to a 90mm framing so the
+           * threading is legible — and the run then cut straight from that
+           * close-up to the rig stage. Six steps of assembly finished, and the
+           * last thing seen of the finished pole was three connectors filling
+           * the frame.
+           *
+           * So for the length of the hold the camera is given the rig stage's
+           * own framing, which is already exactly "the whole mounted assembly
+           * on its column": CAM_01_FULL_POLE, fitted to MOUNTED_ASSEMBLY plus
+           * the shaft. The page underneath is still the connectors page — this
+           * moves the camera, not the route — and clearing activeClip below is
+           * what releases the push-in so it can pull back at all.
+           */
+          stage={powerOn ? 'height' : stageId} view={view}
+          camera={STAGE_CAMERA[powerOn ? 'height' : stageId]}
           height={s.height} downtilt={s.downtilt}
           /* Dome turns green and starts pulsing only once BOTH rig
              settings are within target — the same pass/fail the stage
              gates enforce, expressed as a property of the coverage. */
           rigSettled={s.heightOk() && s.tiltOk()}
           completedClips={completedClips}
-          activeClip={busy ? stage.clip : null}
+          activeClip={busy && !powerOn ? stage.clip : null}
           modelRoot={s.modelRoot}
           selectedNames={[]}
           focusNodeName={null}
