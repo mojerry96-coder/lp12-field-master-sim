@@ -1,0 +1,283 @@
+/* PAGE 04 — Pole Overview. Against the replication spec's 1672 x 941 reference.
+   Every position here is that reference's own pixels; ReferenceStage scales the
+   whole artboard by one factor, so nothing reflows between viewports. */
+
+/* ------------------------------------------------------------ the ground
+
+   §4/§5: one continuous background across both zones. The canvas is full bleed
+   and now clears transparent, so what fills the frame is App's city plate,
+   softened, with the live pole composited over it. The old page boxed the
+   canvas into the right 62% and the opaque clear met the street at a hard
+   vertical seam two-thirds across the screen. */
+
+/* `.fm-page` paints an opaque studio grey and ties this rule on specificity,
+   so it has to be qualified — unqualified, load order decided it and the page
+   came up as a flat grey sheet with the city hidden behind it. */
+.fm-page.p04 { background: none }
+
+.p04-viewport { position: absolute; inset: 0 }
+
+/* The street behind the pole: blurred and LIFTED rather than dimmed, because
+   here it is the daylight the column stands in. §5's figures. */
+.hybrid-simulation.is-overview .background-image-layer.is-focused img {
+  filter: blur(4px) saturate(0.84) brightness(1.06);
+  transform: scale(1.012);
+}
+
+/* §5's readability wash. Held off the left third so the glass panel is not
+   sitting on flat white, and strongest behind the pole. */
+.hybrid-simulation.is-overview .background-focus-overlay {
+  background:
+    radial-gradient(ellipse at 74% 48%,
+      rgba(255, 255, 255, 0.73) 0%,
+      rgba(255, 255, 255, 0.58) 39%,
+      rgba(255, 255, 255, 0.27) 68%,
+      rgba(255, 255, 255, 0.06) 100%);
+}
+
+/* §26/§27: the isolation the Begin Installation transition fades UP, so the
+   pole is never left floating on nothing between the two environments. */
+.p04-studio {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    url('/assets/lp12/studio-isolation-gradient.png') center / cover no-repeat,
+    radial-gradient(circle at 67% 43%, #fff 0%, #f7f8f6 45%, #edf0f4 100%);
+  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.p04.is-starting .p04-studio { opacity: 1 }
+
+/* Fading App's plate, not this page's own layer — the plate is mounted above
+   the shell, so a rule here has to reach it the way the focus filter does. */
+.hybrid-simulation.is-overview:has(.p04.is-starting) .background-image-layer,
+.hybrid-simulation.is-overview:has(.p04.is-starting) .background-focus-overlay {
+  opacity: 0;
+  transition: opacity 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The overview UI leaves before the camera moves, so the transition is the
+   pole and the environment rather than a page sliding off. */
+.p04.is-starting .p04r-panel,
+.p04.is-starting .p04r-brand,
+.p04.is-starting .p04r-guide {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 260ms ease,
+    transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ------------------------------------------------------------- the brand */
+
+.p04r-brand { left: 62px; top: 43px; font-size: 18px }
+
+/* --------------------------------------------------- the inspection guide
+
+   §24. Faint, unlabelled, and deliberately ambiguous: three nodes on a dotted
+   path that correspond to nothing the learner will be marked on. */
+.p04r-guide {
+  left: 1240px;
+  top: 77px;
+  width: 220px;
+  height: 760px;
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------- the panel
+
+   §8/§9: white optical material, not a tinted card. Opaque enough that the
+   city behind it cannot interfere with the text. */
+.p04r-panel {
+  left: 65px;
+  top: 111px;
+  width: 575px;
+  height: 767px;
+  padding: 42px 51px 33px;
+  border-radius: 29px;
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.91) 0%,
+    rgba(255, 255, 255, 0.73) 56%,
+    rgba(247, 251, 255, 0.68) 100%);
+  backdrop-filter: blur(28px) saturate(145%);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    0 1px 1px rgba(12, 35, 68, 0.025),
+    0 20px 58px rgba(28, 55, 91, 0.12);
+}
+
+/* ------------------------------------------------------------ the heading
+
+   §10: two lines, never combined. POLE navy, OVERVIEW on the blue gradient. */
+.p04r-title {
+  margin: 0;
+  font-size: 88px;
+  line-height: 0.91;
+  font-weight: 650;
+  letter-spacing: -0.065em;
+}
+.p04r-title span,
+.p04r-title strong { display: block }
+.p04r-title span { color: #10233F }
+.p04r-title strong {
+  font-weight: 650;
+  background: linear-gradient(90deg, #116CF2, #2B83FF);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.p04r-sub {
+  margin: 21px 0 0;
+  color: #172942;
+  font-size: 25px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+/* ------------------------------------------------------------- the rules */
+
+.p04r-rule {
+  position: static;
+  width: 100%;
+  height: 1px;
+  margin-top: 17px;
+  background: rgba(37, 68, 109, 0.12);
+}
+.p04r-rule.is-location { margin-top: 4px }
+
+/* --------------------------------------------------------------- the rows
+
+   §13: instructional, not answer-bearing. §14/§15/§16 for the metrics. */
+
+.p04r-rows { position: static; margin-top: 17px }
+
+.p04r-row {
+  position: static;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.p04r-row-icon {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #1478FF;
+  background: linear-gradient(145deg,
+    rgba(241, 247, 255, 0.98), rgba(224, 237, 254, 0.86));
+  border: 1px solid rgba(255, 255, 255, 0.92);
+}
+
+.p04r-row > div { position: static }
+
+.p04r-row strong {
+  display: block;
+  color: #18304E;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.p04r-row p {
+  margin: 3px 0 0;
+  color: #60728C;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 430;
+  letter-spacing: -0.01em;
+}
+
+/* ----------------------------------------------------------- the location
+
+   §17: context, not an answer. */
+.p04r-where {
+  position: static;
+  height: 55px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1478FF;
+  font-size: 17px;
+  font-weight: 550;
+  letter-spacing: -0.015em;
+}
+.p04r-where svg { flex: none }
+.p04r-where i { display: inline-block; width: 4px }
+
+/* ------------------------------------------------------------------ the CTA
+
+   §18-§20: a white glass pill, not a solid blue button. The blue circle is the
+   interaction accent and it carries the page's one strong colour. */
+.p04r-begin {
+  left: 50px;
+  bottom: 32px;
+  width: 477px;
+  height: 92px;
+  padding: 0 27px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 27px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.94), rgba(245, 249, 255, 0.78));
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 11px 29px rgba(24, 55, 92, 0.10);
+  color: #14243C;
+  cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 160ms ease;
+}
+.p04r-begin:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 16px 36px rgba(24, 55, 92, 0.14);
+}
+.p04r-begin:active:not(:disabled) { transform: none }
+.p04r-begin:disabled { cursor: default }
+.p04r-begin:focus-visible { outline: 2px solid #1478FF; outline-offset: 3px }
+
+.p04r-play {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(180deg, #38A0FF, #086CF5);
+  box-shadow:
+    inset 0 0 0 5px rgba(255, 255, 255, 0.30),
+    0 8px 24px rgba(14, 110, 246, 0.30);
+}
+
+.p04r-begin > strong {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+.p04r-begin > svg:last-child { margin-left: auto }
+
+@media (prefers-reduced-motion: reduce) {
+  .p04-studio,
+  .p04.is-starting .p04r-panel,
+  .p04.is-starting .p04r-brand,
+  .p04.is-starting .p04r-guide,
+  .p04r-begin { transition: none }
+  .p04r-begin:hover:not(:disabled) { transform: none }
+}

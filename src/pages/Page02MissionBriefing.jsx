@@ -26,7 +26,8 @@ import '../styles/ref-page02.css'
 export default function Page02MissionBriefing({ reducedMotion, onBegin }) {
   return (
     <ReferenceStage className={`p02r${reducedMotion ? ' is-reduced' : ''}`}
-                    label="Field assignment">
+                    label="Field assignment"
+                    plate={urlFor('iso-background')}>
       <img className="fmref-plate p02r-city" src={urlFor('iso-background')} alt="" />
       <div className="p02r-wash" aria-hidden="true" />
 

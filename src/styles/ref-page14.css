@@ -154,3 +154,12 @@
   padding: 0 26px;
   font-size: 19px;
 }
+
+/* The letterbox bands. This page's ground is a gradient rather than a
+   photograph, so it takes the gradient rather than ReferenceStage's blurred
+   plate — same result, no band of a different colour above and below. */
+.fmref-viewport:has(.p14r) {
+  background:
+    radial-gradient(120% 90% at 12% 8%, #FFFFFF 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, #EFF5FD 0%, #E4EEFA 100%);
+}

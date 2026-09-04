@@ -72,13 +72,45 @@ const band = (value, good, warn) =>
  * than stability on the same input: a dropped call is felt before a marginal
  * handover statistic is.
  */
+/* Which half of the run each decision belongs to, so a row can be held back by
+   a fault in its OWN half rather than by the averaged score. */
+const PHYSICAL_KEYS = new Set(['mountHeight', 'downtilt'])
+
+/**
+ * A row cannot read 'good' while a decision feeding it is wrong.
+ *
+ * Averages hide faults. A run with the downtilt 3 degrees off and the
+ * time-to-trigger at the wrong end of its range still averaged 0.82 overall,
+ * which is the top band — so the panel showed a green PASS on the same screen
+ * as a debrief listing two decisions that needed review. The learner is told
+ * they passed and told they got two things wrong, at the same moment.
+ *
+ * Demoting one band is the honest reading and it is not a second penalty: the
+ * score is untouched, the failed band is untouched, and a run with nothing
+ * faulted is unaffected. It only stops a top band being claimed while
+ * something in it is known to be wrong.
+ */
+const holdBack = (level, faulted) => (
+  faulted && level === 'good' ? 'warning' : level
+)
+
 export function buildResult(settings) {
   const q = calculateTestQuality(settings)
+
+  // `reviewDecisions` is the same judgement the debrief prints, so the panel
+  // and the debrief cannot disagree about whether a decision was acceptable.
+  const decisions = reviewDecisions(settings)
+  const physicalFault = decisions.some(
+    (d) => PHYSICAL_KEYS.has(d.key) && d.state !== 'good')
+  const tuningFault = decisions.some(
+    (d) => !PHYSICAL_KEYS.has(d.key) && d.state !== 'good')
+  const anyFault = physicalFault || tuningFault
+
   return {
-    coverage: band(q.physical, 0.82, 0.65),
-    stability: band(q.tuning, 0.82, 0.65),
-    interruption: band(q.tuning, 0.76, 0.58),
-    overall: band(q.overall, 0.82, 0.65),
+    coverage: holdBack(band(q.physical, 0.82, 0.65), physicalFault),
+    stability: holdBack(band(q.tuning, 0.82, 0.65), tuningFault),
+    interruption: holdBack(band(q.tuning, 0.76, 0.58), tuningFault),
+    overall: holdBack(band(q.overall, 0.82, 0.65), anyFault),
     score: Math.round(q.overall * 100),
     quality: q,
   }

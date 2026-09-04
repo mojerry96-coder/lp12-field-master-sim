@@ -2,7 +2,7 @@ import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, useAnimations } from '@react-three/drei'
 import * as THREE from 'three'
-import StudioEnvironment from './StudioEnvironment'
+import StudioEnvironment, { STUDIO_BG } from './StudioEnvironment'
 import SiteLighting from './SiteLighting'
 import PartCallouts, { CalloutBridge } from './PartCallouts'
 import SiteEnvironment from './SiteEnvironment'
@@ -92,10 +92,22 @@ const ASSEMBLY_SUBJECT_BIAS = -0.13
    off-axis the way the authored anchor has it. */
 const CENTRED_STAGE_IDS = new Set(['coverage', 'handover'])
 
+/* Pole Overview composes the column against a 575px glass panel on the left,
+   and the replication spec puts the pole's centre at x 1168 of the 1672
+   artboard.
+   The bias is measured from where CAM_01_FULL_POLE's own aim lands rather than
+   from frame centre: the anchor is already composed off-axis, so a bias derived
+   from centre misses by that offset. Projecting the pole axis with no bias
+   applied puts it at 0.411 of frame width, and bias moves the subject the
+   opposite way, hence the negation. */
+const OVERVIEW_ANCHOR_FRACTION = 0.411
+const OVERVIEW_SUBJECT_BIAS = -(1168 / 1672 - OVERVIEW_ANCHOR_FRACTION)
+
 const subjectBiasFor = (stage, authored) => (
   ASSEMBLY_STAGE_IDS.has(stage) ? ASSEMBLY_SUBJECT_BIAS
     : CENTRED_STAGE_IDS.has(stage) ? 0
-      : authored
+      : stage === 'overview' ? OVERVIEW_SUBJECT_BIAS
+        : authored
 )
 
 const applySubjectBias = (pos, tgt, bias, vFovDeg, aspect) => {
@@ -942,7 +954,13 @@ export default function LP12BuildCanvas(props) {
         // Without it the canvas is blank to toDataURL and readPixels, so the
         // viewport cannot be captured — which is what the lighting was
         // calibrated against, and what any future frame export needs.
-        gl={{ alpha: false, antialias: props.performanceTier === 'high',
+        /* alpha:true, and the scene supplies its own opaque background on
+           every stage that wants one (see the <color> below).
+           Page 04 is the reason: the replication spec wants one continuous
+           defocused city across the whole frame with the pole standing in it,
+           and an opaque clear made the canvas a rectangle of studio grey that
+           met the plate at a hard vertical seam. */
+        gl={{ alpha: true, antialias: props.performanceTier === 'high',
               preserveDrawingBuffer: true,
               powerPreference: 'high-performance' }}
         camera={{ fov: 32, near: 0.05, far: 250 }}
@@ -953,7 +971,9 @@ export default function LP12BuildCanvas(props) {
           // Blender render. Exposure is 0.9, not the 1.05 it was: the previous
           // value lifted the whole image, which is the browser half of the
           // same washed-out fault corrected in the studio.
-          gl.setClearColor(0xedece9, 1)
+          // Transparent; the scene's own background covers the stages that
+          // need a ground. See the <color attach="background"> below.
+          gl.setClearColor(0xedece9, 0)
           gl.outputColorSpace = THREE.SRGBColorSpace
           // AgX, not the ACESFilmic the brief's snippet names.
           //
@@ -995,6 +1015,17 @@ export default function LP12BuildCanvas(props) {
             'finished' event never fires, and the stage button locks on
             "Installing…" permanently. Isolating them means the environment can
             suspend as often as it likes without stopping the assembly. */}
+        {/* The studio ground.
+            It used to be the renderer's clear colour, which is why nothing else
+            painted it: SiteLighting carries the Blender rig but no background,
+            and StudioEnvironment — which does set one — is only the fallback.
+            With the context transparent for Page 04's sake, the clear no longer
+            supplies it, so the scene states it here for every stage that is
+            meant to be an isolated studio. Page 04 is the exception and gets
+            none, so the city plate behind the canvas is what shows through. */}
+        {props.stage !== 'overview' && (
+          <color attach="background" args={[STUDIO_BG]} />
+        )}
         <Suspense fallback={null}>
           {/* The Blender rig when the manifest is available, the hand-matched
               studio rig when it is not — so a missing or stale site_look.json

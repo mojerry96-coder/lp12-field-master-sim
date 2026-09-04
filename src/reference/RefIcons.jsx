@@ -153,3 +153,47 @@ export function RestartIcon({ size = 22 }) {
     </svg>
   )
 }
+
+/* ---------------------------------------------------- Pole Overview rows
+ *
+ * The kit's component names them LampDesk / Network / MapPin / ClipboardList
+ * from lucide. Drawn here instead of taking the dependency, in the same line
+ * weight as the rest of this file so the four circles read as one set.
+ * Deliberately generic marks: the specification forbids this page hinting at
+ * where anything mounts, so none of them points at a position on the column. */
+
+export function ColumnIcon({ size = 21 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+      {/* A double-arm lighting column: shaft, two curved arms, two heads. */}
+      <path {...stroke} d="M12 21V5" />
+      <path {...stroke} d="M12 7.4c-3 0-4.4 1.3-4.4 3.2M12 7.4c3 0 4.4 1.3 4.4 3.2" />
+      <path {...stroke} d="M5.9 10.6h3.4M14.7 10.6h3.4" />
+      <path {...stroke} d="M9.4 21H14.6" />
+    </svg>
+  )
+}
+
+export function NodesIcon({ size = 21 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+      {/* Structure and connection points, not a map of them. */}
+      <circle {...stroke} cx="12" cy="12" r="2.3" />
+      <circle {...stroke} cx="5" cy="6" r="1.9" />
+      <circle {...stroke} cx="19" cy="6" r="1.9" />
+      <circle {...stroke} cx="5" cy="18" r="1.9" />
+      <circle {...stroke} cx="19" cy="18" r="1.9" />
+      <path {...stroke} d="m10.3 10.4-3.7-3M13.7 10.4l3.7-3M10.3 13.6l-3.7 3M13.7 13.6l3.7 3" />
+    </svg>
+  )
+}
+
+export function ClipboardIcon({ size = 21 }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
+      <path {...stroke} d="M9 4.5h6M9.6 3h4.8a1 1 0 0 1 1 1v1.4a1 1 0 0 1-1 1H9.6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
+      <path {...stroke} d="M15.6 4.9h2.1a1.4 1.4 0 0 1 1.4 1.4v12.3A1.4 1.4 0 0 1 17.7 20H6.3a1.4 1.4 0 0 1-1.4-1.4V6.3a1.4 1.4 0 0 1 1.4-1.4h2.1" />
+      <path {...stroke} d="M8.8 11.6h6.4M8.8 15.3h4.2" />
+    </svg>
+  )
+}

@@ -203,3 +203,20 @@
   .fmref .fm-btn { transition: none }
   .fmref .fm-btn:hover:not(:disabled) { transform: none }
 }
+
+/* The letterbox fill behind the stage. See ReferenceStage for why it exists. */
+.fmref .fmref-bleed {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.06);
+  filter: blur(26px) saturate(112%);
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Above the fill. */
+.fmref .fmref-stage { z-index: 1 }

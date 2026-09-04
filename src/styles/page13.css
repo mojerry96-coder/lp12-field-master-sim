@@ -1,3 +1,10 @@
+/* The canvas clears transparent now (see LP12BuildCanvas's gl props), so the
+   ground under the city has to be painted here. The same studio the model is
+   lit against, which is what the clear colour used to supply. */
+.p13 {
+  background: radial-gradient(circle at 50% 35%, #fff 0%, #f6f6f3 46%, #eceef1 100%);
+}
+
 /* PAGE 13 — Network Coverage.
    The city is back and the coverage dominates it. Two pieces of chrome, both
    in the left margin, both out of the dome's way. */

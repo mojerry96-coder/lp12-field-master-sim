@@ -32,7 +32,8 @@ export default function Page19CommissioningComplete({ onReview, onRestart }) {
   const passed = score !== null && score >= passMark
 
   return (
-    <ReferenceStage className="p19r" label="Commissioning complete">
+    <ReferenceStage className="p19r" label="Commissioning complete"
+                    plate={urlFor('commissioning-plate')}>
       <img className="fmref-plate p19r-plate" src={urlFor('commissioning-plate')}
            alt="The commissioned LP12 on its column above Awolowo Way" />
       <div className="p19r-wash" aria-hidden="true" />

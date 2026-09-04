@@ -34,7 +34,9 @@ import '../styles/reference.css'
 export const STAGE_W = 1672
 export const STAGE_H = 941
 
-export default function ReferenceStage({ children, className = '', label, transparent = false }) {
+export default function ReferenceStage({
+  children, className = '', label, transparent = false, plate = null,
+}) {
   const [scale, setScale] = useState(null)
 
   useEffect(() => {
@@ -50,6 +52,21 @@ export default function ReferenceStage({ children, className = '', label, transp
   return (
     <section className={`fmref fmref-viewport${transparent ? ' is-transparent' : ''}`}
              aria-label={label}>
+      {/* The letterbox fill.
+          A uniformly scaled stage cannot fill a window whose aspect is not the
+          artboard's: at 1440x900 the stage lands at 1440x810 and leaves 45px of
+          flat page colour above and below it, so a page whose background IS a
+          photograph visibly stopped short of the top and bottom edges. This is
+          the same plate, cover-fitted to the whole viewport and thrown out of
+          focus, so the bands read as the image continuing rather than as two
+          strips of UI chrome. The stage keeps its exact authored crop on top —
+          which is why this is a second copy rather than simply cover-fitting
+          the real one, whose composition the UI is aligned to. */}
+      {plate && !transparent && (
+        <img className="fmref-bleed" src={plate} alt="" aria-hidden="true"
+             draggable={false} decoding="async" />
+      )}
+
       <div
         className={`fmref-stage ${className}`}
         /* Hidden until measured: at scale 1 the stage is 1672px wide on a

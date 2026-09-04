@@ -61,7 +61,8 @@ export default function Page01Welcome({ reducedMotion, onBegin }) {
 
   return (
     <ReferenceStage className={`p01r${reducedMotion ? ' is-reduced' : ''}`}
-                    label="Field Master — LP12 Small-Cell Installation">
+                    label="Field Master — LP12 Small-Cell Installation"
+                    plate={urlFor('landing-plate')}>
       <img className="fmref-plate p01r-plate" src={urlFor('landing-plate')}
            alt="An LP12 small-cell antenna on a lighting column above Awolowo Way, Ikeja" />
       <div className="p01r-wash" aria-hidden="true" />

@@ -211,7 +211,17 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
       // s6: only advance once the animation has clearly completed
       setStageId(STAGES[Math.min(idx + 1, STAGES.length - 1)].id)
     } catch (err) {
+      /* Say so. This used to log and return, which meant a failed step looked
+         exactly like a step that was never clicked: the learner dropped the
+         right component on the pole, the clip never ran, the page did not
+         advance and nothing on screen acknowledged any of it. The commonest
+         cause is the animation controller not being registered yet — the model
+         is parsed but the mixer is not wired — and the correct advice for that
+         is simply to try it again. */
       console.error('[LP12] stage failed:', err)
+      setNotice(String(err?.message || err).includes('controller')
+        ? 'The model is still getting ready — try that again in a moment.'
+        : 'That step could not be completed. Try it again.')
     } finally {
       setBusy(false)
     }
@@ -367,7 +377,11 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
         cards={stage.cards}
         activePart={stage.activePart}
         busy={busy}
-        feedback={refusal?.text || null}
+        /* A refusal, or a step that failed to run: both are "the thing you
+           just did did not take", and the assembly page has one place to say
+           so. `notice` was only ever wired to the rig pages, so on these six a
+           failure had nowhere to appear. */
+        feedback={refusal?.text || notice || null}
         onAttempt={attemptPart}
       >
         {canvas}
