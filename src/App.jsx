@@ -4,7 +4,6 @@ import {
   selectControlsEnabled,
 } from './store'
 import BackgroundPlate from './components/BackgroundPlate'
-import Page03LocateSite from './pages/Page03LocateSite'
 import NetworkCoverageDome, { DeadZoneDome } from './components/NetworkCoverageDome'
 import LP12BuildCanvas from './components/LP12BuildCanvas'
 import InstallationPage from './InstallationPage'
@@ -132,21 +131,6 @@ export default function App() {
     )
   }
 
-  if (!s.briefingDone) {
-    return (
-      <>
-        <Page02MissionBriefing
-          reducedMotion={s.reducedMotion}
-          onBegin={useSim.getState().briefingFinished}
-        />
-        {/* Back to the welcome. The opener is a flag rather than a route, so
-            stepping back is clearing it — and it replays skippably, exactly as
-            it does after a restart. */}
-        <BackButton onBack={() => useSim.setState({ openerDone: false })} />
-      </>
-    )
-  }
-
   if (s.mode === 'complete') {
     return (
       <>
@@ -190,15 +174,27 @@ export default function App() {
           : <DeadZoneDome reducedMotion={s.reducedMotion} />
       )}
 
+      {/* One screen, not two. The assignment card and the site used to be
+          separate pages over the same plate — see Page02MissionBriefing — and
+          Begin now does what the column click used to do. */}
       {showHotspot && s.bgReady && (
         <>
-          <Page03LocateSite
-            disabled={s.transitionLocked}
-            completed={s.installed && s.heightOk() && s.tiltOk()}
-            onSelect={s.openBuild}
+          <Page02MissionBriefing
+            reducedMotion={s.reducedMotion}
+            busy={s.transitionLocked}
+            onBegin={() => {
+              // The flag still means "the learner has read the brief", and the
+              // completion screen and restart both read it. It is set here
+              // because this is the only screen that can set it now.
+              useSim.getState().briefingFinished()
+              useSim.getState().openBuild()
+            }}
           />
+          {/* Back to the welcome. The opener is a flag rather than a route, so
+              stepping back is clearing it — and it replays skippably, exactly
+              as it does after a restart. */}
           <BackButton
-            onBack={() => useSim.setState({ briefingDone: false })}
+            onBack={() => useSim.setState({ openerDone: false })}
             busy={s.transitionLocked}
           />
         </>

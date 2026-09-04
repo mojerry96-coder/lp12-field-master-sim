@@ -46,6 +46,11 @@
 .fmref-viewport {
   position: fixed;
   inset: 0;
+  /* Explicit, because these stages are laid over App's own layers on the
+     merged assignment screen: the plate, the readability wash and the dead
+     zone dome all sit beneath, and a positioned sibling with any z-index at
+     all would otherwise paint over the card. Below BackButton's 40. */
+  z-index: 20;
   overflow: hidden;
   background: #EDF3FB;
 }

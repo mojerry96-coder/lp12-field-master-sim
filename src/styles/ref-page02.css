@@ -3,15 +3,38 @@
 /* The plate is the real isometric render. A soft wash on the left keeps the
    panel's glass readable over the city without dimming the whole frame — the
    kit wants the environment bright, not knocked back. */
-.p02r-wash {
+/* The wash and the pin live in VIEWPORT space, not on the artboard.
+   The city on this screen is App's full-bleed plate — the same one the dead
+   zone dome measures itself against — so a wash sized to the 1672 stage would
+   stop at the letterbox edge, and a pin placed at the kit's 1040/387 would
+   point at whatever happened to be there after the plate was cover-fitted to a
+   different box. Both are laid over the plate instead. */
+/* Three layers over App's plate, in this order:
+     1  the wash, UNDER the dead-zone dome so it does not grey it out
+     2  the dome (index.css)
+     3  the pin, over the dome so the label stays crisp on it
+    20  the reference stage carrying the card (reference.css)
+   The wash started at 5, above the stage, and washed out the very card it
+   exists to make readable. */
+.p02m-wash {
+  position: absolute;
   left: 0;
   top: 0;
-  width: 760px;
-  height: 941px;
+  z-index: 1;
+  width: 46%;
+  height: 100%;
+  pointer-events: none;
   background: linear-gradient(90deg,
-    rgba(240, 246, 253, 0.92) 0%,
-    rgba(240, 246, 253, 0.55) 55%,
+    rgba(240, 246, 253, 0.94) 0%,
+    rgba(240, 246, 253, 0.72) 52%,
     rgba(240, 246, 253, 0) 100%);
+}
+
+.p02m-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
 }
 
 .p02r-brand { left: 78px; top: 57px; font-size: 19px }
@@ -91,6 +114,7 @@
   left: 1040px;
   top: 387px;
   height: 64px;
+  position: absolute;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -118,4 +142,12 @@
   letter-spacing: -0.015em;
   color: #fff;
   white-space: nowrap;
+}
+
+/* Hung off the projected LP12 anchor: centred on the column and lifted clear
+   of it, so the label sits above the pole rather than across it. */
+.p02r-pin.is-projected {
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -190%);
 }
