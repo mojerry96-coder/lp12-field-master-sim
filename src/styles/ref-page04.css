@@ -96,6 +96,18 @@
   object-position: center top;
   user-select: none;
   pointer-events: none;
+  /* §21 wants the pole "sharper than the environment, slightly more contrasty
+     than the city". It is not, on its own: the cutout is bright galvanised
+     silver shot on a white studio, and §5 puts the strongest part of the
+     readability wash — 73% white, centred at 74%/48% — directly behind it. The
+     two are the same value and the column vanished into the plate. Pulling it
+     down and adding contrast separates it, and the shadow gives it somewhere
+     to stand rather than floating on the wash. */
+  filter:
+    brightness(0.93)
+    contrast(1.14)
+    saturate(1.06)
+    drop-shadow(0 20px 38px rgba(23, 48, 82, 0.20));
   transition: opacity 300ms ease;
 }
 

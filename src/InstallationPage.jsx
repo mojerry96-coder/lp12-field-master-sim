@@ -12,7 +12,7 @@ import BackButton from './components/BackButton'
 import { createOrbitInput } from './lib/constrainedOrbit'
 import {
   STAGES, stageIndex, stageById, COMPLETED_PART_BY_STAGE, STAGE_CAMERA,
-  PART_LABELS, PART_ORDER, PART_PREREQ_MESSAGE,
+  PART_LABELS,
 } from './lib/installationStages'
 
 /**
@@ -263,10 +263,28 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
   const attemptPart = useCallback((id) => {
     if (busy) return
     if (id === stage.activePart) { runStage(); return }
-    const needed = PART_ORDER[PART_ORDER.indexOf(id) - 1]
+    /**
+     * The refusal says the attempt was wrong. It does not say what is right.
+     *
+     * It used to read the part's own entry in PART_PREREQ_MESSAGE, which is
+     * keyed by the component CLICKED and names that component's immediate
+     * predecessor — not what the step in front of the learner actually wants.
+     * Both ways of being wrong showed up in one run of the bands step:
+     *
+     *   click the pivot bracket -> "Install the mounting rail first", naming a
+     *   part that is not this step either and is itself blocked; and
+     *
+     *   click the mounting rail  -> "Install the pole bands first", which is
+     *   the answer to the step they are standing on. One wrong guess, five
+     *   points, and the tray is solved — exactly the brute-force route the
+     *   unmarked tiles and the scored attempts exist to close.
+     *
+     * So the refusal states the ordering fact and stops. Recognising which
+     * component comes next is the assessment; being told costs nothing.
+     */
     const reason = installed.includes(id)
       ? `${PART_LABELS[id]} is already installed.`
-      : PART_PREREQ_MESSAGE[id] || `Install the ${PART_LABELS[needed]} first.`
+      : 'That component cannot go on yet — what it mounts to is not in place.'
     useSim.getState().noteWrongAttempt()
     // A counter, not a bare string: the same refusal twice running is the same
     // value, and the dismissal timer above would never re-arm.

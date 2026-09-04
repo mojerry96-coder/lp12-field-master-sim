@@ -188,11 +188,26 @@
   color: var(--fm-text-secondary);
 }
 
+/* Both of these sit ON the photograph rather than on the artboard's own pale
+   ground, and at the kit's --fm-text-secondary they were mid-slate on a bright
+   sunlit plate: the campaign line falls across the galvanised column and the
+   sky behind it, where it measured well under the 4.5:1 that 14px text needs,
+   and the first character of each line disappeared into the pole entirely.
+   Darkened to the navy ink and given a soft light halo, which lifts them off
+   the image without moving them or adding a panel the reference does not have. */
+.p01r-campaign,
+.p01r-footer {
+  color: var(--fm-navy);
+  text-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.75),
+    0 0 10px rgba(255, 255, 255, 0.55);
+}
+
 .p01r-campaign {
   left: 1482px;
   top: 69px;
   padding-left: 22px;
-  border-left: 1px solid rgba(30, 61, 104, 0.22);
+  border-left: 1px solid rgba(30, 61, 104, 0.38);
 }
 
 .p01r-footer { right: 66px; bottom: 66px }

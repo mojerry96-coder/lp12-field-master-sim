@@ -212,8 +212,14 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scale(1.06);
-  filter: blur(26px) saturate(112%);
+  /* Pushed well past recognisable: at 26px of blur the bands still read as
+     content — the bottom of the commissioning plate is road and kerb, so the
+     strip under the artboard came out as a distinctly warm band that looked
+     like a different image rather than the same one continuing. More blur,
+     more scale and a little desaturation turn it into ambient colour, which is
+     what a letterbox fill is for. */
+  transform: scale(1.14);
+  filter: blur(48px) saturate(88%) brightness(1.04);
   user-select: none;
   pointer-events: none;
 }
