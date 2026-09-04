@@ -1,0 +1,121 @@
+/* PAGE 02 — Field Assignment. Against 02-field-assignment.png at 1672 x 941. */
+
+/* The plate is the real isometric render. A soft wash on the left keeps the
+   panel's glass readable over the city without dimming the whole frame — the
+   kit wants the environment bright, not knocked back. */
+.p02r-wash {
+  left: 0;
+  top: 0;
+  width: 760px;
+  height: 941px;
+  background: linear-gradient(90deg,
+    rgba(240, 246, 253, 0.92) 0%,
+    rgba(240, 246, 253, 0.55) 55%,
+    rgba(240, 246, 253, 0) 100%);
+}
+
+.p02r-brand { left: 78px; top: 57px; font-size: 19px }
+
+/* ---------------------------------------------------------------- the panel */
+
+.fmref .p02r-panel {
+  left: 78px;
+  top: 176px;
+  width: 548px;
+  height: 617px;
+  padding: 44px;
+  border-radius: 28px;
+}
+
+.p02r-eyebrow {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fm-blue);
+}
+
+.p02r-site {
+  margin: 22px 0 0;
+  font-size: 52px;
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: var(--fm-navy);
+}
+
+.p02r-place {
+  margin: 10px 0 0;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--fm-text-secondary);
+}
+
+.p02r-line { margin: 30px 0 0 }
+
+.p02r-brief {
+  margin: 30px 0 0;
+  font-size: 29px;
+  font-weight: 500;
+  line-height: 1.34;
+  letter-spacing: -0.02em;
+  color: var(--fm-text);
+}
+
+.p02r-note {
+  margin: 20px 0 0;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.52;
+  color: var(--fm-text-secondary);
+}
+
+.fmref .p02r-begin {
+  position: absolute;
+  left: 44px;
+  bottom: 44px;
+  width: 252px;
+  height: 74px;
+  padding: 0 30px;
+  font-size: 22px;
+}
+
+/* ------------------------------------------------------------------ the pin
+
+   HTML, not baked art: the label has to stay sharp at every stage scale. The
+   dot sits on the column and the tail hangs from its bottom edge. */
+
+.p02r-pin {
+  left: 1040px;
+  top: 387px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 26px 0 6px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2F8BFF 0%, #0F6BF5 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.36),
+    0 16px 34px rgba(15, 90, 210, 0.34);
+}
+
+.p02r-pin-dot {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #1170F0;
+  background: #fff;
+}
+
+.p02r-pin-label {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: #fff;
+  white-space: nowrap;
+}

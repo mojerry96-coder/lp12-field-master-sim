@@ -1,0 +1,221 @@
+/* PAGE 05 (kit) — Performance Review. Against 05-performance-review.png.
+
+   A dialog rather than a route, so it is not inside a ReferenceStage: it has to
+   sit over whatever it opened from. The panel keeps the kit's proportions and
+   is centred and clamped so it never outgrows a short window — the one place a
+   fixed stage would be wrong, because a dialog that overflows cannot be
+   scrolled back into view. */
+
+.revr-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+}
+
+/* The kit's treatment of the environment behind: light blur, cool overlay. */
+.revr-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 35, 63, 0.42);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
+.fmref .revr-panel {
+  position: relative;
+  /* 934 x 830 at the reference size, scaled down together on smaller windows
+     so the 2 x 2 grid never has to become a list. */
+  width: min(934px, 94vw);
+  height: min(830px, 94vh);
+  padding: 34px 38px 30px;
+  border-radius: 26px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --------------------------------------------------------------- the head */
+
+.revr-head {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 22px;
+}
+.revr-head h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--fm-navy);
+}
+.revr-score { display: flex; align-items: baseline; gap: 12px }
+.revr-score strong {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--fm-navy);
+}
+.revr-score > span:first-of-type {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--fm-text-secondary);
+}
+.fmref .revr-score .fm-chip { align-self: center; margin-left: 6px; min-height: 36px }
+
+.revr-close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--fm-text-secondary);
+  background: rgba(19, 36, 61, 0.06);
+}
+.revr-close:hover { background: rgba(19, 36, 61, 0.11) }
+.revr-close:focus-visible { outline: 3px solid rgba(20, 120, 255, 0.28); outline-offset: 2px }
+
+/* --------------------------------------------------------------- the grid
+
+   Two by two, and it stays two by two. The kit calls this out specifically:
+   turning it back into one column is the failure mode it is replacing. */
+
+.revr-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.revr-cell {
+  min-height: 0;
+  padding: 20px 30px 20px 0;
+  overflow: hidden;
+}
+.revr-cell--right { padding-left: 34px; padding-right: 0; border-left: 1px solid var(--fm-hairline) }
+.revr-cell--bottom { border-top: 1px solid var(--fm-hairline) }
+
+.revr-cell h3 {
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--fm-blue);
+}
+.revr-mark {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(180deg, #3D93FF, #106CFF);
+}
+
+/* ------------------------------------------------------------ score rows */
+
+.revr-rows { margin: 0; padding: 0; list-style: none }
+.revr-rows li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0;
+  font-size: 16px;
+  color: var(--fm-text);
+}
+.revr-rows b { font-weight: 600; color: var(--fm-navy) }
+.revr-rows b.is-minus { color: #E2603C }
+
+.revr-total-line { margin: 8px 0 0 }
+.revr-total {
+  margin: 10px 0 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--fm-navy);
+}
+
+/* ---------------------------------------------------------------- steps */
+
+.revr-steps { margin: 0; padding: 0; list-style: none }
+.revr-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 17px;
+  color: var(--fm-text);
+}
+.revr-tick { flex: none; display: grid; color: var(--fm-success) }
+
+/* --------------------------------------------------------- configuration */
+
+.revr-config { margin: 0; padding: 0; list-style: none }
+.revr-config li {
+  display: grid;
+  grid-template-columns: 1fr auto 122px;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(30, 61, 104, 0.07);
+  font-size: 16px;
+  color: var(--fm-text);
+}
+.revr-config li:last-child { border-bottom: 0 }
+.revr-config b { font-weight: 600; color: var(--fm-navy) }
+.fmref .revr-config .fm-chip { min-height: 28px; padding: 0 10px; font-size: 11px }
+
+/* ------------------------------------------------------------- corridor */
+
+.revr-corridor { display: flex; gap: 14px; align-items: flex-start }
+.revr-corridor-mark {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #C98A08;
+  background: #FFF3DA;
+}
+.revr-corridor.is-good .revr-corridor-mark { color: #0D7B50; background: #E7F7F0 }
+.revr-corridor p { margin: 0; font-size: 16px; line-height: 1.5; color: var(--fm-text-secondary) }
+.revr-corridor b { font-size: 20px; font-weight: 700; color: #C98A08 }
+.revr-corridor.is-good b { color: #0D7B50 }
+
+.revr-empty { margin: 0; font-size: 16px; color: var(--fm-text-tertiary) }
+
+/* ---------------------------------------------------------------- footer */
+
+.revr-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--fm-hairline);
+}
+.revr-tagline {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.7;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fm-text-tertiary);
+}
+.fmref .revr-again { width: 240px; height: 66px; padding: 0 26px; font-size: 20px }

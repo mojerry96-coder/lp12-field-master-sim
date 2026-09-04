@@ -87,8 +87,15 @@ const ASSEMBLY_STAGE_IDS = new Set([
 ])
 const ASSEMBLY_SUBJECT_BIAS = -0.13
 
+/* The coverage page is the one page where the scene IS the message: there is
+   no title column to keep clear, so the site is centred rather than composed
+   off-axis the way the authored anchor has it. */
+const CENTRED_STAGE_IDS = new Set(['coverage', 'handover'])
+
 const subjectBiasFor = (stage, authored) => (
-  ASSEMBLY_STAGE_IDS.has(stage) ? ASSEMBLY_SUBJECT_BIAS : authored
+  ASSEMBLY_STAGE_IDS.has(stage) ? ASSEMBLY_SUBJECT_BIAS
+    : CENTRED_STAGE_IDS.has(stage) ? 0
+      : authored
 )
 
 const applySubjectBias = (pos, tgt, bias, vFovDeg, aspect) => {
@@ -148,6 +155,125 @@ const STAGE_FIT = {
 }
 
 /**
+ * The coverage page is framed like an architectural model: the whole city
+ * plate, seen from high up at a corner, centred, with white studio all round.
+ *
+ * The authored CAM_10 anchor is a street-level oblique (about 23 degrees of
+ * elevation, aimed 40 m above the pole) and the plate runs off every edge of
+ * it. So the anchor only lends its bearing here — which corner the city is
+ * seen from — and everything else is solved from the plate's own footprint:
+ * the target is the centre of the ground, the elevation is fixed, and the
+ * distance is whatever puts all eight corners of the plate's box inside the
+ * viewport at the live aspect. Corner-fitting rather than a bounding sphere,
+ * because a 440 x 340 m slab's sphere is mostly empty air and would leave the
+ * plate small in a wide frame.
+ */
+/**
+ * `fill` is how much of the plate-fitting distance the default actually uses.
+ *
+ * Fitting all eight corners of the environment's box puts the whole district in
+ * frame with white studio around it — an architectural model on a table. The
+ * subject of this page is the dome over one junction, and at that distance it
+ * is a small blue shape in the middle of a lot of city. Coming in to 60% of the
+ * fitted distance gives the framing this page was signed off at: the dome
+ * dominant, the boulevard running through it, buildings for context.
+ *
+ * It is a fraction of the fit rather than an absolute distance so it stays
+ * correct if the environment or the viewport aspect changes.
+ */
+const COVERAGE_FRAME = {
+  // Lower than the 52 the plate-fitting view used: at that elevation the city
+  // reads as a floor plan. Around 40 degrees the buildings show their faces and
+  // the boulevard recedes, which is the view this page was signed off on.
+  // 44 rather than 40: at the closer distance a shallower camera sees past the
+  // far corners of the environment slab and the studio shows through as white
+  // wedges in the top corners. Four degrees of lift puts the city across the
+  // whole frame without flattening it into a plan.
+  elevationDeg: 44, lensMM: 45, margin: 1.06, fill: 0.42, near: 0.5, far: 2000,
+  /**
+   * Bearing, taken here rather than inherited from the stage anchor.
+   *
+   * The anchor's bearing looks ACROSS the boulevard, which puts the road on a
+   * diagonal and the dome against a row of roofs. Awolowo Way runs along world
+   * X, so -90 degrees stands the camera at one end and looks down it: the road
+   * runs away up the frame, the dome sits over the junction in the middle, and
+   * the buildings line both sides. That is the composition this page wants,
+   * because the thing being judged is how far the cell reaches ALONG the road.
+   */
+  azimuthDeg: -90,
+}
+const COVERAGE_FRAME_STAGES = new Set(['coverage', 'handover'])
+const ENV_FOOTPRINT_NODES = ['ENV_Ground_merged', 'ENV_Roads_merged']
+
+function frameEnvironment(scene, anchor, aspect, domeRadiusM = 0) {
+  const box = new THREE.Box3()
+  let found = false
+  ENV_FOOTPRINT_NODES.forEach((n) => {
+    const node = scene.getObjectByName(n)
+    if (node) { box.expandByObject(node, true); found = true }
+  })
+  if (!found || box.isEmpty()) return null
+
+  const fov = fitFovToViewport(COVERAGE_FRAME.lensMM, STUDIO_AUTHORED_ASPECT, aspect)
+  const vHalf = THREE.MathUtils.degToRad(fov) / 2
+  const hHalf = Math.atan(Math.tan(vHalf) * aspect)
+  const tanV = Math.tan(vHalf)
+  const tanH = Math.tan(hHalf)
+
+  const tgt = box.getCenter(new THREE.Vector3())
+  tgt.y = box.min.y
+
+  // Bearing and elevation both from the rule; the anchor is no longer consulted
+  // for either, so this framing is stable whatever CAM_10 is authored at.
+  const az = THREE.MathUtils.degToRad(COVERAGE_FRAME.azimuthDeg)
+  const el = THREE.MathUtils.degToRad(COVERAGE_FRAME.elevationDeg)
+  const dir = new THREE.Vector3(
+    Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el))
+  const fwd = dir.clone().negate()
+  const right = fwd.clone().cross(WORLD_UP).normalize()
+  const up = right.clone().cross(fwd).normalize()
+
+  let dist = 0
+  const c = new THREE.Vector3()
+  for (let i = 0; i < 8; i += 1) {
+    c.set(i & 1 ? box.max.x : box.min.x,
+          i & 2 ? box.max.y : box.min.y,
+          i & 4 ? box.max.z : box.min.z).sub(tgt)
+    const cf = c.dot(fwd)
+    dist = Math.max(dist, Math.abs(c.dot(right)) / tanH - cf,
+                    Math.abs(c.dot(up)) / tanV - cf)
+  }
+  dist *= COVERAGE_FRAME.margin * COVERAGE_FRAME.fill
+
+  /**
+   * Then stand far enough back to actually SEE the dome.
+   *
+   * The distance above is fitted to the city slab alone, which was safe only
+   * while this page could be reached with the correct rig settings and nothing
+   * else: at 7.5 m and 5 degrees the footprint is ~86 m and sits comfortably
+   * inside that framing. The assessment model now accepts whatever height and
+   * tilt the learner picks, and the radius is `height / tan(downtilt)` — so a
+   * shallow tilt throws it out to the 250 m clamp. The camera then ends up
+   * INSIDE the hemisphere, which is backface-culled, and the page whose entire
+   * subject is the dome renders a city with no dome and no visible pole.
+   *
+   * The dome is a hemisphere of radius R standing on the ground at the LP12,
+   * which is the world origin and effectively the ground target here. Framing a
+   * sphere of radius R needs `R / sin(halfAngle)` along the view axis, taking
+   * the narrower of the two half-angles so it fits in both directions. Taking
+   * the max with the city fit keeps the signed-off framing wherever the dome is
+   * small enough to fit inside it, and only pulls back when it is not.
+   */
+  if (domeRadiusM > 0) {
+    const halfMin = Math.min(vHalf, hHalf)
+    dist = Math.max(dist, (domeRadiusM / Math.sin(halfMin)) * COVERAGE_FRAME.margin)
+  }
+
+  const pos = tgt.clone().addScaledVector(dir, dist)
+  return { pos, tgt, fov, near: COVERAGE_FRAME.near, far: COVERAGE_FRAME.far }
+}
+
+/**
  * Compiles the scene's shaders before the stage is revealed.
  *
  * three compiles a material's program the first time it is actually drawn. Do
@@ -184,10 +310,11 @@ function ScenePrecompile({ onCompiled }) {
 
 function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
                           activeClip = null, modelRoot = null, orbitInput = null,
-                          viewRef = null }) {
-  const { camera, size } = useThree()
+                          viewRef = null, domeRadiusM = 0 }) {
+  const { camera, size, scene } = useThree()
   const state = useMemo(
-    () => ({ anim: null, pos: null, tgt: null, subject: null, focus: null }), [])
+    () => ({ anim: null, pos: null, tgt: null, subject: null, focus: null,
+             home: null, pendingFrame: false }), [])
 
   // Studio manifest wins when present: it carries the 9 authored anchors and
   // the stage -> camera map straight from Blender.
@@ -267,16 +394,36 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
         }
       }
     }
+    // Coverage: the whole plate, from above, centred. The environment mounts
+    // in its own Suspense boundary and may not be in the scene yet when this
+    // runs; if it is not, the frame loop below keeps looking and eases over
+    // to the plate framing the moment it lands.
+    let fov2 = fov
+    state.pendingFrame = false
+    if (COVERAGE_FRAME_STAGES.has(stage)) {
+      const framed = frameEnvironment(scene, v, aspect, domeRadiusM)
+      if (framed) {
+        v = { ...v, pos: framed.pos, near: framed.near, far: framed.far }
+        tgt = framed.tgt
+        fov2 = framed.fov
+      } else {
+        state.pendingFrame = true
+      }
+    }
+    // The stage's authored framing, kept so navigation can be reset to it.
+    state.home = { pos: v.pos.clone(), tgt: tgt.clone(), fov: fov2,
+                   near: v.near, far: v.far }
     if (!state.pos) {
       state.pos = v.pos.clone(); state.tgt = tgt.clone()
       camera.position.copy(v.pos); camera.lookAt(tgt)
-      camera.fov = fov; camera.near = v.near; camera.far = v.far
+      camera.fov = fov2; camera.near = v.near; camera.far = v.far
       camera.updateProjectionMatrix()
       return
     }
+    camera.near = v.near; camera.far = v.far
     state.anim = { t: 0, fromPos: state.pos.clone(), fromTgt: state.tgt.clone(),
-                   fromFov: camera.fov, to: { ...v, tgt, fov } }
-  }, [views, studio, stage, cameraName, view, camera, size, state, activeClip, modelRoot])
+                   fromFov: camera.fov, to: { ...v, tgt, fov: fov2 } }
+  }, [views, studio, stage, cameraName, view, camera, size, state, activeClip, modelRoot, scene])
 
   // Push in on the part being worked, partway through the clip.
   useEffect(() => {
@@ -320,24 +467,71 @@ function CameraDirector({ flow, studio, stage, cameraName, view = 'front',
     // authored data rather than a rectangle guessed in CSS.
     if (viewRef?.current && state.subject) viewRef.current.target = state.subject
 
-    // Orbit runs on the resolved target, so it follows whatever the stage is
-    // framing and survives a stage change without re-deriving anything.
+    // The plate arrived after the stage effect ran: frame it now, from
+    // wherever the camera is, with the same eased move a stage change gets.
+    if (state.pendingFrame && state.home && state.pos) {
+      const framed = frameEnvironment(
+        scene, state.home, size.width / size.height, domeRadiusM)
+      if (framed) {
+        state.pendingFrame = false
+        state.home = { ...framed }
+        camera.near = framed.near; camera.far = framed.far
+        state.anim = { t: 0, fromPos: state.pos.clone(), fromTgt: state.tgt.clone(),
+                       fromFov: camera.fov, to: { ...framed } }
+      }
+    }
+
+
+    // Navigation runs on the resolved target, so it follows whatever the stage
+    // is framing and survives a stage change without re-deriving anything.
     if (view === 'orbit' && state.tgt && state.pos && !state.anim) {
-      // Driven by the learner's wheel, never by the clock. The simulation does
-      // not turn the hardware on its own (specification 2.3), so a frame with
-      // nothing scrolled is a frame where the camera does not move — which is
-      // also what makes the motion stop the instant the scrolling does.
-      const step = orbitInput ? orbitInput.consume() : 0
-      if (!step) return
-      // Rotate the offset about the target's vertical axis. Height and radius
-      // come from wherever the camera already is, so orbit picks up the
-      // stage's framing instead of imposing one — and neither changes here,
-      // which is the whole of the constraint.
+      // Driven by the learner, never by the clock. A frame with no input is a
+      // frame where the camera does not move — which is what makes the motion
+      // stop the instant the gesture does.
+      const d = orbitInput ? orbitInput.consume() : null
+      if (!d) return
+
+      if (d.reset && state.home) {
+        state.anim = { t: 0, fromPos: state.pos.clone(), fromTgt: state.tgt.clone(),
+                       fromFov: camera.fov, to: { ...state.home } }
+        return
+      }
+      if (!d.az && !d.el && !d.dolly && !d.panX && !d.panY) return
+
       const off = state.pos.clone().sub(state.tgt)
-      const r = Math.hypot(off.x, off.z)
-      const ang = Math.atan2(off.x, off.z) + step
-      state.pos = state.tgt.clone().add(
-        new THREE.Vector3(Math.sin(ang) * r, off.y, Math.cos(ang) * r))
+      let r = off.length()
+      // Spherical about the target: azimuth free, elevation clamped short of
+      // both poles so the view never flips or dives under the ground plane.
+      let az = Math.atan2(off.x, off.z) + d.az
+      let el = Math.acos(THREE.MathUtils.clamp(off.y / r, -1, 1)) + d.el
+      el = THREE.MathUtils.clamp(el, 0.18, Math.PI / 2 - 0.02)
+      /**
+       * Log-scale dolly, so a trackpad flick behaves the same as a mouse notch.
+       *
+       * The outer stop is the stage's own framing rather than a fixed number:
+       * the authored distance is the widest the page is composed for, and past
+       * it the subject just recedes into empty studio. So the learner can move
+       * in as far as they like and out only as far as the view they arrived on.
+       */
+      const homeR = state.home
+        ? state.home.pos.distanceTo(state.home.tgt)
+        : 900
+      r = THREE.MathUtils.clamp(r * Math.exp(d.dolly), 4, homeR)
+
+      if (d.panX || d.panY) {
+        // Pan in screen space, scaled by radius so it feels the same near and
+        // far. The target moves; the camera follows it below.
+        const fwd = state.tgt.clone().sub(state.pos).normalize()
+        const right = fwd.clone().cross(WORLD_UP).normalize()
+        const up = right.clone().cross(fwd).normalize()
+        const shift = right.multiplyScalar(d.panX * r)
+          .add(up.multiplyScalar(d.panY * r))
+        state.tgt = state.tgt.clone().add(shift)
+      }
+
+      const sinEl = Math.sin(el)
+      state.pos = state.tgt.clone().add(new THREE.Vector3(
+        Math.sin(az) * sinEl * r, Math.cos(el) * r, Math.cos(az) * sinEl * r))
       camera.position.copy(state.pos)
       camera.lookAt(state.tgt)
       return
@@ -842,7 +1036,10 @@ export default function LP12BuildCanvas(props) {
                         stage={props.stage} cameraName={props.camera}
                         view={props.view} activeClip={props.activeClip}
                         modelRoot={props.modelRoot} orbitInput={props.orbitInput}
-                        viewRef={calloutView} />
+                        viewRef={calloutView}
+                        domeRadiusM={COVERAGE_FRAME_STAGES.has(props.stage)
+                          ? effectiveCoverageRadiusM(props.height, props.downtilt)
+                          : 0} />
         {/* Amber active-component outline. One composer for the whole scene. */}
         {props.modelRoot && (
           <ComponentHighlight

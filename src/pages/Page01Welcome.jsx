@@ -1,37 +1,33 @@
 import { useEffect, useRef, useState } from 'react'
-import { P1, preload } from '../lib/preloader'
+import { preload, P1 } from '../lib/preloader'
 import { urlFor } from '../lib/assetManifest'
+import ReferenceStage from '../reference/ReferenceStage'
+import { PinIcon, PlayIcon, ArrowRight } from '../reference/RefIcons'
+import '../styles/ref-page01.css'
 
 /**
- * PAGE 01 — Welcome.
+ * PAGE 01 — Landing, replicated against `01-landing-page.png`.
  *
- * The cinematic introduction. Replaces the dark auto-advancing title card: the
- * redesign hands the entry to the learner, so this page holds until Begin
- * Simulation is pressed and exposes no later control.
+ * Authored at the reference render's own 1672 x 941 and scaled as one piece,
+ * so every coordinate below is the kit's: brand at 84/68, copy block at 82/163,
+ * FIELD/MASTER at 98px on 0.88 leading, subtitle at 407, location at 470,
+ * tagline at 555, the CTA at 83/636 measuring 454 x 114, the step counter at
+ * 84 from the left and 74 from the bottom, campaign copy at 1482/69.
  *
- * It is still the P1 preload window. The old opener spent three seconds it had
- * to spend anyway; this one spends however long the learner reads, which is
- * strictly better — but it means the handover can now be requested before the
- * assets are decoded. So the button owns both jobs: press it and it either
- * leaves immediately or reports real byte-weighted progress until it can. It
- * never shows a bar that is a timer pretending to be one, and it never drops
- * the learner into an empty briefing.
+ * The kit is explicit that the title does not sit in a card — the page is
+ * carried by open negative space and a localized wash over the plate, and a
+ * panel behind the type would close it up.
  *
- * NO LOGO FILE EXISTS IN THIS PROJECT. The wordmark is typographic for the same
- * reason it always was — inventing a mark would put an unapproved one in front
- * of every learner.
+ * BACKGROUND. The kit's own `landing-awolowo-bg` prompt, generated: one frame
+ * with the boulevard in perspective and the LP12 sharp in the right foreground.
+ * It replaces a two-layer stand-in that composited the isometric render under
+ * the cut-out hero and showed the cut-out's edge down the middle of the page.
+ * The wash over it stays, because the plate's left third is bright haze rather
+ * than the flat field the title needs.
  *
- * There used to be an empty 30px span here reserving the mark's box, so that
- * dropping the real asset in would shift nothing. It cost more than it saved:
- * with no asset the slot is invisible, and it pushed the wordmark 42px right of
- * the title, the subtitle and the location line, which all sit on the same left
- * edge. Reserving space for a file nobody has is not worth a visible
- * misalignment on the first screen of the simulation.
- *
- * When the approved mark does arrive it goes back in as a flex item, and that
- * is the moment to decide which edge holds the column — the mark's, with the
- * text indented as a normal lockup, or the text's, with the mark hanging into
- * the margin. Either is defensible; guessing now is what produced this.
+ * The loading contract is unchanged. P1 is fetched behind the page and Begin
+ * leaves only once both the learner has asked and the assets have arrived,
+ * whichever happens second.
  */
 
 export default function Page01Welcome({ reducedMotion, onBegin }) {
@@ -64,55 +60,47 @@ export default function Page01Welcome({ reducedMotion, onBegin }) {
   }
 
   return (
-    <section className={`fm-page p01${reducedMotion ? ' is-reduced' : ''}`}>
-      {/* Context, not subject: the city is defocused and washed out under the
-          title so the hardware on the right stays the sharpest thing here. */}
-      <img className="fm-media fm-media--soft" src={urlFor('iso-background')} alt="" />
-      <div className="p01-wash" aria-hidden="true" />
+    <ReferenceStage className={`p01r${reducedMotion ? ' is-reduced' : ''}`}
+                    label="Field Master — LP12 Small-Cell Installation">
+      <img className="fmref-plate p01r-plate" src={urlFor('landing-plate')}
+           alt="An LP12 small-cell antenna on a lighting column above Awolowo Way, Ikeja" />
+      <div className="p01r-wash" aria-hidden="true" />
 
-      <img
-        className="p01-hero"
-        src={urlFor('welcome-hero')}
-        alt="An LP12 small-cell antenna mounted on a roadside pole above Awolowo Way"
-      />
+      <div className="fm-brand p01r-brand">
+        <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
+      </div>
 
-      <div className="p01-brand">MIVA OPEN UNIVERSITY</div>
-
-      <div className="p01-stack">
-        {/* Two block spans rather than a <br>: the break has to be visual only,
-            and a <br> here makes the accessible name read "FIELDMASTER". */}
-        <h1 className="p01-title"><span>FIELD</span> <span>MASTER</span></h1>
-        <p className="p01-sub">LP12 Small-Cell Installation</p>
-        <p className="p01-where">
-          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-            <path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0
-                     9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" />
-          </svg>
-          Awolowo Way · Ikeja, Lagos
+      <div className="p01r-copy">
+        {/* Two block spans rather than a <br>: the break is visual only, and a
+            <br> here makes the accessible name read "FIELDMASTER". */}
+        <h1 className="p01r-title"><span>FIELD</span> <span>MASTER</span></h1>
+        <p className="p01r-sub">LP12 Small-Cell Installation</p>
+        <p className="p01r-where">
+          <PinIcon size={26} />
+          <span>Awolowo Way<i /> · <i />Ikeja, Lagos</span>
         </p>
-
+        <div className="p01r-rule" aria-hidden="true"><i /><b /></div>
+        <p className="p01r-tagline">Practice today.<br />A more connected tomorrow.</p>
       </div>
 
-      {/* Pinned to the page rather than trailing the copy: the specification
-          puts the CTA at 5.5vw / bottom 12vh, and letting it follow the text
-          would move it every time a line wraps. */}
-      <div className="p01-action">
-        <button className="fm-btn p01-cta" type="button" onClick={begin} disabled={waiting}>
-          <span className="fm-btn-glyph" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18">
-              <path fill="currentColor" d="M8 5.5v13l11-6.5z" />
-            </svg>
-          </span>
-          {waiting ? `Preparing simulation — ${Math.round(progress * 100)}%` : 'Begin Simulation'}
-        </button>
+      <button className="fm-glass fm-btn p01r-cta" type="button"
+              onClick={begin} disabled={waiting}>
+        <span className="p01r-play" aria-hidden="true"><PlayIcon size={28} /></span>
+        <span className="p01r-cta-label">
+          {waiting ? `Preparing… ${Math.round(progress * 100)}%` : 'Begin Simulation'}
+        </span>
+        <ArrowRight size={30} />
+      </button>
 
-        {/* Only once the learner is waiting on us. Real progress or nothing. */}
-        {waiting && (
-          <span className="p01-progress" role="status" aria-live="polite">
-            <i style={{ transform: `scaleX(${progress})` }} />
-          </span>
-        )}
+      <p className="p01r-caption">Interactive Network Installation Simulation</p>
+
+      <div className="p01r-progress" aria-hidden="true">
+        <span>01 / 09</span>
+        <i className="is-on" /><i /><i /><i /><i /><i /><i /><i />
       </div>
-    </section>
+
+      <p className="p01r-campaign">Real skills<br />greater<br />impact</p>
+      <p className="p01r-footer">Mobile networks<br />stronger communities</p>
+    </ReferenceStage>
   )
 }

@@ -124,11 +124,15 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
 
   // Each new part is presented at its authored anchor, and orbit is dropped
   // with the stage that turned it on — carrying it forward would leave the
-  // wheel captured on a page whose chrome says nothing about orbit.
+  // wheel captured on a page whose chrome says nothing about orbit. The
+  // coverage stage is the exception: the dome is the whole message there and
+  // cannot be read from one angle, so navigation is on from the moment the
+  // page opens, with the Orbit button still able to switch it off.
   useEffect(() => {
-    setView('front')
-    setOrbitOn(false)
-    orbitInput.setEnabled(false)
+    const navigate = stageId === 'coverage'
+    setView(navigate ? 'orbit' : 'front')
+    setOrbitOn(navigate)
+    orbitInput.setEnabled(navigate)
   }, [stageId, orbitInput])
 
   // App retires the city plate off this (specification 2.4): the street stays
@@ -199,7 +203,11 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
       if (!controller) throw new Error('Animation controller not ready')
       await controller.playOnce(stage.clip,
         { timeScale: useSim.getState().reducedMotion ? 2 : 1 })
+      // Both halves of "this step is done": the title, for the review, and the
+      // clip, which is what the model derives the installed hardware from.
+      // Without the second the part is only in place until the next remount.
       useSim.getState().noteStageComplete(stage.title)
+      useSim.getState().noteClipComplete(stage.clip)
       // s6: only advance once the animation has clearly completed
       setStageId(STAGES[Math.min(idx + 1, STAGES.length - 1)].id)
     } catch (err) {

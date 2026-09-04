@@ -52,9 +52,9 @@
   left: 5vw;
   top: 6vh;
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
-  color: #1555C7;
+  color: var(--fm-blue);
   z-index: 4;
 }
 
@@ -64,6 +64,18 @@
   top: 19vh;
   z-index: 4;
   max-width: 42vw;
+  /* A stronger glass backing keeps the text from disappearing into the
+     blurred street plate while the page remains airy. */
+  padding: 26px 30px;
+  border-radius: 26px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.58),
+    rgba(255, 255, 255, 0.32));
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(22px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    0 18px 54px rgba(40, 70, 120, 0.10);
 }
 
 .p04-title {
@@ -71,17 +83,17 @@
   font-size: clamp(46px, 5vw, 72px);
   line-height: 0.95;
   letter-spacing: -0.045em;
-  font-weight: 500;
-  color: #123E90;
+  font-weight: 650;
+  color: var(--fm-blue);
 }
 .p04-title span { display: block }
 
 .p04-sub {
   margin: 24px 0 0;
   font-size: clamp(20px, 1.7vw, 25px);
-  font-weight: 400;
+  font-weight: 500;
   letter-spacing: -0.015em;
-  color: #425069;
+  color: var(--fm-blue);
 }
 
 .p04-where {
@@ -90,9 +102,12 @@
   gap: 9px;
   margin: 48px 0 0;
   font-size: 17px;
-  color: #67758D;
+  font-weight: 500;
+  color: var(--fm-blue);
 }
-.p04-where svg { color: #8797B4; flex: none }
+.p04-where svg { color: var(--fm-blue); flex: none }
+
+.p04-actions .fm-btn { color: var(--fm-blue) }
 
 /* ------------------------------------------------------------------- hint */
 /* ---------------------------------------------------------------- actions */

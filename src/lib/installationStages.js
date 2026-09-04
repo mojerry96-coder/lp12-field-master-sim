@@ -60,7 +60,12 @@ export const STAGES = [
     clip: 'ANIM_06_Connectors_Attach', camera: 'CAM_08_CONNECTORS',
     tracker: { top: 51, height: 24 },
     wireframe: '/lp12/wireframes/06_connectors.png',
-    cards: ['connector-set'],
+    /* Three, like every other step. This was a single card, which meant the
+       last step of the assembly was the one step that could not be answered
+       wrongly: there was nothing to choose between, so it scored nothing and
+       taught nothing. The two distractors are parts already installed by this
+       point, which is the same pattern the fasteners step uses. */
+    cards: ['connector-set', 'fastener-set', 'mounting-rail'],
   },
   {
     // Mount height and downtilt. These are rig settings, not parts, so they

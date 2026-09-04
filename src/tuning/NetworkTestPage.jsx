@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import NetworkTestViewport, { TEST_DURATION_MS } from './NetworkTestViewport'
+import CorridorDebrief from './CorridorDebrief'
 import { buildResult, reviewDecisions, verdictLabel } from './networkTestQuality'
 
 /**
@@ -92,33 +93,6 @@ function ResultRow({ label, state, icon, final, verdict }) {
   )
 }
 
-const STATE_LABEL = { good: 'Correct', near: 'Close', off: 'Needs review' }
-
-function DecisionRow({ decision, onAdjust }) {
-  const { label, value, unit, state, note } = decision
-  return (
-    <li className={`debrief-row is-${state}`}>
-      <div className="debrief-row__head">
-        <span className="debrief-row__label">{label}</span>
-        <span className="debrief-row__value">
-          {value}<small>{unit}</small>
-        </span>
-        <span className="debrief-row__state">{STATE_LABEL[state]}</span>
-      </div>
-      {note && <p className="debrief-row__note">{note}</p>}
-      {state !== 'good' && onAdjust && (
-        <button
-          type="button"
-          className="debrief-row__adjust"
-          onClick={() => onAdjust(decision.revisit)}
-        >
-          Adjust {label.toLowerCase()}
-        </button>
-      )}
-    </li>
-  )
-}
-
 export default function NetworkTestPage({ settings, onContinue, onAdjust, onResult }) {
   const [phase, setPhase] = useState('intro')
   const [progress, setProgress] = useState(0)
@@ -178,7 +152,7 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
     <main className="network-test-page">
       <NetworkTestViewport settings={settings} progress={progress} />
 
-      <section className="network-test-title network-glass">
+      {!complete && <section className="network-test-title network-glass">
         <div className="network-test-title__icon">
           <TowerGlyph />
           <span className="network-test-title__status" />
@@ -187,9 +161,9 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
           <h1>Network Test</h1>
           <p>Live corridor test</p>
         </div>
-      </section>
+      </section>}
 
-      <aside className="live-result-panel network-glass" aria-label="Live test result">
+      {!complete && <aside className="live-result-panel network-glass" aria-label="Live test result">
         <ResultRow label="Coverage" state={rowState('coverage')} icon="coverage" />
         <ResultRow label="Stability" state={rowState('stability')} icon="stability" />
         <ResultRow label="Interruption" state={rowState('interruption')} icon="interruption" />
@@ -200,27 +174,19 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
           final
           verdict={complete ? verdictLabel(outcome.overall) : null}
         />
-      </aside>
+      </aside>}
 
+      {/* PAGE 06 of the replication kit, in place of the old list debrief. It
+          brings its own title panel, status panel and actions, so the running
+          chrome above is hidden once the corridor has finished. */}
       {complete && (
-        <section className="network-debrief network-glass" aria-label="Test debrief">
-          <header className="network-debrief__head">
-            <h2>{faults.length === 0 ? 'Corridor test passed'
-              : 'The corridor found problems'}</h2>
-            <p>
-              {faults.length === 0
-                ? 'Every decision holds up under load. The cell is ready to commission.'
-                : `${faults.length} of your five decisions did not hold up. Adjust them `
-                  + 'and run the corridor again, or commission the cell as it stands.'}
-            </p>
-          </header>
-
-          <ul className="network-debrief__list">
-            {decisions.map((d) => (
-              <DecisionRow key={d.key} decision={d} onAdjust={onAdjust} />
-            ))}
-          </ul>
-        </section>
+        <CorridorDebrief
+          decisions={decisions}
+          outcome={outcome}
+          onAdjust={onAdjust}
+          onCommission={onContinue}
+          onRetune={() => onAdjust?.('interval')}
+        />
       )}
 
       {/* The bottom control, rebuilt to the revised spec.
@@ -229,7 +195,7 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
           and made it taller still, and Continue was a circular icon buried in
           its far edge. Now: a compact readout with the percentage the learner
           actually wants, and Continue as its own button beside it. */}
-      <div className="network-test-dock">
+      {!complete && <div className="network-test-dock">
         <section className="network-test-progress network-glass">
           <div className="network-test-progress__head">
             <span className="network-test-progress__label">Network test</span>
@@ -263,7 +229,7 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
                   strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-      </div>
+      </div>}
 
       <p className="sr-live" aria-live="polite">
         {complete ? `Network test complete. Result ${verdictLabel(outcome.overall)}.` : ''}

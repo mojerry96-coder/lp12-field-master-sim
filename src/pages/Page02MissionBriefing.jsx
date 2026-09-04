@@ -1,74 +1,62 @@
-import { useEffect, useRef, useState } from 'react'
 import { urlFor } from '../lib/assetManifest'
+import ReferenceStage from '../reference/ReferenceStage'
+import { ArrowRight, PinIcon } from '../reference/RefIcons'
+import '../styles/ref-page02.css'
 
 /**
- * PAGE 02 — Mission Briefing.
+ * PAGE 02 — Field Assignment, replicated against `02-field-assignment.png`.
  *
- * The assignment, without turning the page into a text-heavy briefing. It
- * replaces the typed dispatcher monologue: that version ran a character clock
- * for about seven seconds and then handed over on its own, and the redesign
- * gives both the pace and the handover to the learner. Six lines of copy on
- * one glass sheet say the same thing in the time it takes to read them.
+ * The kit's coordinates: panel at 78/176 measuring 548 x 617 on a 28px radius
+ * with 44px internal padding; eyebrow 16/800/blue, "Awolowo Way" 52/600,
+ * "Ikeja · Lagos" 28/400 secondary, a hairline, the instruction at 29/500 and
+ * the body at 18/400 secondary.
  *
- * The environment stays full-screen behind the sheet and is only softened —
- * it is the site the learner is about to work on, and the glass is secondary
- * to it. Nothing here may grow into a card stack or a metric row.
+ * THE LOCATION PIN IS HTML, and the kit is explicit about why: baked into the
+ * background art its label would scale with the image and go soft, so it is a
+ * DOM element at 1040/387 that stays crisp at any stage scale. It marks the
+ * median column the learner is about to work on.
  *
- * P2 is already warming: App starts that band the moment Page 01 hands over,
- * so the seconds spent reading this are seconds the model was going to need.
+ * Background is the isometric city this app already renders out of Blender —
+ * the same plate the locate page uses. The kit's generated alternative
+ * (`field-assignment-isometric.webp`) describes exactly this view, so unlike
+ * the other screens there is nothing missing here; the real render is better
+ * than a generated approximation of it would be.
  */
+
 export default function Page02MissionBriefing({ reducedMotion, onBegin }) {
-  const [shown, setShown] = useState(false)
-  const [leaving, setLeaving] = useState(false)
-  const done = useRef(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setShown(true), 60)
-    return () => clearTimeout(t)
-  }, [])
-
-  const begin = () => {
-    if (done.current) return
-    done.current = true
-    if (reducedMotion) { onBegin(); return }
-    // Fade the sheet out before handing over. A hard swap into the site is the
-    // blank frame this sequence exists to avoid.
-    setLeaving(true)
-    setTimeout(onBegin, 320)
-  }
-
   return (
-    <section
-      className={`fm-page p02${shown ? ' is-shown' : ''}${leaving ? ' is-leaving' : ''}`}
-      aria-label="Field assignment"
-    >
-      <img className="fm-media fm-media--soft" src={urlFor('iso-background')} alt="" />
+    <ReferenceStage className={`p02r${reducedMotion ? ' is-reduced' : ''}`}
+                    label="Field assignment">
+      <img className="fmref-plate p02r-city" src={urlFor('iso-background')} alt="" />
+      <div className="p02r-wash" aria-hidden="true" />
 
-      <div className="fm-glass p02-sheet">
-        {/* No mark slot: see Page01Welcome. The eyebrow sits on the sheet's
-            own left edge, with the site name and place line below it. */}
-        <p className="fm-eyebrow p02-eyebrow">Field assignment</p>
+      <div className="fm-brand p02r-brand">
+        <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
+      </div>
 
-        <h1 className="p02-site">Awolowo Way</h1>
-        <p className="p02-place">Ikeja · Lagos</p>
+      <section className="fm-glass p02r-panel">
+        <p className="p02r-eyebrow">Field assignment</p>
+        <h1 className="p02r-site">Awolowo Way</h1>
+        <p className="p02r-place">Ikeja · Lagos</p>
 
-        <hr className="p02-rule" />
+        <div className="fm-hairline p02r-line" />
 
-        <p className="p02-task">Install and commission one LP12 small-cell antenna.</p>
-        <p className="p02-note">
-          Replacement goes on the lighting column on the central median.
+        <p className="p02r-brief">Install and commission one<br />LP12 small-cell antenna.</p>
+        <p className="p02r-note">
+          Replacement goes on the lighting column<br />on the central median.
         </p>
 
-        <button className="fm-btn fm-btn--trailing p02-cta" type="button" onClick={begin}>
-          Begin
-          <span className="fm-btn-arrow" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"
-                    strokeLinejoin="round" d="M4 12h15m-6-6 6 6-6 6" />
-            </svg>
-          </span>
+        <button className="fm-btn fm-btn-primary p02r-begin" type="button" onClick={onBegin}>
+          <span>Begin</span>
+          <ArrowRight size={26} />
         </button>
+      </section>
+
+      {/* The column the assignment names, marked on the plate itself. */}
+      <div className="p02r-pin" aria-hidden="true">
+        <span className="p02r-pin-dot"><PinIcon size={24} /></span>
+        <span className="p02r-pin-label">Awolowo Way</span>
       </div>
-    </section>
+    </ReferenceStage>
   )
 }

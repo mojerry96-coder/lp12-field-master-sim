@@ -133,62 +133,59 @@
 .drop-hint-pill.is-over{background:var(--lp12-blue);transform:scale(1.04)}
 
 /* --- downtilt knob + edge dial -------------------------------------------- */
-/* Local tokens for the machined control. Kept here with the rest of the
-   panel's hard-coded values rather than promoted to the global palette —
-   this is one instrument, not a theme. */
-.tilt-knob-row{--knob-metal:#2c3440;--knob-metal-hi:#7f8ea3;--knob-lamp:#ffb44d;
+/* The knob is a minimal matte-white disc — soft domed surface, a tiny dotted
+   icon, and a small pill as the position marker. Local tokens stay here with
+   the panel's other hard-coded values; this is one instrument, not a theme. */
+.tilt-knob-row{--knob-white:#fdfdfd;--knob-lamp:#0a84ff;
   display:flex;align-items:center;gap:16px}
 
 .tilt-knob{position:relative;width:92px;height:92px;flex:0 0 92px;border-radius:999px;
   cursor:grab;touch-action:none;outline:none;
   /* contact shadow: the control sits ON the panel */
-  filter:drop-shadow(0 10px 16px rgba(2,10,32,.45))}
+  filter:drop-shadow(0 14px 22px rgba(2,10,32,.38))}
 .tilt-knob:active{cursor:grabbing}
-.tilt-knob:active .tilt-knob-cap{transform:scale(.985);
-  box-shadow:inset 0 2px 6px rgba(0,0,0,.6),inset 0 -1px 0 rgba(255,255,255,.1)}
+.tilt-knob:active .tilt-knob-collar{transform:scale(.985)}
 .tilt-knob:focus-visible{box-shadow:0 0 0 3px #fff}
-.tilt-knob.is-disabled{filter:grayscale(.6) brightness(.8);opacity:.5;cursor:default}
+.tilt-knob.is-disabled{filter:grayscale(.5) brightness(.94);opacity:.5;cursor:default}
 
-/* Fixed outer collar — machined ring the cap turns inside of. */
+/* The disc itself: matte white, softly domed, lit from the top. Static — only
+   the pill marker turns. */
 .tilt-knob-collar{position:absolute;inset:0;border-radius:999px;
+  transition:transform .12s ease;
   background:
-    conic-gradient(from 210deg,#0f151f,#4a5768 18%,#1a2029 34%,#5c6b7f 52%,
-                   #141b25 70%,#3d4959 86%,#0f151f);
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),
-             inset 0 1px 0 rgba(255,255,255,.5),
-             inset 0 -2px 6px rgba(0,0,0,.55)}
+    radial-gradient(circle at 36% 28%,rgba(255,255,255,.95),rgba(255,255,255,0) 52%),
+    linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,0) 34%,
+                    rgba(0,0,0,.02) 78%,rgba(0,0,0,.055)),
+    var(--knob-white);
+  box-shadow:inset 0 2px 6px rgba(255,255,255,.9),
+             inset 0 -3px 8px rgba(0,0,0,.06),
+             0 0 0 .5px rgba(0,0,0,.05)}
+
+/* Dotted antenna icon near the top — pure reference styling, low contrast. */
+.tilt-knob-icon{position:absolute;left:50%;top:19%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.26;
+  pointer-events:none}
+.tilt-knob-icon span{display:flex;gap:2px}
+.tilt-knob-icon i{display:block;width:3px;height:3px;border-radius:999px;
+  background:#1c2733}
 
 .tilt-knob-body{position:absolute;inset:0;border-radius:999px;
   transition:transform .16s cubic-bezier(.2,.7,.3,1)}
 
-/* Knurled rim: each ridge lit on one side, shaded on the other. */
-.tilt-knob-knurl{position:absolute;inset:4px;border-radius:999px}
-.tilt-knob-knurl i{position:absolute;left:50%;top:2px;width:3px;height:9px;margin-left:-1.5px;
-  border-radius:1px;transform-origin:50% 40px;
-  background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(255,255,255,.55))}
-
-/* Inner cap: inset, darker, brushed, lit from the top-left. */
-.tilt-knob-cap{position:absolute;inset:13px;border-radius:999px;
-  transition:transform .12s ease,box-shadow .12s ease;
-  background:
-    radial-gradient(circle at 32% 26%,rgba(255,255,255,.34),rgba(255,255,255,0) 52%),
-    repeating-conic-gradient(from 0deg,rgba(255,255,255,.045) 0deg 2deg,
-                             rgba(0,0,0,.05) 2deg 4deg),
-    radial-gradient(circle at 50% 50%,#2f3846,#171d27 78%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.22),
-             inset 0 -6px 12px rgba(0,0,0,.5),
-             0 2px 6px rgba(0,0,0,.45)}
-
-/* Recessed indicator groove, from cap edge out to the rim. */
-.tilt-knob-pointer{position:absolute;left:50%;top:9px;width:4px;height:26px;margin-left:-2px;
-  border-radius:2px;
-  background:linear-gradient(180deg,#fff,rgba(255,255,255,.6));
-  box-shadow:0 0 8px rgba(255,255,255,.5),inset 0 0 0 1px rgba(0,0,0,.35)}
-/* Lamp at the rim tip — brightens while the knob is being turned. */
-.tilt-knob-lamp{position:absolute;left:50%;top:3px;width:6px;height:6px;margin-left:-3px;
-  border-radius:999px;background:var(--knob-lamp);opacity:.45;
-  transition:opacity .2s ease,box-shadow .2s ease}
-.tilt-knob.is-turning .tilt-knob-lamp{opacity:1;box-shadow:0 0 12px var(--knob-lamp)}
+/* Pill marker: the position indicator, turning with the body. */
+.tilt-knob-pill{position:absolute;left:50%;top:5px;width:9px;height:20px;
+  margin-left:-4.5px;border-radius:999px;
+  background:linear-gradient(180deg,#ffffff,#f0f2f5);
+  box-shadow:0 2px 5px rgba(2,10,32,.18),
+             inset 0 1px 1px rgba(255,255,255,1),
+             0 0 0 .5px rgba(0,0,0,.06);
+  transition:background .2s ease,box-shadow .2s ease}
+.tilt-knob.is-turning .tilt-knob-pill{
+  background:linear-gradient(180deg,#ffffff,#d9e9fc);
+  box-shadow:0 2px 5px rgba(2,10,32,.18),
+             inset 0 1px 1px rgba(255,255,255,1),
+             0 0 0 .5px rgba(10,132,255,.45),
+             0 0 10px rgba(10,132,255,.35)}
 
 .tilt-knob-readout{display:grid;gap:2px}
 .tilt-knob-readout b{font:700 34px/1 inherit;letter-spacing:-.02em}
@@ -260,8 +257,8 @@
 .tilt-dial-state.is-ok em{color:rgba(255,255,255,.4)}
 
 @media (prefers-reduced-motion:reduce){
-  .tilt-dial,.tilt-dial-face,.tilt-knob-body,.tilt-knob-cap,
-  .tilt-knob-lamp,.tilt-dial-window{transition:none}
+  .tilt-dial,.tilt-dial-face,.tilt-knob-body,.tilt-knob-collar,
+  .tilt-knob-pill,.tilt-dial-window{transition:none}
 }
 
 

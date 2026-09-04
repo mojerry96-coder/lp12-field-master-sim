@@ -105,12 +105,20 @@ export default function SiteTraffic({ visible = true }) {
 
   // Every asset is loaded unconditionally: the hook order has to be stable, and
   // all ten types appear in the placement list anyway.
-  const types = Object.keys(VEHICLE_ASSETS)
-  const loaded = types.map((t) => useGLTF(VEHICLE_ASSETS[t]))
+  //
+  // ONE useGLTF call over the whole list, not one per type in a map(). The map
+  // was a hook inside a callback — it happened to be safe, because the list
+  // comes from a module constant and so never changes length, but it is the
+  // rules-of-hooks violation the linter is built to catch and the safety was an
+  // invariant a reader had to verify rather than one the code enforced. drei's
+  // useGLTF takes an array and returns results in the same order, which is the
+  // same load with the hook order guaranteed by construction.
+  const types = useMemo(() => Object.keys(VEHICLE_ASSETS), [])
+  const urls = useMemo(() => types.map((t) => VEHICLE_ASSETS[t]), [types])
+  const loaded = useGLTF(urls)
   const sources = useMemo(
     () => Object.fromEntries(types.map((t, i) => [t, loaded[i].scene])),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loaded],
+    [types, loaded],
   )
 
   if (!placements) return null

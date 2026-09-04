@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import { useSim } from '../store'
+import { effectiveCoverageRadiusM } from '../lib/coverage'
 
 /**
  * PAGE 13 — Network Coverage.
@@ -10,10 +12,18 @@ import { useEffect, useRef } from 'react'
  * dashboard" — and the numbers that would fill one are all derivable from a
  * height and a tilt the learner has already set and confirmed.
  *
- * "Optimal" is not decoration. Both rig gates have to pass before this page can
- * be reached, so by construction the footprint on screen is the correct one;
- * the chip says in words what the dome says in shape, which is also the reason
- * the dome no longer changes hue to signal it.
+ * The chip REPORTS, it does not judge. It used to read a hardcoded "Optimal",
+ * on the reasoning that both rig gates had to pass before this page could be
+ * reached, so the footprint on screen could only be the correct one. That
+ * stopped being true when the assessment model changed: height and downtilt are
+ * now accepted whatever the learner sets them to, and the corridor test is the
+ * thing that judges them. So the page could be standing in front of a 215 m
+ * footprint thrown by a 2 degree tilt while telling the learner it was optimal.
+ *
+ * Printing the reach the learner's own settings produce is true at every
+ * setting, and it is the number the dome in front of them is drawn from. It
+ * also leaves the verdict where the user asked for it — the corridor test names
+ * what went wrong and refers them back — rather than pre-empting it here.
  *
  * ORBIT lives here rather than on the pole overview. A dome is the one subject
  * in the run whose shape cannot be read from a single angle — how far it
@@ -42,22 +52,64 @@ export default function Page13NetworkCoverage({
 }) {
   const hostRef = useRef(null)
 
+  // The same function the 3D dome is sized from, so the number in the chip and
+  // the shape on the screen can never disagree.
+  const height = useSim((s) => s.height)
+  const downtilt = useSim((s) => s.downtilt)
+  const reachM = effectiveCoverageRadiusM(height, downtilt)
+
   // Non-passive, because the handler calls preventDefault when orbit is on —
   // a passive listener cannot, and the page would scroll under the model.
   // Attached for the life of the page rather than only while orbit is enabled:
   // the input itself ignores wheel events when disabled, so there is one place
   // that decides, not two.
+  //
+  // The pointer gestures are attached the same way and for the same reason:
+  // left drag orbits, right or middle drag pans, wheel dollies, double click
+  // returns to the authored framing — the gesture set of any 3D application.
   useEffect(() => {
     const host = hostRef.current
     if (!host || !orbitInput) return undefined
     const onWheel = (e) => orbitInput.onWheel(e)
+    const onDown = (e) => {
+      // Never steal the buttons and chips layered over the scene.
+      if (e.target.closest('button, a, input')) return
+      if (orbitInput.onPointerDown(e)) {
+        e.preventDefault()
+        host.setPointerCapture?.(e.pointerId)
+      }
+    }
+    const onMove = (e) => { if (orbitInput.onPointerMove(e)) e.preventDefault() }
+    const onUp = (e) => {
+      if (orbitInput.onPointerUp(e)) host.releasePointerCapture?.(e.pointerId)
+    }
+    const onMenu = (e) => { if (orbitInput.enabled) e.preventDefault() }
+    const onDouble = () => orbitInput.requestReset()
+
     host.addEventListener('wheel', onWheel, { passive: false })
-    return () => host.removeEventListener('wheel', onWheel)
+    host.addEventListener('pointerdown', onDown)
+    host.addEventListener('pointermove', onMove)
+    host.addEventListener('pointerup', onUp)
+    host.addEventListener('pointercancel', onUp)
+    host.addEventListener('contextmenu', onMenu)
+    host.addEventListener('dblclick', onDouble)
+    return () => {
+      host.removeEventListener('wheel', onWheel)
+      host.removeEventListener('pointerdown', onDown)
+      host.removeEventListener('pointermove', onMove)
+      host.removeEventListener('pointerup', onUp)
+      host.removeEventListener('pointercancel', onUp)
+      host.removeEventListener('contextmenu', onMenu)
+      host.removeEventListener('dblclick', onDouble)
+    }
   }, [orbitInput])
 
   return (
-    <section ref={hostRef} className="fm-page p13" aria-label="Network coverage">
+    <section ref={hostRef}
+             className={`fm-page p13${orbitEnabled ? ' is-navigating' : ''}`}
+             aria-label="Network coverage">
       <div className="p13-viewport">{children}</div>
+
 
       <div className="fm-glass p13-chip">
         <span className="p13-bars" aria-hidden="true">
@@ -66,7 +118,7 @@ export default function Page13NetworkCoverage({
         <span className="p13-chip-text">
           <b>Network coverage</b>
           <span className="p13-state">
-            <i aria-hidden="true" /> Optimal
+            <i aria-hidden="true" /> Reaches {Math.round(reachM)} m along the road
           </span>
         </span>
       </div>
@@ -76,7 +128,7 @@ export default function Page13NetworkCoverage({
       {orbitEnabled && (
         <div className="fm-glass p13-hint" role="status">
           <OrbitGlyph />
-          Orbit enabled · Scroll to inspect
+          Orbit enabled · Drag to turn · Scroll to zoom · Right-drag to pan
         </div>
       )}
 

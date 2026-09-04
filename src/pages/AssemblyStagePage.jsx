@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { PART_LABELS } from '../lib/installationStages'
 
 /**
  * The assembly workspace — PAGES 05-10.
@@ -14,7 +15,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
  * isolated on it, and three things over the top — the instruction, the target
  * region on the column, and the tray.
  *
- * The tiles carry no names and no marking. The stage title says which
+ * The tiles carry no VISIBLE names and no marking (they do carry an accessible
+ * name, for the reason set out at the aria-label below). The stage title says which
  * component the step wants; recognising it among the wrong ones is the thing
  * being assessed (specification 2.5), and every hint removed is a hint the
  * learner has to replace with knowledge. A caption answered the question
@@ -113,16 +115,18 @@ export default function AssemblyStagePage({
             type="button"
             draggable={!busy}
             className={`as-part${dragging === id ? ' is-dragging' : ''}`}
-            /* The only name this control carries is for assistive tech: a
-               screen-reader user cannot recognise a silhouette, so refusing
-               them the label would not be the same exercise, it would be no
-               exercise at all. */
-            /* Position only. Naming it here would hand the answer to a screen
-               reader user that the page withholds from everyone else — and
-               withholding it entirely would leave them no way to tell the
-               tiles apart at all, so they are numbered, like the sighted
-               learner's are by their order on screen. */
-            aria-label={`Component ${order.indexOf(id) + 1} of ${order.length}`}
+            /* Named, because the tile IS its name to anyone who can see it.
+               These were numbered — "Component 1 of 3" — on the reasoning that
+               naming them would hand a screen reader user an answer the page
+               withholds from everyone else. It withholds no such thing: the
+               tile is a photograph of the hardware, and recognising the
+               hardware is precisely what the sighted learner does to choose.
+               A number conveys none of that, so the exercise went from "which
+               of these three parts comes next" to "guess one of three", which
+               is not the same exercise made fair, it is no exercise at all.
+               The name identifies the option; which option is CORRECT is still
+               the thing being asked, and is still withheld from everybody. */
+            aria-label={`${PART_LABELS[id] || id}, component ${order.indexOf(id) + 1} of ${order.length}`}
             onDragStart={(e) => onDragStart(id, e)}
             onDragEnd={() => setDragging(null)}
             onClick={() => onAttempt(id)}

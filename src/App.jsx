@@ -15,7 +15,7 @@ import Page01Welcome from './pages/Page01Welcome'
 import Page02MissionBriefing from './pages/Page02MissionBriefing'
 import StageGate from './components/StageGate'
 import BackButton from './components/BackButton'
-import { PerformanceReview } from './components/CompletionScreen'
+import PerformanceReview from './pages/PerformanceReview'
 import Page19CommissioningComplete from './pages/Page19CommissioningComplete'
 import { P2, P3, warm } from './lib/preloader'
 import { urlFor } from './lib/assetManifest'
@@ -225,8 +225,14 @@ export default function App() {
         // materials are built and its shaders are compiled — `modelReady` is
         // set by the canvas, not on mount, so this cannot reveal an empty
         // studio the way clicking the hotspot early used to.
+        //
+        // The completion page is a photograph now and mounts no canvas, so
+        // gating it on `modelReady` alone would wait for something that never
+        // arrives. In the ordinary run the flag is already true by then — the
+        // learner came through the coverage stage — but a route that does not
+        // need the model must not be able to deadlock behind it.
         <StageGate name="Installation workspace" priority={P2}
-                   ready={s.modelReady}
+                   ready={s.modelReady || s.installStage === 'complete'}
                    onRetreat={() => useSim.getState().returnToSite()}>
           <InstallationPage
             studio={studio} flow={flow}

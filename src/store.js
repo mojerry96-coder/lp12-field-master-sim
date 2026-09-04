@@ -29,6 +29,24 @@ const INITIAL_BUILD = {
   controlsLocked: false,
   animationError: null,
   installed: false,
+  /**
+   * 7.5 m is the height the assembly is BUILT at, not a default the learner is
+   * meant to keep.
+   *
+   * It has to be this number. The six assembly cameras are authored anchors
+   * composed around the rig sitting here, and they do not follow it — dropping
+   * the default even to 6.5 slides the hardware low in every one of them, and
+   * at the 4 m floor it leaves the frame entirely, so the learner watches
+   * components install onto bare pole.
+   *
+   * The cost is real and worth recording: 7.5 is also `mount_height_ideal` and
+   * sits inside the [7, 8] correct band, so a learner who never touches the
+   * slider confirms the optimal answer and is scored for a decision they did
+   * not make. Downtilt starts at 0 against a correct 5, and all three reporter
+   * settings start off their targets, so height is the one control that hands
+   * over its answer. Closing that needs the assembly cameras to follow the rig;
+   * until they do, moving this number trades a scoring flaw for a broken build.
+   */
   height: 7.5,
   downtilt: 0,
 }
@@ -207,6 +225,33 @@ export const useSim = create((set, get) => ({
     st.completedStages.includes(title)
       ? st
       : { completedStages: [...st.completedStages, title] })),
+
+  /**
+   * Record that an assembly clip has finished, so the hardware it installed
+   * stays installed.
+   *
+   * `completedClips` is the ONE source of truth for what is bolted to the pole:
+   * the GLB ships unassembled, and LP12Assembly derives both the parts' poses
+   * and their visibility from this list. The store's own `runAssembly` action
+   * has always appended to it, but the installation route does not use that
+   * action — it drives `controller.playOnce` itself — so nothing was writing to
+   * the list and it stayed empty for the whole build.
+   *
+   * That went unnoticed because a finished clip leaves its part sitting in the
+   * end pose, and with the list never changing there was nothing to re-run the
+   * effect that would have snapped it back. Any remount broke the illusion:
+   * the effect ran once against an empty list, every staged part reset to its
+   * unassembled position, and the learner was looking at a bare pole on step
+   * six — while the page, which derives its own progress from the stage index,
+   * went on saying five parts were installed.
+   *
+   * Written here rather than in the page so the two routes into the model agree
+   * about what has been built.
+   */
+  noteClipComplete: (clip) => set((st) => (
+    !clip || st.completedClips.includes(clip)
+      ? st
+      : { completedClips: [...st.completedClips, clip] })),
 
   /**
    * Freeze the outcome. Called once when the simulation finishes, so the

@@ -33,19 +33,31 @@
   gap: 14px;
   padding: 20px 26px;
   pointer-events: auto;
+  /* Dark glass specifically for this page: the busy city plate behind it
+     makes light glass unreadable, so we invert to a dark frosted surface
+     with light text. */
+  background: linear-gradient(135deg,
+    rgba(12, 22, 38, 0.82),
+    rgba(12, 22, 38, 0.62));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 18px 54px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(26px) saturate(155%);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
 }
 .p03-capsule strong {
   display: block;
   font-size: 19px;
   font-weight: 600;
   letter-spacing: -0.015em;
-  color: var(--fm-ink);
+  color: #F5F7FA;
 }
 .p03-capsule span {
   display: block;
   margin-top: 5px;
   font-size: 14px;
-  color: #697790;
+  color: rgba(245, 247, 250, 0.74);
 }
 
 .p03-capsule-icon {
@@ -55,9 +67,9 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
-  color: var(--fm-blue);
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+  color: #6BB3FF;
 }
 
 /* ------------------------------------------------------------ the target */
@@ -179,13 +191,22 @@
      leader line above it stay transparent to it. */
   pointer-events: auto;
   cursor: pointer;
-  border: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   padding: 9px 18px;
   border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
-  color: #075FD8;
+  color: #F5F7FA;
   white-space: nowrap;
+  /* Dark glass to match the instruction capsule on this page. */
+  background: linear-gradient(135deg,
+    rgba(12, 22, 38, 0.82),
+    rgba(12, 22, 38, 0.62));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 8px 22px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
   /* A slow breath on the label only. The learner has to notice it; the line it
      hangs off should stay still once drawn. */
   animation: p03-pill-pulse 2.4s var(--fm-ease) infinite 1s;
@@ -200,8 +221,8 @@
   to { stroke-dashoffset: 0 }
 }
 @keyframes p03-pill-pulse {
-  0%, 100% { transform: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 8px 22px rgba(40,70,120,.10) }
-  50% { transform: translateX(-4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 8px 26px rgba(0,122,255,.28) }
+  0%, 100% { transform: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 22px rgba(0,0,0,.22) }
+  50% { transform: translateX(-4px); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 8px 26px rgba(0,122,255,.42) }
 }
 
 /* Once the column is fitted the callout has nothing left to say. */

@@ -152,16 +152,15 @@ export default function DowntiltKnob({ value, min = 0, max = 10, target,
             onPointerUp={(e) => e.currentTarget.releasePointerCapture(e.pointerId)}
             onKeyDown={onKeyDown}
           >
-            <span className="tilt-knob-collar" aria-hidden="true" />
-            <span className="tilt-knob-body" style={{ transform: `rotate(${angle}deg)` }}>
-              <span className="tilt-knob-knurl">
-                {Array.from({ length: 36 }, (_, i) => (
-                  <i key={i} style={{ transform: `rotate(${i * 10}deg)` }} />
-                ))}
+            <span className="tilt-knob-collar" aria-hidden="true">
+              <span className="tilt-knob-icon">
+                <span><i /></span>
+                <span><i /><i /><i /></span>
+                <span><i /><i /><i /><i /><i /></span>
               </span>
-              <span className="tilt-knob-cap" />
-              <i className="tilt-knob-pointer" />
-              <i className="tilt-knob-lamp" />
+            </span>
+            <span className="tilt-knob-body" style={{ transform: `rotate(${angle}deg)` }}>
+              <i className="tilt-knob-pill" />
             </span>
           </div>
 

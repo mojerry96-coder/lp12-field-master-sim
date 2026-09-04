@@ -1,0 +1,156 @@
+/* PAGE 03 (kit) — Installation Complete. Against 03-installation-complete.png. */
+
+/* A flat bright ground rather than a plate: the reference's left column is
+   open pale blue-white, and the only picture on the page is the viewport. */
+.p14r-plate {
+  left: 0;
+  top: 0;
+  width: 1672px;
+  height: 941px;
+  background:
+    radial-gradient(120% 90% at 12% 8%, #FFFFFF 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, #EFF5FD 0%, #E4EEFA 100%);
+}
+
+.p14r-brand { left: 53px; top: 49px; font-size: 18px }
+
+/* ---------------------------------------------------------- the left column */
+
+.p14r-copy { left: 51px; top: 109px; width: 480px }
+
+.p14r-title {
+  margin: 0;
+  font-size: 76px;
+  line-height: 0.9;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.p14r-title span { display: block }
+.p14r-title span:first-child { color: var(--fm-navy) }
+.p14r-title span:last-child { color: var(--fm-blue) }
+
+.p14r-sub {
+  margin: 20px 0 0;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--fm-text);
+}
+
+.p14r-where {
+  margin: 14px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--fm-text-secondary);
+}
+.p14r-where svg { color: var(--fm-blue); flex: none }
+.p14r-where i { display: inline-block; width: 4px }
+
+.p14r-rule { margin: 20px 0 0; display: flex; align-items: center; gap: 5px }
+.p14r-rule i { width: 40px; height: 4px; border-radius: 999px; background: var(--fm-blue) }
+.p14r-rule b { width: 38px; height: 4px; border-radius: 999px; background: rgba(30, 61, 104, 0.16) }
+
+.p14r-tagline {
+  margin: 18px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.66;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fm-text-secondary);
+}
+
+/* -------------------------------------------------------- the media viewport
+
+   The kit's rectangle, and the live scene is clipped to it. `isolation` gives
+   the rounded corners something to clip against when the child paints a WebGL
+   canvas, which otherwise ignores the parent's border-radius in some engines. */
+
+.p14r-view {
+  left: 577px;
+  top: 104px;
+  width: 1022px;
+  height: 750px;
+  border-radius: 32px;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(160deg, #F4F8FD 0%, #E8F0FA 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.7),
+    0 30px 80px rgba(23, 48, 82, 0.14);
+}
+.p14r-view > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* -------------------------------------------------------------- the card */
+
+.fmref .p14r-card {
+  left: 50px;
+  top: 443px;
+  width: 470px;
+  height: 396px;
+  padding: 38px 40px;
+  border-radius: 29px;
+}
+
+.p14r-card-title {
+  margin: 0;
+  font-size: 42px;
+  line-height: 1.04;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--fm-navy);
+}
+
+.p14r-card-sub {
+  margin: 14px 0 0;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--fm-text-secondary);
+}
+
+/* The stack below has to finish above the CTA, which is pinned 36px off the
+   bottom of a card whose height the kit fixes at 396px. At the authored
+   rhythm the second metric row ran to y=747 against a button top of y=736, so
+   "Downtilt" sat underneath the button. These three margins are tightened by
+   24px in total, which clears it with room to spare and keeps the kit's
+   proportions — the alternative was growing the card past the specified
+   height. */
+.p14r-card-line { margin: 20px 0 0 }
+
+/* Values darker and heavier than their labels, per the kit. */
+.p14r-metrics { margin: 16px 0 0 }
+.p14r-metrics > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+.p14r-metrics dt { font-size: 18px; font-weight: 400; color: var(--fm-text-secondary) }
+.p14r-metrics dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--fm-navy);
+}
+
+.fmref .p14r-continue {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 36px;
+  width: auto;
+  height: 66px;
+  padding: 0 26px;
+  font-size: 19px;
+}

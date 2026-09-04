@@ -16,9 +16,9 @@
   --fm-bg-cool: #EEF0F3;
   --fm-white: #FFFFFF;
 
-  --fm-glass-fill: rgba(255, 255, 255, 0.30);
-  --fm-glass-fill-2: rgba(255, 255, 255, 0.12);
-  --fm-glass-line: rgba(255, 255, 255, 0.55);
+  --fm-glass-fill: rgba(255, 255, 255, 0.55);
+  --fm-glass-fill-2: rgba(255, 255, 255, 0.28);
+  --fm-glass-line: rgba(255, 255, 255, 0.68);
 
   --fm-radius-lg: 28px;
   --fm-radius-md: 22px;

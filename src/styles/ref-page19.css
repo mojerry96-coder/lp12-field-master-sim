@@ -1,0 +1,123 @@
+/* PAGE 04 (kit) — Commissioning Complete. Against 04-commissioning-complete.png. */
+
+/* The generated plate already carries the depth of field the kit asked for —
+   hardware sharp on the right, avenue soft behind — so nothing is filtered. */
+
+.p19r-wash {
+  left: 0;
+  top: 0;
+  width: 900px;
+  height: 941px;
+  background: linear-gradient(90deg,
+    rgba(244, 248, 253, 0.72) 0%,
+    rgba(244, 248, 253, 0.40) 62%,
+    rgba(244, 248, 253, 0) 100%);
+}
+
+/* ---------------------------------------------------------------- the card */
+
+.fmref .p19r-card {
+  left: 87px;
+  top: 95px;
+  width: 626px;
+  height: 731px;
+  padding: 52px;
+  border-radius: 31px;
+}
+
+.p19r-brand { position: static; font-size: 17px }
+
+.p19r-title {
+  margin: 26px 0 0;
+  font-size: 54px;
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  color: var(--fm-navy);
+}
+
+.p19r-score-label {
+  margin: 34px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fm-text-secondary);
+}
+
+/* The kit's hierarchy: the number blue and dominant, the denominator navy and
+   smaller, the verdict amber unless the run actually cleared the mark. */
+.p19r-score {
+  margin: 10px 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+.p19r-score strong {
+  font-size: 92px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  color: var(--fm-blue);
+}
+.p19r-outof {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--fm-navy);
+}
+.fmref .p19r-verdict {
+  align-self: center;
+  margin-left: 12px;
+  min-height: 40px;
+  padding: 0 20px;
+  font-size: 14px;
+  gap: 8px;
+}
+.fmref .p19r-verdict i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.p19r-where {
+  margin: 26px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--fm-text-secondary);
+}
+.p19r-where svg { color: var(--fm-blue); flex: none }
+.p19r-where i { display: inline-block; width: 4px }
+
+.p19r-line { margin: 30px 0 0 }
+
+/* Full-width pills, stacked. */
+.fmref .p19r-action {
+  margin: 22px 0 0;
+  width: 100%;
+  height: 76px;
+  padding: 0 24px;
+  justify-content: flex-start;
+  gap: 16px;
+  font-size: 21px;
+}
+.p19r-action-glyph {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+}
+.p19r-action-glyph.is-quiet {
+  color: var(--fm-navy);
+  background: rgba(19, 36, 61, 0.07);
+}
+.p19r-action-label { flex: 1; text-align: left }

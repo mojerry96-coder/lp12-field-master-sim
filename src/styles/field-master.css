@@ -192,3 +192,26 @@
 @media (max-width: 900px), (orientation: portrait) {
   .fm-back { top: 14px; right: 14px; padding: 8px 13px 8px 10px; font-size: 12px }
 }
+
+/* Back, on the pages that are a fixed-size reference artboard.
+ *
+ * `.fm-back` is `position: fixed`, which pins it 24px from the WINDOW's top
+ * right. The kit pages are a 1672 x 941 stage scaled uniformly and centred, so
+ * on any window that is not 16:9 there are letterbox bands above and below it —
+ * 45px of them at 1440x900 — and the button sat in the band, floating on the
+ * flat ground above the artboard it belongs to.
+ *
+ * The band's height is computable from the same rule ReferenceStage scales by
+ * (`Math.min(vw / 1672, vh / 941)`): the stage lands at
+ * `min(100vw * 941 / 1672, 100vh)` tall, and half the remainder is the band.
+ * Adding it puts the button 24px inside the artboard's own top edge, so it sits
+ * with the composition at every window shape and matches the unscaled pages.
+ *
+ * `:has()` scopes this to windows actually showing a reference stage; the live
+ * 3D pages keep the plain viewport offset.
+ */
+body:has(.fmref-viewport) .fm-back {
+  --fm-stage-h: min(100vw * 941 / 1672, 100vh);
+  top: calc((100vh - var(--fm-stage-h)) / 2 + 24px);
+  right: calc((100vw - min(100vw, 100vh * 1672 / 941)) / 2 + 24px);
+}

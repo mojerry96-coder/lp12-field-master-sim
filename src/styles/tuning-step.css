@@ -313,10 +313,12 @@
   letter-spacing: -0.01em;
   color: #5B6C87;
 }
-/* Green only here, and only for a value that is already correct — every
-   setting on this page had to pass its own gate to be on it, so the tick is a
-   receipt rather than a status the learner has to read. */
-.p18-settings dd.is-ok { color: #1E9E63 }
+/* Green only for a value that is actually on target. The steps no longer gate
+   on their own value, so this is a status the learner does have to read, and
+   the off-target case needs a mark of its own rather than the absence of one:
+   amber, matching the commissioning verdict chip. */
+.p18-settings dd.is-ok, .p18-settings dd.is-ok svg { color: #1E9E63 }
+.p18-settings dd.is-review, .p18-settings dd.is-review svg { color: #B5730B }
 
 .p18-results {
   margin-top: 48px;

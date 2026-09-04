@@ -51,6 +51,34 @@ export const ASSETS = [
   // the supplied 01-welcome reference render at the panel's own crop.
   { id: 'welcome-hero', url: '/assets/lp12/welcome-hero.webp', kind: KIND.image, priority: P1,
     bytes: 54_000, note: 'LP12 on the pole, the sharp subject on Page 01' },
+  // Generated to the replication kit's own prompt for `landing-awolowo-bg`:
+  // one frame carrying the boulevard in perspective with the LP12 sharp in the
+  // right foreground, and the left 38% held calm for the title. It replaces
+  // Page 01's two-layer stand-in, which composited the isometric render under a
+  // cut-out hero and showed the cut-out's edge.
+  { id: 'landing-plate', url: '/assets/lp12/landing-awolowo-bg.webp', kind: KIND.image,
+    priority: P1, bytes: 86_000, note: 'Page 01 background, generated' },
+  // The kit's `installation-complete-scene`. Page 03 keeps the learner's own
+  // pole live in its viewport instead, so this is here for the switch rather
+  // than in use — see Page14InstallationComplete.
+  { id: 'install-plate', url: '/assets/lp12/installation-complete-scene.webp',
+    kind: KIND.image, priority: P3, bytes: 220_000, note: 'Page 03 scene, generated' },
+  // The kit's `commissioning-complete-bg`. In use on Page 04, replacing the
+  // isometric-plus-cutout composite that page shared with Page 01.
+  { id: 'commissioning-plate', url: '/assets/lp12/commissioning-complete-bg.webp',
+    kind: KIND.image, priority: P3, bytes: 115_000, note: 'Page 04 background, generated' },
+  // The kit's `field-assignment-isometric` and `corridor-test-isometric`.
+  // NEITHER IS IN USE, deliberately. Page 02's city has to be the same city
+  // Page 03 then asks the learner to find a specific column on — that page
+  // pins its hotspot to a Blender-projected anchor on our own render, so a
+  // generated lookalike beside it would be a second, different Awolowo Way.
+  // The corridor screen sits over the live test rather than a still. Both are
+  // here because they were generated to the kit's prompts and are one line
+  // from being used if the plates are preferred to the render.
+  { id: 'assignment-plate', url: '/assets/lp12/field-assignment-isometric.webp',
+    kind: KIND.image, priority: P3, bytes: 230_000, note: 'Generated, unused — see note' },
+  { id: 'corridor-plate', url: '/assets/lp12/corridor-test-isometric.webp',
+    kind: KIND.image, priority: P3, bytes: 200_000, note: 'Generated, unused — see note' },
 
   /* ---- P2: the installation workspace ---------------------------------- */
   { id: 'lp12', url: '/models/lp12_v2.glb', kind: KIND.gltf, priority: P2, bytes: 1_529_000,

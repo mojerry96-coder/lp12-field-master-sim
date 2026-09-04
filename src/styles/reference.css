@@ -1,0 +1,205 @@
+/* ============================================================================
+   The replication kit's design system, scoped.
+   ============================================================================
+
+   Straight from Field_Master_Accurate_Replication_Kit/src/styles/tokens.css,
+   with one deliberate change: everything is nested under `.fmref` instead of
+   `:root`.
+
+   That is not tidiness. The kit reuses the same names this app already has —
+   --fm-blue, --fm-glass-fill, --fm-radius-lg, .fm-glass, .fm-btn, .fm-chip,
+   .fm-back — with different values. Our --fm-blue is #007AFF; the kit's is
+   #1478FF. Our glass is 30% white; the kit's is 76-90%, deliberately more
+   opaque so type stays readable over the bright isometric city. Letting those
+   loose at :root would restyle the assembly stages, the rig pages, the tuning
+   tablet and the corridor test — every surface in the app — as a side effect
+   of replicating six screens. Scoped here, the kit's system applies inside the
+   reference stage and nowhere else.
+
+   Values are the kit's; do not "harmonise" them with tokens.css. The two
+   systems are allowed to disagree until the design is signed off, at which
+   point one of them wins deliberately rather than by CSS accident. */
+
+.fmref {
+  --fm-blue: #1478FF;
+  --fm-blue-deep: #0758D5;
+  --fm-blue-soft: #5FA9FF;
+  --fm-navy: #10233F;
+  --fm-text: #13243D;
+  --fm-text-secondary: #61738C;
+  --fm-text-tertiary: #8795AA;
+  --fm-success: #1AA66A;
+  --fm-warning: #E7A515;
+  --fm-danger: #D94A55;
+  --fm-hairline: rgba(30, 61, 104, 0.14);
+  --fm-radius-xl: 30px;
+  --fm-radius-lg: 24px;
+  --fm-radius-md: 18px;
+  --fm-font: "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  font-family: var(--fm-font);
+  color: var(--fm-text);
+}
+
+/* --------------------------------------------------------------- the stage */
+
+.fmref-viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #EDF3FB;
+}
+
+/* Laid over a live scene rather than a plate: no ground of its own, and the
+   letterbox bands must not catch the pointer either. */
+.fmref-viewport.is-transparent { background: none; pointer-events: none }
+.fmref-viewport.is-transparent .fmref-stage > * { pointer-events: auto }
+
+.fmref-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1672px;
+  height: 941px;
+  transform-origin: center center;
+  overflow: hidden;
+}
+
+/* Every child is placed in reference pixels from the stage's own corner. */
+.fmref-stage > * { position: absolute }
+
+/* ------------------------------------------------------------- the surface */
+
+.fmref .fm-glass {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.90) 0%,
+    rgba(255, 255, 255, 0.69) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(28px) saturate(145%);
+  backdrop-filter: blur(28px) saturate(145%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 1px rgba(13, 36, 69, 0.03),
+    0 18px 52px rgba(23, 48, 82, 0.12);
+}
+
+.fmref .fm-glass-soft {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.78),
+    rgba(255, 255, 255, 0.58));
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  -webkit-backdrop-filter: blur(22px) saturate(138%);
+  backdrop-filter: blur(22px) saturate(138%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 14px 40px rgba(20, 48, 82, 0.09);
+}
+
+.fmref .fm-hairline { height: 1px; width: 100%; background: var(--fm-hairline) }
+
+/* ------------------------------------------------------------- the buttons */
+
+.fmref .fm-btn {
+  height: 72px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  padding: 0 26px;
+  font: 600 20px/1 var(--fm-font);
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+.fmref .fm-btn:hover:not(:disabled) { transform: translateY(-1px) }
+
+/**
+ * Each variant states its own hover background.
+ *
+ * Without these the app's global `.fm-btn:hover` rule wins — it washes any
+ * .fm-btn to rgba(255,255,255,.42) on hover, which was written for the light
+ * glass buttons on the other pages. On these screens the primary button is a
+ * blue gradient with WHITE text, so that wash painted white on white and the
+ * label disappeared under the cursor. The pseudo-class gives these the extra
+ * specificity to hold their own ground.
+ */
+.fmref .fm-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #3F97FF 0%, #1B78FF 100%);
+}
+.fmref .fm-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.92);
+}
+/* The glass pill (Page 01's CTA) keeps its own surface rather than the wash. */
+.fmref .fm-glass.fm-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.78) 100%);
+}
+.fmref .fm-btn:focus-visible { outline: 3px solid rgba(20, 120, 255, 0.28); outline-offset: 3px }
+.fmref .fm-btn:disabled { opacity: 0.55; cursor: default }
+
+.fmref .fm-btn-primary {
+  color: #fff;
+  background: linear-gradient(180deg, #318CFF 0%, #116FFF 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 10px 26px rgba(19, 111, 255, 0.25);
+}
+
+.fmref .fm-btn-secondary {
+  color: var(--fm-text);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: inset 0 1px 0 #fff, 0 10px 30px rgba(35, 61, 93, 0.08);
+}
+
+/* --------------------------------------------------------------- the chips */
+
+.fmref .fm-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font: 700 12px/1 var(--fm-font);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.fmref .fm-chip-review { color: #A56200; background: #FFF0D4; border: 1px solid #F4C97D }
+.fmref .fm-chip-good   { color: #0D7B50; background: #E7F7F0; border: 1px solid #A9E1C7 }
+.fmref .fm-chip-danger { color: #C72F45; background: #FCE8EC; border: 1px solid #F0BDC7 }
+
+/* --------------------------------------------------------------- the brand */
+
+.fmref .fm-brand {
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+  font: 600 18px/1 var(--fm-font);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.fmref .fm-brand strong { color: #0D6EE9; font-weight: 800 }
+.fmref .fm-brand span { color: #566A86 }
+
+/* ------------------------------------------------------------ the plate */
+
+/* Background art fills the stage and is never allowed to letterbox inside it:
+   the plate is the composition's ground, so it crops rather than shrinks. */
+.fmref .fmref-plate {
+  left: 0;
+  top: 0;
+  width: 1672px;
+  height: 941px;
+  object-fit: cover;
+  user-select: none;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fmref .fm-btn { transition: none }
+  .fmref .fm-btn:hover:not(:disabled) { transform: none }
+}

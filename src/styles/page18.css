@@ -43,15 +43,21 @@
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.01em;
-  /* Green, and only here. The redesign allows one accent per page and it
-     belongs to the CTA below; these three are a different statement — not
-     "press me" but "this one is right" — and the reference draws them in
-     green for exactly that reason. Rendering them in the interaction blue
-     would make three settled facts look like three more things to do. */
-  color: #1B8F53;
+  /* Neutral by default; the state classes below carry the colour.
+     This used to be an unconditional green, from when every setting on this
+     page had already passed its own gate. It no longer has, so a flat green
+     marked an off-target value as correct one screen after the corridor test
+     faulted it. */
+  color: #5B6C87;
 }
 .p18-settings dd small { font-size: 20px; font-weight: 600 }
-.p18-settings dd svg { color: #1B8F53 }
+
+/* Green is still reserved for "this one is right" — the redesign allows one
+   accent per page and it belongs to the CTA, so these are deliberately not the
+   interaction blue. Amber, not red, for the others: matching the commissioning
+   verdict chip, because a review is not a failure. */
+.p18-settings dd.is-ok, .p18-settings dd.is-ok svg { color: #1B8F53 }
+.p18-settings dd.is-review, .p18-settings dd.is-review svg { color: #B5730B }
 
 /* ----------------------------------------------------------- the results */
 .p18-results {

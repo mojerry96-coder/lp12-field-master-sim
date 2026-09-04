@@ -1,0 +1,202 @@
+/* PAGE 01 — Landing. Authored against 01-landing-page.png at 1672 x 941.
+   Every number here is a reference pixel; the stage scales them as one. */
+
+/* ---------------------------------------------------------------- the plate
+
+   The kit's single generated frame is not available, so the composition is
+   assembled from the two layers this app ships: the city soft and washed out
+   behind the type, the LP12 sharp on the right. The wash is a horizontal
+   gradient rather than a panel because the kit is explicit that the title sits
+   on open space, not on a card. */
+
+/* The generated plate, unfiltered: it was composed with its own haze on the
+   left, and blurring it again would soften the hardware it exists to show. */
+.p01r-plate { object-position: center }
+
+.p01r-wash {
+  left: 0;
+  top: 0;
+  width: 1100px;
+  height: 941px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.90) 0%,
+    rgba(255, 255, 255, 0.78) 40%,
+    rgba(255, 255, 255, 0.40) 72%,
+    rgba(255, 255, 255, 0) 100%);
+}
+
+/* ---------------------------------------------------------------- the copy */
+
+.p01r-brand { left: 84px; top: 68px; font-size: 19px }
+
+.p01r-copy { left: 82px; top: 163px; width: 560px }
+
+.p01r-title {
+  margin: 0;
+  font-size: 98px;
+  line-height: 0.88;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+.p01r-title span { display: block }
+.p01r-title span:first-child { color: var(--fm-navy) }
+.p01r-title span:last-child { color: var(--fm-blue) }
+
+/* Absolute rather than flowed, so the block's own coordinates hold whatever
+   the title does. 407 and 470 are measured from the stage, not from the h1. */
+.p01r-sub {
+  position: absolute;
+  left: 0;
+  top: 244px;            /* 407 - 163 */
+  margin: 0;
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--fm-text);
+  white-space: nowrap;
+}
+
+.p01r-where {
+  position: absolute;
+  left: 0;
+  top: 307px;            /* 470 - 163 */
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 23px;
+  font-weight: 500;
+  color: var(--fm-text-secondary);
+  white-space: nowrap;
+}
+.p01r-where svg { color: var(--fm-blue); flex: none }
+/* Spacers around the middot: the reference sets it wide of both names. */
+.p01r-where i { display: inline-block; width: 5px }
+
+.p01r-rule {
+  position: absolute;
+  left: 2px;
+  top: 367px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.p01r-rule i { width: 54px; height: 5px; border-radius: 999px; background: var(--fm-blue) }
+.p01r-rule b { width: 52px; height: 5px; border-radius: 999px; background: rgba(30, 61, 104, 0.16) }
+
+.p01r-tagline {
+  position: absolute;
+  left: 0;
+  top: 392px;            /* 555 - 163 */
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.62;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--fm-text-secondary);
+  white-space: nowrap;
+}
+
+/* ----------------------------------------------------------------- the CTA
+
+   The kit's note: the circular play control is visually stronger than the rest
+   of the pill. So the disc carries the blue and the shadow, and the pill around
+   it stays white glass with a navy label. */
+
+.fmref .p01r-cta {
+  left: 83px;
+  top: 636px;
+  width: 454px;
+  height: 114px;
+  padding: 0 30px 0 18px;
+  border-radius: 999px;
+  justify-content: flex-start;
+  gap: 22px;
+}
+
+.fmref .p01r-play {
+  flex: none;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(180deg, #3D93FF 0%, #0E6BFF 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 10px 24px rgba(16, 106, 255, 0.38);
+}
+/* Optically centred: a triangle's mass sits left of its bounding box. */
+.p01r-play svg { margin-left: 4px }
+
+.fmref .p01r-cta-label {
+  flex: 1;
+  text-align: left;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--fm-navy);
+}
+.fmref .p01r-cta > svg:last-child { flex: none; color: var(--fm-navy) }
+
+.p01r-caption {
+  left: 86px;
+  top: 778px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--fm-text-tertiary);
+}
+
+/* ------------------------------------------------------- counter and copy */
+
+.p01r-progress {
+  left: 84px;
+  bottom: 74px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.p01r-progress span {
+  margin-right: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--fm-text-secondary);
+}
+.p01r-progress i {
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(30, 61, 104, 0.17);
+}
+.p01r-progress i.is-on { background: var(--fm-blue) }
+
+/* The two campaign lines. Letterspaced small caps, right-aligned, and the
+   top one carries the reference's vertical rule on its left. */
+.p01r-campaign,
+.p01r-footer {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.72;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--fm-text-secondary);
+}
+
+.p01r-campaign {
+  left: 1482px;
+  top: 69px;
+  padding-left: 22px;
+  border-left: 1px solid rgba(30, 61, 104, 0.22);
+}
+
+.p01r-footer { right: 66px; bottom: 66px }
+
+@media (prefers-reduced-motion: reduce) {
+  .fmref .p01r-cta { transition: none }
+}

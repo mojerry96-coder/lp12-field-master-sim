@@ -101,3 +101,8 @@
   /* Clear of the back control, which owns the top-right corner. */
   .p13-hint { right: 50%; transform: translateX(50%); top: calc(4.5vh + 46px) }
 }
+
+/* Navigation cursor. The scene is grabbable only while orbit is enabled, and
+   the chrome above it keeps its own pointer. */
+.p13.is-navigating .p13-viewport { cursor: grab; touch-action: none }
+.p13.is-navigating .p13-viewport:active { cursor: grabbing }
