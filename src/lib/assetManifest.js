@@ -67,6 +67,17 @@ export const ASSETS = [
   // isometric-plus-cutout composite that page shared with Page 01.
   { id: 'commissioning-plate', url: '/assets/lp12/commissioning-complete-bg.webp',
     kind: KIND.image, priority: P3, bytes: 115_000, note: 'Page 04 background, generated' },
+  // The replication spec's `double-arm-lighting-column` (its section 32), which
+  // that document offers only "if the existing GLB cannot be used". The GLB CAN
+  // be used and still is — it is the model the whole assembly runs on — but it
+  // has no lamp arms, and the arms are the one thing the Pole Overview page is
+  // pointing at: its own copy calls the subject an "LP12 small-cell pole with
+  // double-arm luminaire", and the reference render shows two curved arms with
+  // LED heads. So the overview shows this cutout and the 3D column takes over
+  // the moment the installation begins. Bare hardware, deliberately: the page
+  // must not show what the learner has not installed yet.
+  { id: 'pole-column', url: '/assets/lp12/pole-column.webp',
+    kind: KIND.image, priority: P2, bytes: 58_000, note: 'Page 04 column, generated' },
   // The kit's `field-assignment-isometric` and `corridor-test-isometric`.
   // NEITHER IS IN USE, deliberately. Page 02's city has to be the same city
   // Page 03 then asks the learner to find a specific column on — that page

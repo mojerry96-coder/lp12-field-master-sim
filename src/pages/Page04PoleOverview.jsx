@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { urlFor } from '../lib/assetManifest'
 import ReferenceStage from '../reference/ReferenceStage'
 import {
   ArrowRight, ClipboardIcon, ColumnIcon, NodesIcon, PinIcon, PlayIcon,
@@ -85,6 +86,23 @@ export default function Page04PoleOverview({ onBeginInstallation, busy, children
         <div className="fm-brand p04r-brand">
           <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
         </div>
+
+          {/* The column, per §32.
+            §22 prefers the GLB and the GLB is still what the installation
+            runs on — it is mounted right behind this, holding the camera and
+            the model ready. But it has no lamp arms, and this page's own copy
+            names the subject an "LP12 small-cell pole with double-arm
+            luminaire" while the reference draws two curved arms with LED
+            heads. So the overview shows the hardware the page describes, and
+            the live column takes over as the installation opens: this fades
+            with the rest of the overview UI on Begin Installation, by which
+            time the camera has moved in and the studio is up.
+
+            Bare, and that is not an oversight — §35 forbids this page showing
+            anything the learner has still to install, so there is no LP12 on
+            it, no cabling and no marked attachment point. */}
+        <img className="p04r-column" src={urlFor('pole-column')} alt=""
+             aria-hidden="true" draggable={false} decoding="async" />
 
         {/* §24: spatial cues only. No labels, no numbers, no target region —
             it says "inspect this object", not "install here". */}

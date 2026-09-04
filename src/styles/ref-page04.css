@@ -16,6 +16,7 @@
 .fm-page.p04 { background: none }
 
 .p04-viewport { position: absolute; inset: 0 }
+/* opacity for this element is set in "the column" section below. */
 
 /* The street behind the pole: blurred and LIFTED rather than dimmed, because
    here it is the daylight the column stands in. §5's figures. */
@@ -74,6 +75,40 @@
 /* ------------------------------------------------------------- the brand */
 
 .p04r-brand { left: 62px; top: 43px; font-size: 18px }
+
+/* ------------------------------------------------------------- the column
+
+   §21: centre x 1168, top 29, bottom 901, inside a 490 x 875 box. The cutout
+   is 0.50:1, so fitting the 872px height gives 436px of width and the left
+   edge falls at 1168 - 218.
+
+   The live model is held at zero opacity underneath while this is on screen —
+   not unmounted, because it is what reports the model ready and what the
+   camera is already framing. On Begin Installation the two swap: this fades
+   out with the rest of the overview UI, the model fades in, and the camera is
+   moving in on the assembly by the time either has finished. */
+.p04r-column {
+  left: 950px;
+  top: 29px;
+  width: 436px;
+  height: 872px;
+  object-fit: contain;
+  object-position: center top;
+  user-select: none;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+.p04-viewport {
+  opacity: 0;
+  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.p04.is-starting .p04-viewport { opacity: 1 }
+.p04.is-starting .p04r-column { opacity: 0 }
+
+@media (prefers-reduced-motion: reduce) {
+  .p04r-column, .p04-viewport { transition: none }
+}
 
 /* --------------------------------------------------- the inspection guide
 
