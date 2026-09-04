@@ -198,3 +198,9 @@
   .cmv { right: 4vw; left: 4vw; bottom: 3vh; width: auto }
   .p12-confirm { right: 4vw; left: 4vw; bottom: calc(3vh + 230px); min-width: 0 }
 }
+
+.p12-title, .p12-dial { animation: fm-rise 460ms var(--fm-ease) both }
+.p12-dial { animation-delay: 70ms }
+@media (prefers-reduced-motion: reduce) {
+  .p12-title, .p12-dial { animation: none }
+}

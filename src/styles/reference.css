@@ -53,6 +53,11 @@
   z-index: 20;
   overflow: hidden;
   background: #EDF3FB;
+  /* A fade, never a rise: these screens ARE a photograph edge to edge, and a
+     plate that slides in reads as a second image rather than as this one
+     arriving. The whole stage moves as one unit, so nothing inside it can
+     drift out of register with the artboard while it settles. */
+  animation: fm-fade 420ms var(--fm-ease) both;
 }
 
 /* Laid over a live scene rather than a plate: no ground of its own, and the

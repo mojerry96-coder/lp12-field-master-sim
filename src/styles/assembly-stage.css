@@ -150,3 +150,73 @@
   .as-part img { width: 74px; height: 74px }
   .as-feedback { bottom: calc(3.5vh + 150px) }
 }
+
+/* ------------------------------------------------------------- powered on
+
+   The one green on the whole run, and it is earned: the signal cables are what
+   make the cell a live thing rather than six pieces of hardware on a pole, so
+   the step that lands them says so before the page moves on.
+
+   It takes the feedback's slot deliberately. That strip above the tray is
+   already where this page puts anything it has to say, so the confirmation
+   arrives where the learner is looking instead of somewhere new. */
+.as-power {
+  position: absolute;
+  left: 50%;
+  bottom: calc(3.5vh + 190px);
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 15px 26px 15px 22px;
+  border-radius: 999px;
+  color: #0E6B45;
+  animation: as-power-in 420ms var(--fm-ease) both;
+}
+
+.as-power strong {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.as-power-sub {
+  font-size: 14px;
+  font-weight: 500;
+  color: #4E7A66;
+}
+
+/* The indicator itself: a lit lamp, not a tick. It pulses twice and settles,
+   which is what a status LED coming up actually does. */
+.as-power-dot {
+  align-self: center;
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border-radius: 50%;
+  background: #14A86B;
+  box-shadow: 0 0 0 4px rgba(20, 168, 107, 0.18);
+  animation: as-power-lamp 1.5s var(--fm-ease) 2;
+}
+
+@keyframes as-power-in {
+  from { opacity: 0; transform: translate(-50%, 8px) }
+  to   { opacity: 1; transform: translate(-50%, 0) }
+}
+
+@keyframes as-power-lamp {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(20, 168, 107, 0.16) }
+  50%      { box-shadow: 0 0 0 9px rgba(20, 168, 107, 0.05) }
+}
+
+/* ------------------------------------------------------ stage entrance
+
+   The instruction block is keyed on the step, so this replays on every stage
+   change and the title arrives with the camera instead of snapping into place
+   ahead of it. */
+.as-instruction { animation: fm-rise 460ms var(--fm-ease) both }
+
+@media (prefers-reduced-motion: reduce) {
+  .as-power, .as-power-dot, .as-instruction { animation: none }
+}

@@ -57,7 +57,7 @@ function shuffleForStep(cards, seedText) {
 }
 
 export default function AssemblyStagePage({
-  step, steps, title, helper, cards, activePart, busy, feedback,
+  step, steps, title, helper, cards, activePart, busy, feedback, powerOn = false,
   onAttempt, children,
 }) {
   const order = useMemo(() => shuffleForStep(cards, title), [cards, title])
@@ -102,7 +102,12 @@ export default function AssemblyStagePage({
       {/* The live model, full bleed. Everything else is over it. */}
       <div className="as-viewport">{children}</div>
 
-      <div className="as-instruction">
+      {/* Keyed on the step so the entrance replays: this component stays
+          mounted across all six stages, so without a new key React updates the
+          text in place and the animation, having already run once, never runs
+          again — the title would swap instantly under a camera that is still
+          moving. */}
+      <div className="as-instruction" key={title}>
         <p className="as-step"><b>{step}</b> / {steps}</p>
         <h1 className="fm-stage-title as-title">{title}</h1>
         <p className="fm-helper as-helper">{helper}</p>
@@ -137,14 +142,26 @@ export default function AssemblyStagePage({
         ))}
       </div>
 
-      {feedback && (
+      {feedback && !powerOn && (
         <div className="fm-glass as-feedback" role="alert">{feedback}</div>
+      )}
+
+      {/* The cell is live. Held in the same slot the refusal uses, so nothing
+          new appears in a place the learner has not already been reading, and
+          announced rather than only drawn. */}
+      {powerOn && (
+        <div className="fm-glass as-power" role="status">
+          <span className="as-power-dot" aria-hidden="true" />
+          <strong>Antenna powered on</strong>
+          <span className="as-power-sub">Signal cables live</span>
+        </div>
       )}
 
       {/* Announced rather than drawn: the refusal above is visual, and a
           learner using a screen reader needs the same information. */}
       <p ref={liveRef} className="sr-live" aria-live="polite">
-        {busy ? 'Installing' : feedback || ''}
+        {powerOn ? 'Antenna powered on. Signal cables live.'
+          : busy ? 'Installing' : feedback || ''}
       </p>
     </section>
   )

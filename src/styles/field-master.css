@@ -215,3 +215,31 @@ body:has(.fmref-viewport) .fm-back {
   top: calc((100vh - var(--fm-stage-h)) / 2 + 24px);
   right: calc((100vw - min(100vw, 100vh * 1672 / 941)) / 2 + 24px);
 }
+
+/* ---------------------------------------------------------- page entrances
+
+ * Nothing used to animate in. Every screen replaced the last one on the frame
+ * it mounted, which is what made the run feel like a slideshow of finished
+ * layouts rather than one continuous job: the 3D camera would still be easing
+ * toward the new stage while the chrome for that stage was already sitting
+ * there, fully arrived.
+ *
+ * Two shapes, and only two, so the whole simulation moves the same way.
+ * `fm-rise` for chrome that should arrive — panels, titles, controls.
+ * `fm-fade` for anything holding a picture, which must not slide: a plate that
+ * moves is a plate the eye reads as a second, different image.
+ */
+@keyframes fm-rise {
+  from { opacity: 0; transform: translateY(10px) }
+  to   { opacity: 1; transform: none }
+}
+
+@keyframes fm-fade {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The arrival still happens, it just stops travelling. */
+  .fm-page, .fmref-viewport { animation-name: fm-fade !important }
+}

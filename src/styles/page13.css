@@ -113,3 +113,11 @@
    the chrome above it keeps its own pointer. */
 .p13.is-navigating .p13-viewport { cursor: grab; touch-action: none }
 .p13.is-navigating .p13-viewport:active { cursor: grabbing }
+
+/* The dome is the subject here and the camera is already flying to frame it,
+   so the chrome comes in behind that rather than with it. */
+.p13-chip, .p13-actions { animation: fm-rise 500ms var(--fm-ease) both }
+.p13-actions { animation-delay: 90ms }
+@media (prefers-reduced-motion: reduce) {
+  .p13-chip, .p13-actions { animation: none }
+}

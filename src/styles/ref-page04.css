@@ -111,12 +111,28 @@
   transition: opacity 300ms ease;
 }
 
+/* THE SWAP, STAGGERED — and this is the whole point of the delay.
+ *
+ * The cutout and the live model are not the same object: the GLB has no lamp
+ * arms, it is thinner, and its base sits higher in frame. Cross-fading one
+ * into the other showed BOTH at once for a third of a second, two poles of
+ * different widths dissolving through each other — the mispositioned image
+ * this transition was accused of, and fairly.
+ *
+ * So they never overlap. The cutout leaves first, the studio ground comes up
+ * under it, and the live column only starts fading in once the cutout has
+ * gone. The white studio does the work a cross-dissolve could not: it is a
+ * wipe the eye reads as the street being taken away, so the swap happens
+ * inside it rather than in front of the learner. */
 .p04-viewport {
   opacity: 0;
-  transition: opacity 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 460ms cubic-bezier(0.22, 1, 0.36, 1) 340ms;
 }
 .p04.is-starting .p04-viewport { opacity: 1 }
-.p04.is-starting .p04r-column { opacity: 0 }
+.p04.is-starting .p04r-column {
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .p04r-column, .p04-viewport { transition: none }

@@ -46,6 +46,10 @@ const INSTALL_STEP_OF = Object.fromEntries(INSTALL_STEPS.map((s, i) => [s.id, i 
  */
 const ASSEMBLY_PAGES = ['bands', 'rail', 'pivot', 'antenna', 'fasteners', 'connectors']
 
+/** How long the powered-on status holds before the rig stage loads. Long
+ *  enough to read six words without becoming a wait. */
+const POWER_ON_HOLD_MS = 2200
+
 /**
  * Every stage the redesign has reached, assembly or not.
  *
@@ -108,6 +112,8 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
       .filter(Boolean)
   }, [stageId])
   const [notice, setNotice] = useState(null)
+  /* The green power-on confirmation shown when the signal cables land. */
+  const [powerOn, setPowerOn] = useState(false)
   // The Blender look, fetched once. SiteLighting rebuilds the rig and the view
   // transform from it, so the two ends cannot drift apart the way a rig
   // restated in JSX does.
@@ -208,6 +214,20 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
       // Without the second the part is only in place until the next remount.
       useSim.getState().noteStageComplete(stage.title)
       useSim.getState().noteClipComplete(stage.clip)
+
+      /* The cables are the moment the cell becomes a live thing.
+         Every other step ends the same way — the clip stops and the next title
+         replaces the last — which makes securing the signal cables read as the
+         sixth of six chores rather than as the point of all of them. It is the
+         connection that powers the unit, so the page says so before it moves
+         on: the status goes green, holds long enough to be read, and only then
+         does the rig stage load. */
+      if (stage.id === 'connectors') {
+        setPowerOn(true)
+        await new Promise((resolve) => { setTimeout(resolve, POWER_ON_HOLD_MS) })
+        setPowerOn(false)
+      }
+
       // s6: only advance once the animation has clearly completed
       setStageId(STAGES[Math.min(idx + 1, STAGES.length - 1)].id)
     } catch (err) {
@@ -400,6 +420,7 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
            so. `notice` was only ever wired to the rig pages, so on these six a
            failure had nowhere to appear. */
         feedback={refusal?.text || notice || null}
+        powerOn={powerOn}
         onAttempt={attemptPart}
       >
         {canvas}

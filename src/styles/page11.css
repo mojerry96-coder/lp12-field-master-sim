@@ -158,3 +158,10 @@
   .p11-confirm { right: 50%; transform: translateX(50%); bottom: 3vh }
   .p11-notice { bottom: calc(3vh + 76px) }
 }
+
+/* Arrives with the camera rather than ahead of it. See fm-rise. */
+.p11-sheet, .p11-control { animation: fm-rise 460ms var(--fm-ease) both }
+.p11-control { animation-delay: 70ms }
+@media (prefers-reduced-motion: reduce) {
+  .p11-sheet, .p11-control { animation: none }
+}
