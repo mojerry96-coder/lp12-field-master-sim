@@ -359,12 +359,12 @@ export default function LP12TabletTuningScene({ onExit }) {
           onAdjust={adjust}
           onResult={noteResult}
         />
-        {/* The same orientation guard the tablet steps carry. Without it the
-            test is the one screen in the sequence that plays in portrait, and
-            the learner meets the rotate wall on the far side of it instead. */}
-        <div className="lp12-rotate-prompt">
-          <p>Rotate your device to landscape to continue the LP12 tuning sequence.</p>
-        </div>
+        {/* No orientation guard here, unlike the tablet steps. It carried one
+            for consistency with them, but the corridor test is not a tablet —
+            it is a full-screen 3D scene with glass panels over it, and those
+            panels lay out in portrait now. The three tuning steps keep their
+            guard because they are literally a landscape device held in shot;
+            this screen has no such excuse for refusing to draw. */}
         {/* The corridor test is the one page over a dark sky, so the control
             takes the inverted glass or it vanishes into it. */}
         <BackButton onBack={goBack} onDark />

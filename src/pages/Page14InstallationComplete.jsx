@@ -36,12 +36,12 @@ export default function Page14InstallationComplete({
 }) {
   return (
     <ReferenceStage className="p14r" label="Installation complete">
-      <div className="p14r-plate" aria-hidden="true" />
-
       <div className="fm-brand p14r-brand">
         <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
       </div>
 
+      {/* One column, so the grid has two children and can become two rows. */}
+      <div className="p14r-side">
       <div className="p14r-copy">
         <h1 className="p14r-title"><span>FIELD</span> <span>MASTER</span></h1>
         <p className="p14r-sub">LP12 Small-Cell Installation</p>
@@ -51,12 +51,6 @@ export default function Page14InstallationComplete({
         </p>
         <div className="p14r-rule" aria-hidden="true"><i /><b /></div>
         <p className="p14r-tagline">Practice today.<br />A more connected tomorrow.</p>
-      </div>
-
-      {/* The finished install, framed to the reference's viewport. */}
-      <div className="p14r-view">
-        <img src={urlFor('install-plate')}
-             alt="The commissioned LP12 on its lighting column beside the office building" />
       </div>
 
       <section className="fm-glass p14r-card">
@@ -76,6 +70,13 @@ export default function Page14InstallationComplete({
           <ArrowRight size={24} />
         </button>
       </section>
+      </div>
+
+      {/* The finished install, framed to the reference's viewport. */}
+      <div className="p14r-view">
+        <img src={urlFor('install-plate')}
+             alt="The commissioned LP12 on its lighting column beside the office building" />
+      </div>
     </ReferenceStage>
   )
 }

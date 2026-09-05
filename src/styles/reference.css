@@ -61,22 +61,21 @@
 }
 
 /* Laid over a live scene rather than a plate: no ground of its own, and the
-   letterbox bands must not catch the pointer either. */
+   shell must not catch the pointer where there is nothing drawn. Children opt
+   back in, so the panels and buttons stay clickable while the scene behind
+   keeps its own drag and wheel gestures. */
 .fmref-viewport.is-transparent { background: none; pointer-events: none }
 .fmref-viewport.is-transparent .fmref-stage > * { pointer-events: auto }
 
+/* The stage fills its viewport and lays out normally. It was a fixed
+   1672 x 941 box scaled by one transform; see ReferenceStage for why that had
+   to go. Each screen's own stylesheet owns its layout from here. */
 .fmref-stage {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 1672px;
-  height: 941px;
-  transform-origin: center center;
+  position: relative;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
-
-/* Every child is placed in reference pixels from the stage's own corner. */
-.fmref-stage > * { position: absolute }
 
 /* ------------------------------------------------------------- the surface */
 
@@ -199,11 +198,14 @@
 
 /* Background art fills the stage and is never allowed to letterbox inside it:
    the plate is the composition's ground, so it crops rather than shrinks. */
+/* Covers the screen it is on. Nothing is letterboxed any more, so there are no
+   bands to fill and the blurred duplicate that used to fill them is gone. */
 .fmref .fmref-plate {
-  left: 0;
-  top: 0;
-  width: 1672px;
-  height: 941px;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   user-select: none;
   pointer-events: none;
@@ -214,25 +216,3 @@
   .fmref .fm-btn:hover:not(:disabled) { transform: none }
 }
 
-/* The letterbox fill behind the stage. See ReferenceStage for why it exists. */
-.fmref .fmref-bleed {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* Pushed well past recognisable: at 26px of blur the bands still read as
-     content — the bottom of the commissioning plate is road and kerb, so the
-     strip under the artboard came out as a distinctly warm band that looked
-     like a different image rather than the same one continuing. More blur,
-     more scale and a little desaturation turn it into ambient colour, which is
-     what a letterbox fill is for. */
-  transform: scale(1.14);
-  filter: blur(48px) saturate(88%) brightness(1.04);
-  user-select: none;
-  pointer-events: none;
-}
-
-/* Above the fill. */
-.fmref .fmref-stage { z-index: 1 }

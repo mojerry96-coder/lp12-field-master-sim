@@ -61,47 +61,56 @@ export default function Page01Welcome({ reducedMotion, onBegin }) {
 
   return (
     <ReferenceStage className={`p01r${reducedMotion ? ' is-reduced' : ''}`}
-                    label="Field Master — LP12 Small-Cell Installation"
-                    plate={urlFor('landing-plate')}>
+                    label="Field Master — LP12 Small-Cell Installation">
       <img className="fmref-plate p01r-plate" src={urlFor('landing-plate')}
            alt="An LP12 small-cell antenna on a lighting column above Awolowo Way, Ikeja" />
       <div className="p01r-wash" aria-hidden="true" />
 
-      <div className="fm-brand p01r-brand">
-        <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
-      </div>
+      {/* Three rows rather than nine absolutely placed siblings. The kit's
+          coordinates put the brand top-left and the campaign line top-right,
+          the copy and its CTA in the middle, the counter bottom-left and the
+          footer bottom-right — which is a header, a body and a footer, and
+          says so now. That is what lets the whole thing reflow. */}
+      <header className="p01r-top">
+        <div className="fm-brand p01r-brand">
+          <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
+        </div>
+        <p className="p01r-campaign">Real skills<br />greater<br />impact</p>
+      </header>
 
-      <div className="p01r-copy">
-        {/* Two block spans rather than a <br>: the break is visual only, and a
-            <br> here makes the accessible name read "FIELDMASTER". */}
-        <h1 className="p01r-title"><span>FIELD</span> <span>MASTER</span></h1>
-        <p className="p01r-sub">LP12 Small-Cell Installation</p>
-        <p className="p01r-where">
-          <PinIcon size={26} />
-          <span>Awolowo Way<i /> · <i />Ikeja, Lagos</span>
-        </p>
-        <div className="p01r-rule" aria-hidden="true"><i /><b /></div>
-        <p className="p01r-tagline">Practice today.<br />A more connected tomorrow.</p>
-      </div>
+      <main className="p01r-main">
+        <div className="p01r-copy">
+          {/* Two block spans rather than a <br>: the break is visual only, and a
+              <br> here makes the accessible name read "FIELDMASTER". */}
+          <h1 className="p01r-title"><span>FIELD</span> <span>MASTER</span></h1>
+          <p className="p01r-sub">LP12 Small-Cell Installation</p>
+          <p className="p01r-where">
+            <PinIcon size={26} />
+            <span>Awolowo Way<i /> · <i />Ikeja, Lagos</span>
+          </p>
+          <div className="p01r-rule" aria-hidden="true"><i /><b /></div>
+          <p className="p01r-tagline">Practice today.<br />A more connected tomorrow.</p>
+        </div>
 
-      <button className="fm-glass fm-btn p01r-cta" type="button"
-              onClick={begin} disabled={waiting}>
-        <span className="p01r-play" aria-hidden="true"><PlayIcon size={28} /></span>
-        <span className="p01r-cta-label">
-          {waiting ? `Preparing… ${Math.round(progress * 100)}%` : 'Begin Simulation'}
-        </span>
-        <ArrowRight size={30} />
-      </button>
+        <button className="fm-glass fm-btn p01r-cta" type="button"
+                onClick={begin} disabled={waiting}>
+          <span className="p01r-play" aria-hidden="true"><PlayIcon size={28} /></span>
+          <span className="p01r-cta-label">
+            {waiting ? `Preparing… ${Math.round(progress * 100)}%` : 'Begin Simulation'}
+          </span>
+          <ArrowRight size={30} />
+        </button>
 
-      <p className="p01r-caption">Interactive Network Installation Simulation</p>
+        <p className="p01r-caption">Interactive Network Installation Simulation</p>
+      </main>
 
-      <div className="p01r-progress" aria-hidden="true">
-        <span>01 / 09</span>
-        <i className="is-on" /><i /><i /><i /><i /><i /><i /><i />
-      </div>
-
-      <p className="p01r-campaign">Real skills<br />greater<br />impact</p>
-      <p className="p01r-footer">Mobile networks<br />stronger communities</p>
+      <footer className="p01r-bottom">
+        <div className="p01r-progress" aria-hidden="true">
+          <span>01 / 09</span>
+          <i className="is-on" /><i /><i /><i /><i /><i /><i /><i />
+        </div>
+        <p className="p01r-footer">Mobile networks<br />stronger communities</p>
+      </footer>
     </ReferenceStage>
   )
 }

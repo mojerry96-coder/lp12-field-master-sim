@@ -3,33 +3,42 @@
 /* The generated plate already carries the depth of field the kit asked for —
    hardware sharp on the right, avenue soft behind — so nothing is filtered. */
 
-.p19r-wash {
-  left: 0;
-  top: 0;
-  width: 900px;
-  height: 941px;
-  background: linear-gradient(90deg,
-    rgba(244, 248, 253, 0.72) 0%,
-    rgba(244, 248, 253, 0.40) 62%,
-    rgba(244, 248, 253, 0) 100%);
+/* The stage: one card held in the left column over a full-bleed plate. */
+.p19r {
+  display: flex;
+  align-items: center;
+  padding: clamp(18px, 3.4vw, 56px);
 }
+
+.p19r-wash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    rgba(244, 248, 253, 0.78) 0%,
+    rgba(244, 248, 253, 0.44) 44%,
+    rgba(244, 248, 253, 0) 64%);
+}
+
+.p19r > :not(.p19r-plate):not(.p19r-wash) { position: relative; z-index: 2 }
 
 /* ---------------------------------------------------------------- the card */
 
 .fmref .p19r-card {
-  left: 87px;
-  top: 95px;
-  width: 626px;
-  height: 731px;
-  padding: 52px;
-  border-radius: 31px;
+  /* 626 of 1672, and as tall as its own contents rather than the kit's 731. */
+  width: min(626px, 100%);
+  padding: clamp(22px, 3.2vw, 52px);
+  border-radius: clamp(18px, 1.9vw, 31px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.p19r-brand { position: static; font-size: 17px }
+.p19r-brand { position: static; font-size: clamp(13px, 1.1vw, 17px) }
 
 .p19r-title {
-  margin: 26px 0 0;
-  font-size: 54px;
+  margin: clamp(14px, 1.6vw, 26px) 0 0;
+  font-size: clamp(30px, 3.4vw, 54px);
   line-height: 1.02;
   font-weight: 700;
   letter-spacing: -0.035em;
@@ -38,8 +47,8 @@
 }
 
 .p19r-score-label {
-  margin: 34px 0 0;
-  font-size: 15px;
+  margin: clamp(18px, 2.1vw, 34px) 0 0;
+  font-size: clamp(12px, 1vw, 15px);
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -55,14 +64,14 @@
   gap: 14px;
 }
 .p19r-score strong {
-  font-size: 92px;
+  font-size: clamp(52px, 5.8vw, 92px);
   font-weight: 700;
   line-height: 1;
   letter-spacing: -0.045em;
   color: var(--fm-blue);
 }
 .p19r-outof {
-  font-size: 40px;
+  font-size: clamp(24px, 2.5vw, 40px);
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--fm-navy);
@@ -83,33 +92,33 @@
 }
 
 .p19r-where {
-  margin: 26px 0 0;
+  margin: clamp(14px, 1.6vw, 26px) 0 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 19px;
+  font-size: clamp(14px, 1.25vw, 19px);
   font-weight: 500;
   color: var(--fm-text-secondary);
 }
 .p19r-where svg { color: var(--fm-blue); flex: none }
 .p19r-where i { display: inline-block; width: 4px }
 
-.p19r-line { margin: 30px 0 0 }
+.p19r-line { margin: clamp(16px, 1.9vw, 30px) 0 0; width: 100% }
 
 /* Full-width pills, stacked. */
 .fmref .p19r-action {
-  margin: 22px 0 0;
+  margin: clamp(12px, 1.4vw, 22px) 0 0;
   width: 100%;
-  height: 76px;
-  padding: 0 24px;
+  height: clamp(56px, 4.9vw, 76px);
+  padding: 0 clamp(16px, 1.6vw, 24px);
   justify-content: flex-start;
-  gap: 16px;
-  font-size: 21px;
+  gap: clamp(11px, 1.1vw, 16px);
+  font-size: clamp(15px, 1.4vw, 21px);
 }
 .p19r-action-glyph {
   flex: none;
-  width: 48px;
-  height: 48px;
+  width: clamp(34px, 3.1vw, 48px);
+  height: clamp(34px, 3.1vw, 48px);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -121,3 +130,21 @@
   background: rgba(19, 36, 61, 0.07);
 }
 .p19r-action-label { flex: 1; text-align: left }
+
+/* Narrow: the card takes the width and sits low, so the hardware the score is
+   about stays visible above it. */
+@media (max-width: 860px) {
+  .p19r { align-items: flex-end }
+  .p19r-wash {
+    background: linear-gradient(180deg,
+      rgba(244, 248, 253, 0) 0%,
+      rgba(244, 248, 253, 0.36) 40%,
+      rgba(244, 248, 253, 0.88) 72%,
+      rgba(244, 248, 253, 0.96) 100%);
+  }
+  .fmref .p19r-card { width: 100% }
+  /* Crop toward the hardware: a centre crop of a 16:9 plate into a phone frame
+     throws the antenna off the right edge and leaves a palm tree as the
+     subject of the commissioning screen. */
+  .p19r-plate { object-position: 66% 50% }
+}

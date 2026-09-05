@@ -286,6 +286,44 @@
   .network-test-continue { width: 120px; font-size: 14px }
 }
 
+/* Narrow screens.
+   The three glass surfaces are placed by percentage off opposite corners,
+   which works while the frame is wide and collides the moment it is not: at
+   390 the title card and the result panel were drawn on top of each other and
+   the dock ran past both edges. They stack instead — title across the top,
+   results under it, dock full width at the foot — and the title loses its
+   fixed 360px floor, which was itself wider than the screen. */
+@media (max-width: 760px) {
+  .network-test-title {
+    left: 12px;
+    right: 12px;
+    top: 12px;
+    width: auto;
+    min-height: 0;
+    gap: 14px;
+    padding: 13px 16px;
+    border-radius: 18px;
+  }
+  .live-result-panel {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 96px;
+    width: auto;
+  }
+  .result-row { height: 48px }
+
+  .network-test-dock {
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    transform: none;
+    gap: 10px;
+  }
+  .network-test-progress { width: auto; flex: 1; max-width: none; min-height: 52px }
+  .network-test-continue { width: auto; flex: none; padding: 0 16px }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .result-row.is-testing .result-row__status i { animation-duration: 6s }
   .network-test-continue:not(:disabled):hover { transform: none }

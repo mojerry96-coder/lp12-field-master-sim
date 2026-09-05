@@ -74,7 +74,21 @@
 
 /* ------------------------------------------------------------- the brand */
 
-.p04r-brand { left: 62px; top: 43px; font-size: 18px }
+/* The stage: brand pinned to the corner, panel held in the left column. */
+.p04r {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(18px, 3.8vw, 64px);
+}
+
+.p04r-brand {
+  position: absolute;
+  left: clamp(18px, 3.8vw, 62px);
+  top: clamp(16px, 2.6vw, 43px);
+  font-size: clamp(13px, 1.2vw, 18px);
+}
 
 /* ------------------------------------------------------------- the column
 
@@ -88,10 +102,15 @@
    out with the rest of the overview UI, the model fades in, and the camera is
    moving in on the assembly by the time either has finished. */
 .p04r-column {
-  left: 950px;
-  top: 29px;
-  width: 436px;
-  height: 872px;
+  /* The specification's centre x 1168 of 1672 and top 29 of 941, as fractions,
+     so the cutout tracks the live column behind it — the camera bias that
+     frames the 3D pole is itself a fraction of frame width, so both move
+     together at any window size. */
+  position: absolute;
+  left: 56.8%;
+  top: 3.1%;
+  width: 26.1%;
+  height: 92.7%;
   object-fit: contain;
   object-position: center top;
   user-select: none;
@@ -143,10 +162,11 @@
    §24. Faint, unlabelled, and deliberately ambiguous: three nodes on a dotted
    path that correspond to nothing the learner will be marked on. */
 .p04r-guide {
-  left: 1240px;
-  top: 77px;
-  width: 220px;
-  height: 760px;
+  position: absolute;
+  left: 74.2%;
+  top: 8.2%;
+  width: 13.2%;
+  height: 80.8%;
   opacity: 0.42;
   pointer-events: none;
 }
@@ -156,12 +176,15 @@
    §8/§9: white optical material, not a tinted card. Opaque enough that the
    city behind it cannot interfere with the text. */
 .p04r-panel {
-  left: 65px;
-  top: 111px;
-  width: 575px;
-  height: 767px;
-  padding: 42px 51px 33px;
-  border-radius: 29px;
+  /* 575 of 1672, and as tall as its own contents rather than the kit's fixed
+     767: a fixed height clips the rows the moment the type stops scaling with
+     the window. */
+  width: min(575px, 100%);
+  padding: clamp(22px, 2.9vw, 42px) clamp(22px, 3.1vw, 51px) clamp(20px, 2.2vw, 33px);
+  border-radius: clamp(18px, 1.8vw, 29px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   border: 1px solid rgba(255, 255, 255, 0.92);
   background: linear-gradient(135deg,
     rgba(255, 255, 255, 0.91) 0%,
@@ -180,7 +203,7 @@
    §10: two lines, never combined. POLE navy, OVERVIEW on the blue gradient. */
 .p04r-title {
   margin: 0;
-  font-size: 88px;
+  font-size: clamp(38px, 5.6vw, 88px);
   line-height: 0.91;
   font-weight: 650;
   letter-spacing: -0.065em;
@@ -197,9 +220,9 @@
 }
 
 .p04r-sub {
-  margin: 21px 0 0;
+  margin: clamp(12px, 1.4vw, 21px) 0 0;
   color: #172942;
-  font-size: 25px;
+  font-size: clamp(17px, 1.65vw, 25px);
   line-height: 1.2;
   font-weight: 500;
   letter-spacing: -0.03em;
@@ -211,7 +234,7 @@
   position: static;
   width: 100%;
   height: 1px;
-  margin-top: 17px;
+  margin-top: clamp(12px, 1.2vw, 17px);
   background: rgba(37, 68, 109, 0.12);
 }
 .p04r-rule.is-location { margin-top: 4px }
@@ -220,20 +243,20 @@
 
    §13: instructional, not answer-bearing. §14/§15/§16 for the metrics. */
 
-.p04r-rows { position: static; margin-top: 17px }
+.p04r-rows { position: static; margin-top: clamp(12px, 1.2vw, 17px); width: 100% }
 
 .p04r-row {
   position: static;
-  min-height: 72px;
+  min-height: clamp(52px, 4.9vw, 72px);
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: clamp(12px, 1.4vw, 20px);
 }
 
 .p04r-row-icon {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
+  width: clamp(32px, 3vw, 44px);
+  height: clamp(32px, 3vw, 44px);
+  flex: none;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -248,7 +271,7 @@
 .p04r-row strong {
   display: block;
   color: #18304E;
-  font-size: 16px;
+  font-size: clamp(13px, 1.1vw, 16px);
   line-height: 1.25;
   font-weight: 650;
   letter-spacing: -0.015em;
@@ -256,7 +279,7 @@
 .p04r-row p {
   margin: 3px 0 0;
   color: #60728C;
-  font-size: 14px;
+  font-size: clamp(11.5px, 0.96vw, 14px);
   line-height: 1.35;
   font-weight: 430;
   letter-spacing: -0.01em;
@@ -267,13 +290,13 @@
    §17: context, not an answer. */
 .p04r-where {
   position: static;
-  height: 55px;
+  height: clamp(40px, 3.7vw, 55px);
   margin: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   color: #1478FF;
-  font-size: 17px;
+  font-size: clamp(13px, 1.15vw, 17px);
   font-weight: 550;
   letter-spacing: -0.015em;
 }
@@ -285,14 +308,13 @@
    §18-§20: a white glass pill, not a solid blue button. The blue circle is the
    interaction accent and it carries the page's one strong colour. */
 .p04r-begin {
-  left: 50px;
-  bottom: 32px;
-  width: 477px;
-  height: 92px;
-  padding: 0 27px 0 12px;
+  margin-top: clamp(16px, 2vw, 30px);
+  width: 100%;
+  height: clamp(58px, 6.2vw, 92px);
+  padding: 0 clamp(16px, 1.8vw, 27px) 0 clamp(8px, 0.9vw, 12px);
   display: flex;
   align-items: center;
-  gap: 27px;
+  gap: clamp(14px, 1.8vw, 27px);
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.96);
   background: linear-gradient(135deg,
@@ -316,9 +338,9 @@
 .p04r-begin:focus-visible { outline: 2px solid #1478FF; outline-offset: 3px }
 
 .p04r-play {
-  width: 72px;
-  height: 72px;
-  flex: 0 0 72px;
+  width: clamp(44px, 4.8vw, 72px);
+  height: clamp(44px, 4.8vw, 72px);
+  flex: none;
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -330,7 +352,7 @@
 }
 
 .p04r-begin > strong {
-  font-size: 20px;
+  font-size: clamp(15px, 1.4vw, 20px);
   font-weight: 650;
   letter-spacing: -0.025em;
 }
@@ -343,4 +365,14 @@
   .p04.is-starting .p04r-guide,
   .p04r-begin { transition: none }
   .p04r-begin:hover:not(:disabled) { transform: none }
+}
+
+/* Narrow: the panel sits at the foot over the full width and the column moves
+   up out from behind it, so the pole is still the thing being inspected rather
+   than something hidden by its own description. */
+@media (max-width: 860px) {
+  .p04r { justify-content: flex-end }
+  .fmref .p04r-panel { width: 100% }
+  .p04r-column { left: 50%; transform: translateX(-50%); top: 1%; height: 58% }
+  .p04r-guide { display: none }
 }

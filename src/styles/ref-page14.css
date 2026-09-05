@@ -1,26 +1,44 @@
 /* PAGE 03 (kit) — Installation Complete. Against 03-installation-complete.png. */
 
-/* A flat bright ground rather than a plate: the reference's left column is
-   open pale blue-white, and the only picture on the page is the viewport. */
-.p14r-plate {
-  left: 0;
-  top: 0;
-  width: 1672px;
-  height: 941px;
+/* A two-column editorial page: copy and result card on the left, the finished
+   install photographed on the right. The kit's coordinates — copy at 51/109,
+   card at 50/443 measuring 470 x 396, viewport at 577/104 measuring 1022 x 750
+   — are proportions now rather than pixels, and below 900 the two columns
+   become two rows. */
+
+.p14r {
+  display: grid;
+  grid-template-columns: minmax(0, 470fr) minmax(0, 1022fr);
+  align-items: center;
+  gap: clamp(20px, 3.4vw, 57px);
+  padding: clamp(18px, 3vw, 50px);
   background:
     radial-gradient(120% 90% at 12% 8%, #FFFFFF 0%, rgba(255, 255, 255, 0) 62%),
     linear-gradient(160deg, #EFF5FD 0%, #E4EEFA 100%);
 }
 
-.p14r-brand { left: 53px; top: 49px; font-size: 18px }
+.p14r-brand {
+  position: absolute;
+  left: clamp(18px, 3.2vw, 53px);
+  top: clamp(16px, 2.6vw, 49px);
+  font-size: clamp(13px, 1.2vw, 18px);
+}
 
 /* ---------------------------------------------------------- the left column */
 
-.p14r-copy { left: 51px; top: 109px; width: 480px }
+.p14r-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(16px, 2.4vw, 34px);
+  min-width: 0;
+}
+
+.p14r-copy { min-width: 0 }
 
 .p14r-title {
   margin: 0;
-  font-size: 76px;
+  font-size: clamp(34px, 4.6vw, 76px);
   line-height: 0.9;
   font-weight: 800;
   letter-spacing: -0.035em;
@@ -30,32 +48,32 @@
 .p14r-title span:last-child { color: var(--fm-blue) }
 
 .p14r-sub {
-  margin: 20px 0 0;
-  font-size: 28px;
+  margin: clamp(10px, 1.2vw, 20px) 0 0;
+  font-size: clamp(17px, 1.7vw, 28px);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--fm-text);
 }
 
 .p14r-where {
-  margin: 14px 0 0;
+  margin: clamp(8px, 0.9vw, 14px) 0 0;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 17px;
+  font-size: clamp(13px, 1.15vw, 17px);
   font-weight: 500;
   color: var(--fm-text-secondary);
 }
 .p14r-where svg { color: var(--fm-blue); flex: none }
 .p14r-where i { display: inline-block; width: 4px }
 
-.p14r-rule { margin: 20px 0 0; display: flex; align-items: center; gap: 5px }
-.p14r-rule i { width: 40px; height: 4px; border-radius: 999px; background: var(--fm-blue) }
-.p14r-rule b { width: 38px; height: 4px; border-radius: 999px; background: rgba(30, 61, 104, 0.16) }
+.p14r-rule { margin: clamp(12px, 1.4vw, 20px) 0 0; display: flex; align-items: center; gap: 5px }
+.p14r-rule i { width: clamp(26px, 2.4vw, 40px); height: 4px; border-radius: 999px; background: var(--fm-blue) }
+.p14r-rule b { width: clamp(24px, 2.3vw, 38px); height: 4px; border-radius: 999px; background: rgba(30, 61, 104, 0.16) }
 
 .p14r-tagline {
-  margin: 18px 0 0;
-  font-size: 13px;
+  margin: clamp(10px, 1.2vw, 18px) 0 0;
+  font-size: clamp(10px, 0.85vw, 13px);
   font-weight: 600;
   line-height: 1.66;
   letter-spacing: 0.2em;
@@ -65,16 +83,14 @@
 
 /* -------------------------------------------------------- the media viewport
 
-   The kit's rectangle, and the live scene is clipped to it. `isolation` gives
-   the rounded corners something to clip against when the child paints a WebGL
-   canvas, which otherwise ignores the parent's border-radius in some engines. */
+   The kit's rectangle, holding its 1022:750 shape. `isolation` gives the
+   rounded corners something to clip against. */
 
 .p14r-view {
-  left: 577px;
-  top: 104px;
-  width: 1022px;
-  height: 750px;
-  border-radius: 32px;
+  position: relative;
+  aspect-ratio: 1022 / 750;
+  max-height: 100%;
+  border-radius: clamp(16px, 2vw, 32px);
   overflow: hidden;
   isolation: isolate;
   background: linear-gradient(160deg, #F4F8FD 0%, #E8F0FA 100%);
@@ -93,17 +109,16 @@
 /* -------------------------------------------------------------- the card */
 
 .fmref .p14r-card {
-  left: 50px;
-  top: 443px;
-  width: 470px;
-  height: 396px;
-  padding: 38px 40px;
-  border-radius: 29px;
+  width: 100%;
+  padding: clamp(20px, 2.4vw, 38px) clamp(20px, 2.5vw, 40px);
+  border-radius: clamp(18px, 1.8vw, 29px);
+  display: flex;
+  flex-direction: column;
 }
 
 .p14r-card-title {
   margin: 0;
-  font-size: 42px;
+  font-size: clamp(26px, 2.6vw, 42px);
   line-height: 1.04;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -112,54 +127,54 @@
 }
 
 .p14r-card-sub {
-  margin: 14px 0 0;
-  font-size: 17px;
+  margin: clamp(8px, 0.9vw, 14px) 0 0;
+  font-size: clamp(13px, 1.15vw, 17px);
   font-weight: 400;
   color: var(--fm-text-secondary);
 }
 
-/* The stack below has to finish above the CTA, which is pinned 36px off the
-   bottom of a card whose height the kit fixes at 396px. At the authored
-   rhythm the second metric row ran to y=747 against a button top of y=736, so
-   "Downtilt" sat underneath the button. These three margins are tightened by
-   24px in total, which clears it with room to spare and keeps the kit's
-   proportions — the alternative was growing the card past the specified
-   height. */
-.p14r-card-line { margin: 20px 0 0 }
+.p14r-card-line { margin: clamp(13px, 1.4vw, 20px) 0 0 }
 
 /* Values darker and heavier than their labels, per the kit. */
-.p14r-metrics { margin: 16px 0 0 }
+.p14r-metrics { margin: clamp(10px, 1.1vw, 16px) 0 0 }
 .p14r-metrics > div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  padding: 5px 0;
+  padding: clamp(4px, 0.4vw, 5px) 0;
 }
-.p14r-metrics dt { font-size: 18px; font-weight: 400; color: var(--fm-text-secondary) }
+.p14r-metrics dt { font-size: clamp(14px, 1.2vw, 18px); font-weight: 400; color: var(--fm-text-secondary) }
 .p14r-metrics dd {
   margin: 0;
-  font-size: 20px;
+  font-size: clamp(15px, 1.35vw, 20px);
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--fm-navy);
 }
 
+/* In flow now: the card is as tall as its contents, so there is no fixed
+   bottom to pin against — and pinning is what put the Downtilt row 11px under
+   this button when the type stopped scaling with the window. */
 .fmref .p14r-continue {
-  position: absolute;
-  left: 40px;
-  right: 40px;
-  bottom: 36px;
-  width: auto;
-  height: 66px;
-  padding: 0 26px;
-  font-size: 19px;
+  margin-top: clamp(16px, 1.8vw, 26px);
+  width: 100%;
+  height: clamp(50px, 4.6vw, 66px);
+  padding: 0 clamp(18px, 1.8vw, 26px);
+  font-size: clamp(13px, 1.2vw, 19px);
+}
+/* One line: the card is a third of the frame now, and "Continue to Network
+   Tuning" wrapped inside it at the kit's size. */
+.fmref .p14r-continue > span { white-space: nowrap }
+
+/* Narrow: two rows instead of two columns, photograph first. */
+@media (max-width: 900px) {
+  .p14r {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    padding-top: clamp(52px, 12vw, 90px);
+  }
+  .p14r-view { order: -1; max-height: 38vh }
+  .p14r-title { font-size: clamp(30px, 9vw, 52px) }
 }
 
-/* The letterbox bands. This page's ground is a gradient rather than a
-   photograph, so it takes the gradient rather than ReferenceStage's blurred
-   plate — same result, no band of a different colour above and below. */
-.fmref-viewport:has(.p14r) {
-  background:
-    radial-gradient(120% 90% at 12% 8%, #FFFFFF 0%, rgba(255, 255, 255, 0) 62%),
-    linear-gradient(160deg, #EFF5FD 0%, #E4EEFA 100%);
-}

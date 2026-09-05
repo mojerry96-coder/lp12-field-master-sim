@@ -1,39 +1,74 @@
-/* PAGE 01 — Landing. Authored against 01-landing-page.png at 1672 x 941.
-   Every number here is a reference pixel; the stage scales them as one. */
+/* PAGE 01 — Landing.
+ *
+ * Authored against 01-landing-page.png, but no longer as its pixels. The
+ * artboard is 1672 x 941 and every number here started life as a coordinate in
+ * it; they are proportions, clamps and flow now. See ReferenceStage for why the
+ * scaled artboard had to go — in short it was width-bound at every real window
+ * size, threw the spare height away as empty band, and shrank 14px copy to
+ * 8.6px rather than reflowing it.
+ *
+ * The composition survives the change because it was always a three-row idea:
+ * brand and campaign line across the top, the title block and its CTA in the
+ * middle, counter and footer across the bottom, all over a full-bleed
+ * photograph. That is a header/main/footer grid, and it says so now.
+ */
 
-/* ---------------------------------------------------------------- the plate
-
-   The kit's single generated frame is not available, so the composition is
-   assembled from the two layers this app ships: the city soft and washed out
-   behind the type, the LP12 sharp on the right. The wash is a horizontal
-   gradient rather than a panel because the kit is explicit that the title sits
-   on open space, not on a card. */
-
-/* The generated plate, unfiltered: it was composed with its own haze on the
-   left, and blurring it again would soften the hardware it exists to show. */
-.p01r-plate { object-position: center }
-
-.p01r-wash {
-  left: 0;
-  top: 0;
-  width: 1100px;
-  height: 941px;
-  background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.90) 0%,
-    rgba(255, 255, 255, 0.78) 40%,
-    rgba(255, 255, 255, 0.40) 72%,
-    rgba(255, 255, 255, 0) 100%);
+.p01r {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  /* The kit's 82-84px margin, as a proportion that survives a phone. */
+  padding: clamp(18px, 4.4vw, 74px);
+  gap: clamp(12px, 2vw, 28px);
 }
 
-/* ---------------------------------------------------------------- the copy */
+/* ---------------------------------------------------------------- the plate */
 
-.p01r-brand { left: 84px; top: 68px; font-size: 19px }
+.p01r-plate { object-position: 50% 50% }
 
-.p01r-copy { left: 82px; top: 163px; width: 560px }
+/* The readability wash. On a wide screen it is a left-to-right gradient
+   holding the copy column open, exactly as the kit draws it. On a narrow one
+   the copy sits over the whole photograph instead, so it becomes a vertical
+   veil — same job, different geometry. */
+.p01r-wash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(255, 255, 255, 0.86) 26%,
+    rgba(255, 255, 255, 0.52) 50%,
+    rgba(255, 255, 255, 0) 72%);
+}
+
+/* Everything else sits above the wash. */
+.p01r > :not(.p01r-plate):not(.p01r-wash) { position: relative; z-index: 2 }
+
+/* ------------------------------------------------------------------ header */
+
+.p01r-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.p01r-brand { font-size: clamp(13px, 1.25vw, 19px) }
+
+/* -------------------------------------------------------------------- main */
+
+.p01r-main {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* The kit's copy column is 560 of 1672 — a third. It holds that share on a
+     wide screen and takes the full width once there is no room for a column. */
+  max-width: min(620px, 46%);
+}
 
 .p01r-title {
   margin: 0;
-  font-size: 98px;
+  font-size: clamp(40px, 6.6vw, 98px);
   line-height: 0.88;
   font-weight: 800;
   letter-spacing: -0.035em;
@@ -42,83 +77,73 @@
 .p01r-title span:first-child { color: var(--fm-navy) }
 .p01r-title span:last-child { color: var(--fm-blue) }
 
-/* Absolute rather than flowed, so the block's own coordinates hold whatever
-   the title does. 407 and 470 are measured from the stage, not from the h1. */
 .p01r-sub {
-  position: absolute;
-  left: 0;
-  top: 244px;            /* 407 - 163 */
-  margin: 0;
-  font-size: 34px;
+  margin: clamp(14px, 1.8vw, 26px) 0 0;
+  font-size: clamp(18px, 2.3vw, 34px);
   font-weight: 500;
   letter-spacing: -0.02em;
   color: var(--fm-text);
-  white-space: nowrap;
 }
 
 .p01r-where {
-  position: absolute;
-  left: 0;
-  top: 307px;            /* 470 - 163 */
-  margin: 0;
+  margin: clamp(8px, 1.1vw, 16px) 0 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 23px;
+  font-size: clamp(14px, 1.55vw, 23px);
   font-weight: 500;
   color: var(--fm-text-secondary);
-  white-space: nowrap;
 }
-.p01r-where svg { color: var(--fm-blue); flex: none }
+.p01r-where svg {
+  color: var(--fm-blue);
+  flex: none;
+  width: clamp(17px, 1.75vw, 26px);
+  height: clamp(17px, 1.75vw, 26px);
+}
 /* Spacers around the middot: the reference sets it wide of both names. */
 .p01r-where i { display: inline-block; width: 5px }
 
 .p01r-rule {
-  position: absolute;
-  left: 2px;
-  top: 367px;
+  margin: clamp(12px, 1.6vw, 22px) 0 0;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.p01r-rule i { width: 54px; height: 5px; border-radius: 999px; background: var(--fm-blue) }
-.p01r-rule b { width: 52px; height: 5px; border-radius: 999px; background: rgba(30, 61, 104, 0.16) }
+.p01r-rule i,
+.p01r-rule b { height: 5px; border-radius: 999px }
+.p01r-rule i { width: clamp(34px, 3.2vw, 54px); background: var(--fm-blue) }
+.p01r-rule b { width: clamp(32px, 3.1vw, 52px); background: rgba(30, 61, 104, 0.16) }
 
 .p01r-tagline {
-  position: absolute;
-  left: 0;
-  top: 392px;            /* 555 - 163 */
-  margin: 0;
-  font-size: 16px;
+  margin: clamp(10px, 1.3vw, 18px) 0 0;
+  font-size: clamp(10px, 1.05vw, 16px);
   font-weight: 600;
   line-height: 1.62;
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--fm-text-secondary);
-  white-space: nowrap;
 }
 
-/* ----------------------------------------------------------------- the CTA
+/* --------------------------------------------------------------------- CTA
 
    The kit's note: the circular play control is visually stronger than the rest
    of the pill. So the disc carries the blue and the shadow, and the pill around
    it stays white glass with a navy label. */
 
 .fmref .p01r-cta {
-  left: 83px;
-  top: 636px;
-  width: 454px;
-  height: 114px;
-  padding: 0 30px 0 18px;
+  margin-top: clamp(20px, 3vw, 46px);
+  width: min(454px, 100%);
+  height: clamp(62px, 7.4vw, 114px);
+  padding: 0 clamp(16px, 2vw, 30px) 0 clamp(9px, 1.2vw, 18px);
   border-radius: 999px;
   justify-content: flex-start;
-  gap: 22px;
+  gap: clamp(12px, 1.5vw, 22px);
 }
 
 .fmref .p01r-play {
   flex: none;
-  width: 78px;
-  height: 78px;
+  width: clamp(44px, 5.1vw, 78px);
+  height: clamp(44px, 5.1vw, 78px);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -129,74 +154,83 @@
     0 10px 24px rgba(16, 106, 255, 0.38);
 }
 /* Optically centred: a triangle's mass sits left of its bounding box. */
-.p01r-play svg { margin-left: 4px }
+.p01r-play svg {
+  margin-left: 4px;
+  width: clamp(17px, 1.9vw, 28px);
+  height: clamp(17px, 1.9vw, 28px);
+}
 
 .fmref .p01r-cta-label {
   flex: 1;
   text-align: left;
-  font-size: 26px;
+  font-size: clamp(15px, 1.75vw, 26px);
   font-weight: 600;
   letter-spacing: -0.02em;
   color: var(--fm-navy);
 }
-.fmref .p01r-cta > svg:last-child { flex: none; color: var(--fm-navy) }
+.fmref .p01r-cta > svg:last-child {
+  flex: none;
+  color: var(--fm-navy);
+  width: clamp(19px, 2vw, 30px);
+  height: clamp(19px, 2vw, 30px);
+}
 
 .p01r-caption {
-  left: 86px;
-  top: 778px;
-  margin: 0;
-  font-size: 17px;
+  margin: clamp(10px, 1.4vw, 20px) 0 0;
+  font-size: clamp(12px, 1.15vw, 17px);
   font-weight: 500;
   color: var(--fm-text-tertiary);
 }
 
-/* ------------------------------------------------------- counter and copy */
+/* ------------------------------------------------------------------ footer */
+
+.p01r-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
 
 .p01r-progress {
-  left: 84px;
-  bottom: 74px;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: clamp(6px, 0.6vw, 9px);
 }
 .p01r-progress span {
-  margin-right: 9px;
-  font-size: 15px;
+  margin-right: clamp(6px, 0.6vw, 9px);
+  font-size: clamp(12px, 1vw, 15px);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--fm-text-secondary);
 }
 .p01r-progress i {
-  width: 42px;
+  width: clamp(20px, 2.6vw, 42px);
   height: 4px;
   border-radius: 999px;
   background: rgba(30, 61, 104, 0.17);
 }
 .p01r-progress i.is-on { background: var(--fm-blue) }
 
-/* The two campaign lines. Letterspaced small caps, right-aligned, and the
-   top one carries the reference's vertical rule on its left. */
+/* --------------------------------------------------------- the campaign copy
+
+   Letterspaced small caps, right-aligned, the top one carrying the reference's
+   vertical rule on its left.
+
+   Both sit ON the photograph rather than on a pale ground, and the measured
+   contrast differs sharply between them: the top line falls on sky and pale
+   tower and clears AA on its own, while the bottom one falls across the
+   coaxial cables — luminance 3 — where navy measures 1.31:1. That one keeps a
+   wash behind it; the other does not need one. */
+
 .p01r-campaign,
 .p01r-footer {
   margin: 0;
-  font-size: 14px;
+  font-size: clamp(9px, 0.85vw, 14px);
   font-weight: 600;
   line-height: 1.72;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   text-align: right;
-  color: var(--fm-text-secondary);
-}
-
-/* Both of these sit ON the photograph rather than on the artboard's own pale
-   ground, and at the kit's --fm-text-secondary they were mid-slate on a bright
-   sunlit plate: the campaign line falls across the galvanised column and the
-   sky behind it, where it measured well under the 4.5:1 that 14px text needs,
-   and the first character of each line disappeared into the pole entirely.
-   Darkened to the navy ink and given a soft light halo, which lifts them off
-   the image without moving them or adding a panel the reference does not have. */
-.p01r-campaign,
-.p01r-footer {
   color: var(--fm-navy);
   text-shadow:
     0 1px 2px rgba(255, 255, 255, 0.75),
@@ -204,29 +238,13 @@
 }
 
 .p01r-campaign {
-  left: 1482px;
-  top: 69px;
-  padding-left: 22px;
+  padding-left: clamp(12px, 1.3vw, 22px);
   border-left: 1px solid rgba(30, 61, 104, 0.38);
 }
 
-/* The footer needs a ground; the campaign line does not, and the difference is
-   measured rather than assumed. Sampling the plate under each: the campaign
-   line sits on sky and pale tower, luminance 142 at its darkest, which puts
-   navy text at 4.8:1 — it passes, so it is left alone. The footer sits on the
-   coaxial cables, luminance 3, and navy on that is 1.31:1. No amount of halo
-   rescues text on near-black; it needs something behind it.
-
-   A white wash rather than a panel, because this page already answers exactly
-   this problem exactly this way — `.p01r-wash` is the same idea holding the
-   left third open for the title. It fades out up and to the left so it reads
-   as the plate's own haze rather than as a box in the corner, and the right
-   and bottom offsets are reduced by the padding so the text does not move from
-   the coordinates the kit gives it. */
 .p01r-footer {
-  right: 44px;
-  bottom: 48px;
-  padding: 16px 22px 18px 46px;
+  padding: clamp(8px, 1vw, 16px) clamp(10px, 1.3vw, 22px);
+  margin: calc(-1 * clamp(8px, 1vw, 16px)) calc(-1 * clamp(10px, 1.3vw, 22px));
   background: linear-gradient(to top left,
     rgba(255, 255, 255, 0.94) 0%,
     rgba(255, 255, 255, 0.88) 46%,
@@ -234,6 +252,32 @@
     rgba(255, 255, 255, 0) 100%);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .fmref .p01r-cta { transition: none }
+/* ------------------------------------------------------------ narrow screens
+
+   Below this the photograph cannot hold a copy column and its subject side by
+   side, so the copy takes the full width and the wash turns vertical to carry
+   it. The two campaign lines are brand dressing rather than content — they are
+   the first thing to go when the room runs out. */
+
+@media (max-width: 860px) {
+  .p01r-wash {
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0.88) 46%,
+      rgba(255, 255, 255, 0.72) 72%,
+      rgba(255, 255, 255, 0.58) 100%);
+  }
+  .p01r-plate { object-position: 62% 50% }
+  /* Sits low rather than floating in the middle of a tall frame: the copy
+     stacks above the counter and the photograph breathes over it. */
+  .p01r-main { max-width: none; align-self: end }
+  .fmref .p01r-cta { width: 100% }
+  .p01r-campaign, .p01r-footer { display: none }
+}
+
+/* Very short windows: the middle block gives, not the type. */
+@media (max-height: 560px) {
+  .p01r { padding: clamp(14px, 3vw, 30px) }
+  .p01r-title { font-size: clamp(32px, 5.4vw, 56px) }
+  .p01r-tagline, .p01r-caption { display: none }
 }

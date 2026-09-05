@@ -37,22 +37,45 @@
   pointer-events: none;
 }
 
-.p02r-brand { left: 78px; top: 57px; font-size: 19px }
+/* The stage: brand above, panel below it, both held to the left column the
+   wash opens up. The kit's 78/57 and 78/176 as flow rather than coordinates. */
+.p02r {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(14px, 2vw, 26px);
+  padding: clamp(18px, 4.2vw, 70px);
+}
+
+/* Held to the frame's own corner rather than flowing above the panel: the kit
+   puts it at the very top of the artboard, and in flow it drifted down to sit
+   on the card once the panel moved to the foot of a narrow screen. */
+.p02r-brand {
+  position: absolute;
+  left: clamp(18px, 4.2vw, 70px);
+  top: clamp(18px, 3vw, 50px);
+  font-size: clamp(13px, 1.25vw, 19px);
+}
 
 /* ---------------------------------------------------------------- the panel */
 
 .fmref .p02r-panel {
-  left: 78px;
-  top: 176px;
-  width: 548px;
-  height: 617px;
-  padding: 44px;
-  border-radius: 28px;
+  /* 548 of 1672 is a third of the frame; it keeps that share until there is no
+     room for a column, then takes the width. The panel is as tall as its own
+     copy rather than the kit's fixed 617 — a fixed height either clips the
+     text or leaves a gap once the type stops scaling with the window. */
+  width: min(548px, 100%);
+  padding: clamp(22px, 2.8vw, 44px);
+  border-radius: clamp(18px, 1.8vw, 28px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .p02r-eyebrow {
   margin: 0;
-  font-size: 16px;
+  font-size: clamp(11px, 1.05vw, 16px);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -60,8 +83,8 @@
 }
 
 .p02r-site {
-  margin: 22px 0 0;
-  font-size: 52px;
+  margin: clamp(12px, 1.4vw, 22px) 0 0;
+  font-size: clamp(30px, 3.4vw, 52px);
   font-weight: 600;
   line-height: 1.04;
   letter-spacing: -0.035em;
@@ -69,18 +92,18 @@
 }
 
 .p02r-place {
-  margin: 10px 0 0;
-  font-size: 28px;
+  margin: clamp(6px, 0.7vw, 10px) 0 0;
+  font-size: clamp(17px, 1.85vw, 28px);
   font-weight: 400;
   letter-spacing: -0.01em;
   color: var(--fm-text-secondary);
 }
 
-.p02r-line { margin: 30px 0 0 }
+.p02r-line { margin: clamp(16px, 2vw, 30px) 0 0; width: 100% }
 
 .p02r-brief {
-  margin: 30px 0 0;
-  font-size: 29px;
+  margin: clamp(16px, 2vw, 30px) 0 0;
+  font-size: clamp(19px, 1.95vw, 29px);
   font-weight: 500;
   line-height: 1.34;
   letter-spacing: -0.02em;
@@ -88,21 +111,21 @@
 }
 
 .p02r-note {
-  margin: 20px 0 0;
-  font-size: 18px;
+  margin: clamp(11px, 1.3vw, 20px) 0 0;
+  font-size: clamp(14px, 1.2vw, 18px);
   font-weight: 400;
   line-height: 1.52;
   color: var(--fm-text-secondary);
 }
 
+/* In flow at the foot of the panel rather than pinned to its corner: the panel
+   no longer has a fixed height to pin against. */
 .fmref .p02r-begin {
-  position: absolute;
-  left: 44px;
-  bottom: 44px;
-  width: 252px;
-  height: 74px;
-  padding: 0 30px;
-  font-size: 22px;
+  margin-top: clamp(20px, 2.8vw, 44px);
+  min-width: min(252px, 100%);
+  height: clamp(52px, 5vw, 74px);
+  padding: 0 clamp(20px, 2vw, 30px);
+  font-size: clamp(16px, 1.5vw, 22px);
 }
 
 /* ------------------------------------------------------------------ the pin
@@ -111,14 +134,12 @@
    dot sits on the column and the tail hangs from its bottom edge. */
 
 .p02r-pin {
-  left: 1040px;
-  top: 387px;
-  height: 64px;
+  height: clamp(40px, 4.3vw, 64px);
   position: absolute;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 26px 0 6px;
+  padding: 0 clamp(14px, 1.7vw, 26px) 0 clamp(4px, 0.4vw, 6px);
   border-radius: 999px;
   background: linear-gradient(180deg, #2F8BFF 0%, #0F6BF5 100%);
   box-shadow:
@@ -127,8 +148,8 @@
 }
 
 .p02r-pin-dot {
-  width: 52px;
-  height: 52px;
+  width: clamp(32px, 3.5vw, 52px);
+  height: clamp(32px, 3.5vw, 52px);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -137,7 +158,7 @@
 }
 
 .p02r-pin-label {
-  font-size: 22px;
+  font-size: clamp(14px, 1.5vw, 22px);
   font-weight: 600;
   letter-spacing: -0.015em;
   color: #fff;
@@ -150,4 +171,21 @@
   left: 0;
   top: 0;
   transform: translate(-50%, -190%);
+}
+
+/* Narrow: the wash goes vertical because the panel now sits over the whole
+   plate rather than beside it, and the panel takes the full width low in the
+   frame so the city and its dead zone stay visible above. */
+@media (max-width: 860px) {
+  .p02m-wash {
+    width: 100%;
+    background: linear-gradient(180deg,
+      rgba(240, 246, 253, 0) 0%,
+      rgba(240, 246, 253, 0.42) 42%,
+      rgba(240, 246, 253, 0.86) 72%,
+      rgba(240, 246, 253, 0.96) 100%);
+  }
+  .p02r { justify-content: flex-end }
+  .fmref .p02r-panel { width: 100% }
+  .fmref .p02r-begin { width: 100% }
 }
