@@ -105,8 +105,31 @@
   .p13-chip { left: 4.5vw; right: 4.5vw; padding: 14px 18px }
   .p13-actions { left: 4.5vw; right: 4.5vw; bottom: 4vh }
   .p13-continue { flex: 1; min-width: 0 }
-  /* Clear of the back control, which owns the top-right corner. */
-  .p13-hint { right: 50%; transform: translateX(50%); top: calc(4.5vh + 46px) }
+
+  /* Below the chip, not behind it.
+     The chip goes full width on a narrow screen — two lines of it — so the
+     hint's 4.5vh + 46px cleared the Back control but landed inside the chip
+     instead, with "Drag to turn" reading out from under its bottom edge. It
+     is measured off the chip's own height now: 4.5vh + roughly 82px of chip
+     plus a gap. */
+  .p13-hint {
+    left: 4.5vw;
+    right: 4.5vw;
+    transform: none;
+    top: calc(4.5vh + 94px);
+    justify-content: center;
+    text-align: center;
+    padding: 11px 16px;
+    font-size: 13px;
+  }
+}
+
+/* Touch pointers get no hint at all, because every word of it is wrong for
+   them: there is no scroll wheel to zoom with and no right button to pan
+   with. The gestures the scene actually accepts on a touch screen — drag and
+   pinch — are the ones people try first anyway. */
+@media (pointer: coarse) {
+  .p13-hint { display: none }
 }
 
 /* Navigation cursor. The scene is grabbable only while orbit is enabled, and

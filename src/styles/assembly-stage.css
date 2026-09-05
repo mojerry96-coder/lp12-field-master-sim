@@ -143,12 +143,68 @@
   .as-part:hover { transform: none }
 }
 
+/* -------------------------------------------------- narrow and portrait
+
+   THE INSTRUCTION BECOMES A CARD, and only here.
+
+   On a wide screen it is bare type on open studio to the left of the pole,
+   which is the design and reads perfectly: there is empty ground under it. On
+   a phone there is no empty ground. The model fills the frame, so the title
+   was landing on the antenna body and the black coax — "CONNECT SIGNAL
+   CABLES" in blue across a dark cable run — and the helper line underneath it
+   was grey on grey.
+
+   Moving it does not help, because there is nowhere on a 390px frame that is
+   not over the model. So it gets a ground instead, and the ground is the one
+   this simulation already uses for exactly this: the rig pages put their
+   instruction in a glass sheet and are legible on a phone for that reason.
+   Same material, same blur, same radius. */
+
 @media (orientation: portrait), (max-width: 900px) {
-  .as-instruction { left: 5.5vw; right: 5.5vw; top: 6vh; max-width: none }
+  .as-instruction {
+    left: 3.6vw;
+    right: 3.6vw;
+    top: max(3.2vh, 14px);
+    max-width: none;
+    padding: clamp(14px, 3.6vw, 22px) clamp(16px, 4vw, 24px);
+    border-radius: 22px;
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.93), rgba(255, 255, 255, 0.82));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(22px) saturate(150%);
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 14px 38px rgba(24, 48, 84, 0.13);
+  }
+
+  /* The counter rides the title's line rather than sitting on its own row —
+     the card is over the model, so every line of it costs the learner a piece
+     of the thing they are working on. */
+  .as-step {
+    margin: 0 0 8px;
+    padding: 5px 12px;
+    font-size: 13px;
+    background: rgba(236, 243, 255, 0.9);
+  }
+  .as-step b { font-size: 14px }
+
+  .as-title { font-size: clamp(21px, 6.6vw, 30px) }
+  .as-helper { max-width: none; font-size: clamp(12.5px, 3.4vw, 15px) }
+
   .as-tray { gap: 12px; padding: 14px 16px; min-width: min(560px, 92vw) }
   .as-part { width: 104px; height: 92px }
   .as-part img { width: 74px; height: 74px }
   .as-feedback { bottom: calc(3.5vh + 150px) }
+  .as-power { bottom: calc(3.5vh + 150px); padding: 12px 18px 12px 16px }
+  .as-power strong { font-size: 14px }
+  .as-power-sub { font-size: 12.5px }
+}
+
+/* Very narrow: the helper is the first thing to go. The title already says
+   which component, and the tray below it is the instruction in object form. */
+@media (max-width: 430px) {
+  .as-power { flex-direction: column; align-items: flex-start; gap: 2px; border-radius: 20px }
 }
 
 /* ------------------------------------------------------------- powered on
