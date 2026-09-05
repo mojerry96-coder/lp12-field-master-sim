@@ -142,15 +142,18 @@ export default function CorridorDebrief({
           </div>
         )}
 
+        {/* Retune first, commission second. The two have swapped places; each
+            keeps its own weight, so the blue one now leads the pair rather
+            than closing it. */}
         <footer className="cdb-foot">
-          <button className="fm-btn fm-btn-secondary cdb-commission" type="button"
-                  onClick={onCommission}>
-            Commission as is
-          </button>
           <button className="fm-btn fm-btn-primary cdb-retune" type="button"
                   onClick={clean ? onCommission : onRetune}>
             <span>{clean ? 'Continue' : 'Retune settings'}</span>
             <ArrowRight size={24} />
+          </button>
+          <button className="fm-btn fm-btn-secondary cdb-commission" type="button"
+                  onClick={onCommission}>
+            Commission as is
           </button>
         </footer>
       </section>
