@@ -119,6 +119,16 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  /* Denser than the shared kit glass, and this is the one screen that needs
+     it. Everywhere else `.fm-glass` sits on a plate that has already been
+     washed or is calm by construction, so its 0.90-to-0.69 gradient has an
+     easy job. Here it is over the LIVE corridor — a bright, moving, high
+     contrast city with no wash under it — and the thin end of that gradient
+     let the roads read straight through the decision rows. Still glass, still
+     blurred, with a floor high enough to carry five lines of small type. */
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(255, 255, 255, 0.89) 100%);
 }
 
 .cdb-head { display: flex; align-items: flex-start; gap: 20px }

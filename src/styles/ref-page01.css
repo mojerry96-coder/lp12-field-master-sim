@@ -210,7 +210,29 @@
   border-left: 1px solid rgba(30, 61, 104, 0.38);
 }
 
-.p01r-footer { right: 66px; bottom: 66px }
+/* The footer needs a ground; the campaign line does not, and the difference is
+   measured rather than assumed. Sampling the plate under each: the campaign
+   line sits on sky and pale tower, luminance 142 at its darkest, which puts
+   navy text at 4.8:1 — it passes, so it is left alone. The footer sits on the
+   coaxial cables, luminance 3, and navy on that is 1.31:1. No amount of halo
+   rescues text on near-black; it needs something behind it.
+
+   A white wash rather than a panel, because this page already answers exactly
+   this problem exactly this way — `.p01r-wash` is the same idea holding the
+   left third open for the title. It fades out up and to the left so it reads
+   as the plate's own haze rather than as a box in the corner, and the right
+   and bottom offsets are reduced by the padding so the text does not move from
+   the coordinates the kit gives it. */
+.p01r-footer {
+  right: 44px;
+  bottom: 48px;
+  padding: 16px 22px 18px 46px;
+  background: linear-gradient(to top left,
+    rgba(255, 255, 255, 0.94) 0%,
+    rgba(255, 255, 255, 0.88) 46%,
+    rgba(255, 255, 255, 0.44) 78%,
+    rgba(255, 255, 255, 0) 100%);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .fmref .p01r-cta { transition: none }
