@@ -24,12 +24,18 @@
 
 /* ------------------------------------------------------------------ dial */
 .p12-dial {
+  /* One number the whole control is built from. The needle's orbit is derived
+     from it below, which is the point: the radius used to be the literal 98px
+     that 240 happens to produce, so every narrow layout that shrank the dial
+     left the needle orbiting a point below its centre — the dot drifted into
+     the middle of the face instead of running the ring. */
+  --p12-dial-size: 240px;
   position: absolute;
   left: 4.5vw;
   top: 34vh;
   z-index: 10;
-  width: 240px;
-  height: 240px;
+  width: var(--p12-dial-size);
+  height: var(--p12-dial-size);
   display: grid;
   place-items: center;
   border-radius: 50%;
@@ -62,24 +68,30 @@
   border-radius: 50%;
   background: var(--fm-blue);
   box-shadow: 0 0 14px rgba(0, 122, 255, 0.55);
-  transform-origin: 50% 98px;
+  /* The needle's own centre sits 22px down from the dial's top edge: 16px of
+     face inset, 6px of offset, 6px of half-height. */
+  transform-origin: 50% calc(var(--p12-dial-size) / 2 - 22px);
   transition: transform 220ms var(--fm-ease);
 }
 
+/* Proportions of the dial, not pixels — the same ratios the 240px original
+   was drawn at (74/240, 34/74, 12/240, 52/240), so the wide screen is
+   unchanged and every smaller dial keeps the composition instead of wearing
+   desktop-sized type. */
 .p12-value {
   position: relative;
-  font-size: 74px;
+  font-size: calc(var(--p12-dial-size) * 0.308);
   line-height: 1;
   font-weight: 500;
   letter-spacing: -0.04em;
   color: #0969E9;
 }
-.p12-value sup { font-size: 34px; top: -0.5em; margin-left: 2px }
+.p12-value sup { font-size: 0.46em; top: -0.5em; margin-left: 2px }
 
 .p12-label {
   position: absolute;
-  bottom: 52px;
-  font-size: 12px;
+  bottom: calc(var(--p12-dial-size) * 0.217);
+  font-size: max(10px, calc(var(--p12-dial-size) * 0.05));
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 700;
@@ -191,13 +203,39 @@
   .p12-dial-needle, .cmv, .cmv-aligned { transition: none }
 }
 
-@media (orientation: portrait), (max-width: 900px) {
+@media (orientation: portrait) {
+  /* THE COVERAGE PANEL STOPS BEING AN OVERLAY.
+     On a wide screen the canvas is the whole page and the panel sits in its
+     lower-right corner, over ground the model does not use — the point of the
+     composition is that the coverage belongs to the scene it describes. Upright
+     there is no such corner. The model runs the full height of a phone, so a
+     card pinned to the bottom edge lands across the pole, and worse, the camera
+     was still framing the pivot into the WHOLE viewport, so the lower half of
+     what it composed was behind the card the entire time.
+
+     So the page becomes what it actually is here: a title, the model, the
+     coverage, and the way on. Four rows. The canvas gets a real region rather
+     than the illusion of one, which is the whole fix — the camera re-fits to
+     its container, so the antenna is framed in the band that is visible instead
+     of the band that is not.
+
+     The dial keeps its place over the model, because it is a designed overlay
+     rather than an accident of stacking: it sits on the bare pole, left of the
+     antenna, the way it does on a wide screen. */
+  .p12 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    gap: clamp(10px, 2.6vw, 16px);
+    /* Top clears Back, which owns the top-right corner. */
+    padding: 76px 4vw max(2.4vh, 12px);
+  }
+
   /* A ground for the heading, for the same reason the assembly step has one:
      on a phone the model fills the frame, so bare type lands on the pole. */
   .p12-title {
-    left: 3.6vw;
-    right: 3.6vw;
-    top: 76px;          /* clear of Back, which owns the top-right corner */
+    position: static;
+    grid-row: 1;
     padding: clamp(12px, 3.2vw, 18px) clamp(16px, 4vw, 24px);
     border-radius: 20px;
     font-size: clamp(21px, 6.6vw, 30px);
@@ -211,33 +249,172 @@
       0 14px 38px rgba(24, 48, 84, 0.13);
   }
 
-  .p12-dial { left: 5vw; top: 22vh; width: 190px; height: 190px }
-  .p12-value { font-size: 56px }
+  /* The model's own band. `minmax(0, 1fr)` rather than `1fr` so it can be
+     smaller than its content wants — a 3D canvas has no intrinsic height to
+     argue with, but the min-content floor would still stop the row collapsing
+     under a tall card. */
+  .p12-viewport {
+    position: relative;
+    inset: auto;
+    grid-row: 2;
+    grid-column: 1;
+    min-height: 0;
+    /* Full-bleed is what it is on a wide screen; here it is one band of four,
+       so it takes an edge rather than ending in a square corner mid-page. */
+    border-radius: 22px;
+    overflow: hidden;
+  }
 
-  /* CONFIRM SITS UNDER THE PREVIEW, not on top of it.
-     Both were pinned to the bottom edge with the button offset by a guessed
-     230px, and the card is taller than that on a phone — its stage is 4:3 of a
-     92vw width, so it stands about 357px — which put Confirm Downtilt straight
-     through the middle of the Coverage Preview. Stacking them the other way
-     round removes the guess: the button's height is known and fixed, the
-     card's is not, so the card is positioned off the button rather than the
-     button off the card. */
+  /* Same cell as the viewport: grid items placed in one cell overlap, which is
+     how the dial stays an overlay without leaving the layout. */
+  .p12-dial {
+    position: relative;
+    left: auto;
+    top: auto;
+    grid-row: 2;
+    grid-column: 1;
+    justify-self: start;
+    align-self: center;
+    --p12-dial-size: clamp(148px, 40vw, 190px);
+  }
+
+  .cmv {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    grid-row: 3;
+    grid-column: 1;
+    width: auto;
+    padding: clamp(12px, 3.4vw, 18px) clamp(14px, 4vw, 20px) clamp(10px, 2.6vw, 12px);
+    /* It contracts into its own corner on a wide screen because that corner is
+       where the scene it came from is. Here it is a full-width row, so it
+       settles straight down into the deck. */
+    transform-origin: 50% 100%;
+  }
+  /* Shallower than the authored 4:3 — that eats the frame on a tall phone, and
+     the dome's shape reads just as well a little wider. Capped in viewport
+     units as well, because on a tablet the same ratio across 700px of card
+     would take the model's band with it. */
+  .cmv-stage { aspect-ratio: 16 / 10; max-height: 26vh }
+  .cmv-aligned { display: none }
+
   .p12-confirm {
-    left: 4vw;
-    right: 4vw;
-    bottom: max(2.4vh, 12px);
+    position: relative;
+    right: auto;
+    bottom: auto;
+    grid-row: 4;
+    grid-column: 1;
     min-width: 0;
   }
-  .cmv {
-    left: 4vw;
-    right: 4vw;
-    bottom: calc(max(2.4vh, 12px) + 66px);
-    width: auto;
+
+  /* The refusal sat at `bottom: 5vh`, which on a wide screen is empty air below
+     the panel and here is the Confirm button — the toast telling the learner
+     the tilt is wrong landed on the control they had just pressed. It rides the
+     foot of the model band instead: still over the scene, clear of the deck. */
+  .p12-notice {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    grid-row: 2;
+    grid-column: 1;
+    align-self: end;
+    justify-self: center;
+    margin-bottom: clamp(10px, 2.6vw, 16px);
+    max-width: 92%;
+    text-align: center;
   }
-  /* Shallower stage: 4:3 of the full width eats the frame on a tall phone and
-     the dome's shape reads just as well a little wider. */
-  .cmv-stage { aspect-ratio: 16 / 10 }
+}
+
+
+/* --------------------------------------------------- small screen, on its side
+
+   A phone turned landscape is 844 x 390: wide, and shorter than the four-row
+   stack needs by about the height of the model. Stacking there put the deck's
+   fixed pieces — title, card, button — past the bottom edge and left the band
+   between them at nothing, so the model was a zero-height row and Confirm hung
+   off the screen.
+
+   Short and wide wants columns, which is what the wide layout already knows:
+   model on the left, coverage beside it. The difference from the wide layout is
+   that the panel gets a real column instead of floating in a corner the model
+   is not using — at this height there is no such corner. */
+@media (orientation: landscape) and (max-width: 900px) {
+  .p12 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(230px, 34%, 330px);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    gap: clamp(8px, 1.6vw, 14px);
+    padding: clamp(10px, 2.2vh, 16px) 3vw;
+  }
+
+  .p12-title {
+    position: static;
+    grid-area: 1 / 1 / 2 / 2;
+    font-size: clamp(20px, 3.4vw, 28px);
+  }
+
+  .p12-viewport {
+    position: relative;
+    inset: auto;
+    grid-area: 2 / 1 / 4 / 2;
+    min-height: 0;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .p12-dial {
+    position: relative;
+    left: auto;
+    top: auto;
+    grid-area: 2 / 1 / 4 / 2;
+    justify-self: start;
+    align-self: center;
+    --p12-dial-size: clamp(120px, 30vh, 168px);
+  }
+
+  /* Spans the title's row as well as the model's, so the column is one panel
+     rather than a card with a notch cut out of it. The offset clears Back,
+     which owns the top-right corner and therefore this column's top. */
+  .cmv {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    grid-area: 1 / 2 / 3 / 3;
+    width: auto;
+    margin-top: 58px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 12px 14px 10px;
+    transform-origin: 50% 100%;
+  }
+  .cmv-title { margin-bottom: 8px }
+  /* The card's height is the column's here, not the stage's ratio, so the
+     stage takes what is left instead of dictating it. */
+  .cmv-stage { aspect-ratio: auto; flex: 1; min-height: 0 }
   .cmv-aligned { display: none }
+
+  .p12-confirm {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    grid-area: 3 / 2 / 4 / 3;
+    min-width: 0;
+  }
+
+  .p12-notice {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    grid-area: 2 / 1 / 4 / 2;
+    align-self: end;
+    justify-self: center;
+    margin-bottom: 12px;
+    max-width: 92%;
+    text-align: center;
+  }
 }
 
 .p12-title, .p12-dial { animation: fm-rise 460ms var(--fm-ease) both }
