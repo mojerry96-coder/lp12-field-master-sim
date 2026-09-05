@@ -347,7 +347,11 @@
 @media (max-width: 760px) {
   .cdb { padding: 10px }
   .cdb-grid { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto }
-  .cdb-foot { flex-direction: column-reverse; align-items: stretch }
+  /* `column`, not `column-reverse`. The footer's DOM order is Retune then
+     Commission, so reversing it put the secondary action on top and the
+     primary at the foot — the opposite of the order the wide layout reads
+     in. */
+  .cdb-foot { flex-direction: column; align-items: stretch }
   .cdb-wordmark { display: none }
 
   /* Stop the panel squeezing its own children.

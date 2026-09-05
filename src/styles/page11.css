@@ -165,3 +165,9 @@
 @media (prefers-reduced-motion: reduce) {
   .p11-sheet, .p11-control { animation: none }
 }
+
+/* One line. At 250px minimum the label broke across two rows on a phone. */
+.p11-confirm, .p12-confirm { white-space: nowrap }
+@media (max-width: 900px) {
+  .p11-confirm { left: 4vw; right: 4vw; min-width: 0 }
+}

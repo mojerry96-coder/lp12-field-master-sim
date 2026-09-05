@@ -161,7 +161,11 @@
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 40;
+  /* Above the tuning sequence's portrait wall, which sits at 60. That wall
+     covers the whole viewport, and with Back beneath it a learner who reached
+     the tablet steps on a phone had no way forward and no way out — the one
+     screen in the run with no exit. */
+  z-index: 70;
   display: inline-flex;
   align-items: center;
   gap: 6px;

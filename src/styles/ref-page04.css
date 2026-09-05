@@ -372,7 +372,16 @@
    than something hidden by its own description. */
 @media (max-width: 860px) {
   .p04r { justify-content: flex-end }
-  .fmref .p04r-panel { width: 100% }
+  .fmref .p04r-panel {
+    width: 100%;
+    /* Denser than the shared kit glass. On a wide screen this panel sits on
+       open studio; here it is over the city at full strength, and the row
+       descriptions are secondary grey — the thin end of the kit's 0.91-to-0.73
+       gradient let the boulevard read straight through them. */
+    background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.97) 0%,
+      rgba(255, 255, 255, 0.91) 100%);
+  }
   .p04r-column { left: 50%; transform: translateX(-50%); top: 1%; height: 58% }
   .p04r-guide { display: none }
 }

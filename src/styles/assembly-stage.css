@@ -164,7 +164,10 @@
   .as-instruction {
     left: 3.6vw;
     right: 3.6vw;
-    top: max(3.2vh, 14px);
+    /* Below the Back control, not under it. Back owns the top-right corner and
+       this card runs the full width, so at the old 3.2vh the two overlapped
+       and the card's corner passed beneath the button. */
+    top: 76px;
     max-width: none;
     padding: clamp(14px, 3.6vw, 22px) clamp(16px, 4vw, 24px);
     border-radius: 22px;

@@ -260,12 +260,17 @@
    the first thing to go when the room runs out. */
 
 @media (max-width: 860px) {
+  /* Strongest where the copy is, which is the BOTTOM. It ran the other way
+     round — 0.95 at the top where nothing is written and 0.58 at the foot
+     where the title, the location and the CTA all sit — so the photograph was
+     bleached out in its empty half and the type sat on the thinnest part of
+     the wash. */
   .p01r-wash {
     background: linear-gradient(180deg,
-      rgba(255, 255, 255, 0.95) 0%,
-      rgba(255, 255, 255, 0.88) 46%,
-      rgba(255, 255, 255, 0.72) 72%,
-      rgba(255, 255, 255, 0.58) 100%);
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.42) 34%,
+      rgba(255, 255, 255, 0.88) 62%,
+      rgba(255, 255, 255, 0.96) 100%);
   }
   .p01r-plate { object-position: 62% 50% }
   /* Sits low rather than floating in the middle of a tall frame: the copy

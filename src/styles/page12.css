@@ -197,7 +197,7 @@
   .p12-title {
     left: 3.6vw;
     right: 3.6vw;
-    top: max(3.2vh, 14px);
+    top: 76px;          /* clear of Back, which owns the top-right corner */
     padding: clamp(12px, 3.2vw, 18px) clamp(16px, 4vw, 24px);
     border-radius: 20px;
     font-size: clamp(21px, 6.6vw, 30px);
