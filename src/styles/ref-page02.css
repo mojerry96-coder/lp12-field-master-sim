@@ -9,13 +9,10 @@
    stop at the letterbox edge, and a pin placed at the kit's 1040/387 would
    point at whatever happened to be there after the plate was cover-fitted to a
    different box. Both are laid over the plate instead. */
-/* Three layers over App's plate, in this order:
-     1  the wash, UNDER the dead-zone dome so it does not grey it out
-     2  the dome (index.css)
-     3  the pin, over the dome so the label stays crisp on it
-    20  the reference stage carrying the card (reference.css)
-   The wash started at 5, above the stage, and washed out the very card it
-   exists to make readable. */
+/* Layered over App's plate: the wash sits UNDER the dead-zone dome so it does
+   not grey it out, the dome draws at 2 (index.css), and the reference stage
+   carrying the card is at 20. The wash started at 5, above the stage, and
+   washed out the very card it exists to make readable. */
 .p02m-wash {
   position: absolute;
   left: 0;
@@ -28,13 +25,6 @@
     rgba(240, 246, 253, 0.94) 0%,
     rgba(240, 246, 253, 0.72) 52%,
     rgba(240, 246, 253, 0) 100%);
-}
-
-.p02m-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
 }
 
 /* The stage: brand above, panel below it, both held to the left column the
@@ -126,51 +116,6 @@
   height: clamp(52px, 5vw, 74px);
   padding: 0 clamp(20px, 2vw, 30px);
   font-size: clamp(16px, 1.5vw, 22px);
-}
-
-/* ------------------------------------------------------------------ the pin
-
-   HTML, not baked art: the label has to stay sharp at every stage scale. The
-   dot sits on the column and the tail hangs from its bottom edge. */
-
-.p02r-pin {
-  height: clamp(40px, 4.3vw, 64px);
-  position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 clamp(14px, 1.7vw, 26px) 0 clamp(4px, 0.4vw, 6px);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #2F8BFF 0%, #0F6BF5 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.36),
-    0 16px 34px rgba(15, 90, 210, 0.34);
-}
-
-.p02r-pin-dot {
-  width: clamp(32px, 3.5vw, 52px);
-  height: clamp(32px, 3.5vw, 52px);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  color: #1170F0;
-  background: #fff;
-}
-
-.p02r-pin-label {
-  font-size: clamp(14px, 1.5vw, 22px);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: #fff;
-  white-space: nowrap;
-}
-
-/* Hung off the projected LP12 anchor: centred on the column and lifted clear
-   of it, so the label sits above the pole rather than across it. */
-.p02r-pin.is-projected {
-  left: 0;
-  top: 0;
-  transform: translate(-50%, -190%);
 }
 
 /* Narrow: the wash goes vertical because the panel now sits over the whole
