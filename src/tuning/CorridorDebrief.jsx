@@ -64,12 +64,42 @@ function IssueCard({ decision, onAdjust }) {
   )
 }
 
+/**
+ * The three decisions "Retune settings" can actually take the learner back to.
+ *
+ * Mount height and downtilt are faults too, but they are not TUNING — they are
+ * on the pole, they are corrected on the rig pages, and each already carries
+ * its own Adjust button inside its issue card.
+ */
+const TUNING_REVISITS = new Set(['interval', 'hysteresis', 'timeToTrigger'])
+
 export default function CorridorDebrief({
-  decisions, outcome, onAdjust, onCommission, onRetune,
+  decisions, outcome, onAdjust, onCommission,
 }) {
   const passed = decisions.filter((d) => d.state === 'good')
   const faults = decisions.filter((d) => d.state !== 'good')
   const clean = faults.length === 0
+
+  /**
+   * Where Retune settings goes, and whether it goes anywhere at all.
+   *
+   * It used to be wired to `onAdjust('interval')` — a constant. Whatever the
+   * corridor had faulted, the button dropped the learner on Measurement
+   * Interval, so a run whose only tuning error was the time-to-trigger opened
+   * the one reporter setting that was already right. Being sent to correct
+   * something correct is worse than not being offered the button: it implies
+   * the value on screen is the problem.
+   *
+   * So it targets the first faulted tuning decision instead. `decisions` comes
+   * back in the sequence's own order, so "first" is the earliest step the
+   * learner would reach anyway, and correcting it returns them to the corridor
+   * to run the rest.
+   *
+   * And when nothing in the tuning is wrong it does not appear. A run faulted
+   * only on mount height has nothing to retune; the offer to do so is a dead
+   * end, and the fix it actually needs is already on the issue card.
+   */
+  const retuneTarget = faults.find((d) => TUNING_REVISITS.has(d.revisit))?.revisit ?? null
 
   return (
     <ReferenceStage transparent className="cdb" label="Corridor test result">
@@ -142,15 +172,28 @@ export default function CorridorDebrief({
           </div>
         )}
 
-        {/* Retune first, commission second. The two have swapped places; each
-            keeps its own weight, so the blue one now leads the pair rather
-            than closing it. */}
+        {/* Retune first, commission second. Each keeps its own weight, so the
+            blue one leads the pair rather than closing it.
+
+            The primary is conditional: Continue on a clean run, Retune when
+            there is a tuning fault to go back to, and absent when the only
+            faults are on the pole — where Commission as is stands alone beside
+            the issue cards' own Adjust buttons. */}
         <footer className="cdb-foot">
-          <button className="fm-btn fm-btn-primary cdb-retune" type="button"
-                  onClick={clean ? onCommission : onRetune}>
-            <span>{clean ? 'Continue' : 'Retune settings'}</span>
-            <ArrowRight size={24} />
-          </button>
+          {clean && (
+            <button className="fm-btn fm-btn-primary cdb-retune" type="button"
+                    onClick={onCommission}>
+              <span>Continue</span>
+              <ArrowRight size={24} />
+            </button>
+          )}
+          {!clean && retuneTarget && (
+            <button className="fm-btn fm-btn-primary cdb-retune" type="button"
+                    onClick={() => onAdjust?.(retuneTarget)}>
+              <span>Retune settings</span>
+              <ArrowRight size={24} />
+            </button>
+          )}
           <button className="fm-btn fm-btn-secondary cdb-commission" type="button"
                   onClick={onCommission}>
             Commission as is

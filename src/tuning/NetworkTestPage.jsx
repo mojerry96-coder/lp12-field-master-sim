@@ -185,7 +185,6 @@ export default function NetworkTestPage({ settings, onContinue, onAdjust, onResu
           outcome={outcome}
           onAdjust={onAdjust}
           onCommission={onContinue}
-          onRetune={() => onAdjust?.('interval')}
         />
       )}
 
