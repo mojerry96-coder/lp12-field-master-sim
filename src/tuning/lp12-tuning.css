@@ -525,17 +525,64 @@
   padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-.lp12-rotate-prompt {
-  position: fixed; inset: 0; z-index: 60; display: none;
-  place-items: center; padding: 40px; text-align: center;
-  color: var(--lp12-ink); background: var(--lp12-stage);
-  font-family: "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-@media (orientation: portrait) { .lp12-rotate-prompt { display: grid; } }
-
 @media (prefers-reduced-motion: reduce) {
   .lp12-page-enter,
   .lp12-guided-hand,
   .lp12-apply-button { animation: none; transition: none; }
   .lp12-range-row.is-nudge input { animation: none; }
+}
+
+/* ============================================================== portrait
+
+   No tablet, no hand, no aperture: the tuning UI is laid straight onto the
+   screen over the street. See usePortrait in LP12TabletTuningScene for why. */
+
+.lp12-portrait { display: block }
+
+/* Static, because there is no device plane for the parallax to move against. */
+.lp12-backdrop.is-static {
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+}
+
+.lp12-portrait-app {
+  position: absolute;
+  inset: 0;
+  /* .lp12-app is hard-sized to the tablet's 1366 x 1024 screen, and an
+     explicit width beats `inset: 0` on an absolutely positioned box. */
+  width: 100%;
+  height: 100%;
+  /* and it paints the tablet's screen canvas, which would hide the street. */
+  background: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Clear of the Back control, which owns the top-right corner. */
+  padding: 76px clamp(14px, 4.4vw, 22px) clamp(18px, 5vw, 28px);
+}
+
+.lp12-portrait .lp12-bento-panel,
+.lp12-portrait .lp12-bento-panel.is-full {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  /* A tablet held upright is 768 wide and the controls do not want to be:
+     a slider that long is harder to place, not easier. */
+  max-width: 560px;
+  margin: auto;
+  padding: clamp(18px, 5vw, 26px);
+  border-radius: 26px;
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.9));
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: 0 20px 54px rgba(24, 48, 84, 0.16);
 }

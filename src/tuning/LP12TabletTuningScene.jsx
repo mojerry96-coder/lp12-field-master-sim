@@ -106,13 +106,52 @@ function useLayeredParallax({ hostRef, deviceRef, streetRef, enabled, baseTransf
   return setDragging
 }
 
-function useContainedScale(width, height) {
+/**
+ * Is this a portrait phone or tablet?
+ *
+ * The tuning sequence is a photographed LANDSCAPE tablet held in shot, with
+ * the UI inset into its screen aperture. Rotated into a portrait frame that
+ * artboard fits to about a fifth of the height and the controls inside it
+ * become unusable, which is why the sequence used to refuse to draw at all
+ * and show a rotate wall instead. A wall is not a layout, so portrait now gets
+ * the tuning UI directly: on a phone the phone IS the device, and a
+ * photograph of a different one held in someone's hand adds nothing it can
+ * afford the room for.
+ *
+ * matchMedia rather than a resize listener, so a rotation swaps the layout
+ * without the component measuring anything itself.
+ */
+const PORTRAIT_QUERY = '(orientation: portrait) and (max-width: 900px)'
+
+function usePortrait() {
+  const [portrait, setPortrait] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(PORTRAIT_QUERY).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(PORTRAIT_QUERY)
+    const sync = () => setPortrait(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+  return portrait
+}
+
+/**
+ * `active` is the portrait switch, and it has to be a dependency.
+ *
+ * In portrait the landscape tree is not rendered at all, so `hostRef.current`
+ * is null and there is nothing to measure or observe. Without this argument the
+ * effect ran once on mount, found no host, and never ran again — so a phone
+ * that STARTED in portrait and was then turned landscape got the artboard back
+ * at its initial scale of 1, which is a 1672px tablet in a 1024px window.
+ */
+function useContainedScale(width, height, active) {
   const hostRef = useRef(null)
   const [fit, setFit] = useState({ scale: 1, drop: 0 })
 
   useLayoutEffect(() => {
     const host = hostRef.current
-    if (!host) return undefined
+    if (!host || !active) return undefined
     const update = () => {
       const rect = host.getBoundingClientRect()
       if (!rect.width || !rect.height) return
@@ -131,7 +170,7 @@ function useContainedScale(width, height) {
     const observer = new ResizeObserver(update)
     observer.observe(host)
     return () => observer.disconnect()
-  }, [width, height])
+  }, [width, height, active])
 
   return { hostRef, scale: fit.scale, drop: fit.drop }
 }
@@ -203,7 +242,9 @@ export default function LP12TabletTuningScene({ onExit }) {
   // the two the learner made on the pole come along with the three made here.
   const height = useSim((s) => s.height)
   const downtilt = useSim((s) => s.downtilt)
-  const { hostRef, scale, drop } = useContainedScale(ARTBOARD.width, ARTBOARD.height)
+  const portrait = usePortrait()
+  const { hostRef, scale, drop } = useContainedScale(
+    ARTBOARD.width, ARTBOARD.height, !portrait)
   const deviceRef = useRef(null)
   const streetRef = useRef(null)
   // The drop is prepended, so it lands in the parent's pixels rather than
@@ -372,6 +413,53 @@ export default function LP12TabletTuningScene({ onExit }) {
     )
   }
 
+  /* One definition, two frames: inside the tablet's aperture in landscape and
+     straight onto the screen in portrait. */
+  const stepContent = (
+    <>
+      {TUNING_STEPS[step] && (
+        <TuningStepPage
+          step={TUNING_STEPS[step]}
+          value={values[TUNING_STEPS[step].field]}
+          onChange={setValue(TUNING_STEPS[step].field)}
+          onApply={apply}
+        />
+      )}
+      {step === 'complete' && (
+        <Page18ReporterOptimised
+          values={values}
+          onComplete={() => {
+            setHandCue({ targetId: 'complete-commissioning', sequence: 'tap' })
+            window.setTimeout(() => { setHandCue(null); onExit?.() }, 440)
+          }}
+        />
+      )}
+    </>
+  )
+
+  if (portrait) {
+    return (
+      <main className="lp12-scene lp12-portrait" aria-label="LP12 network tuning">
+        {/* The street stays — it is the place this is happening, and it is the
+            one part of the tablet composition that costs nothing in portrait.
+            No parallax: there is no device plane for it to move against. */}
+        <div className="lp12-backdrop is-static" aria-hidden="true">
+          <img src={urlFor('street-background')} alt="" draggable={false} />
+        </div>
+
+        {/* No tablet plate, no hand, no aperture, no guided-hand overlay. Every
+            one of those is a property of the photographed device, and in
+            portrait the device is the screen the learner is holding. */}
+        <div className="lp12-app lp12-portrait-app">
+          <section className="lp12-bento-panel is-full">{stepContent}</section>
+        </div>
+
+        <p className="lp12-sr-only" role="status" aria-live="polite">{announce}</p>
+        <BackButton onBack={goBack} />
+      </main>
+    )
+  }
+
   return (
     <main
       ref={hostRef}
@@ -436,23 +524,7 @@ export default function LP12TabletTuningScene({ onExit }) {
               )}
 
               <section className={`lp12-bento-panel${TUNING_STEPS[step] || step === 'complete' ? ' is-full' : ''}`}>
-                {TUNING_STEPS[step] && (
-                  <TuningStepPage
-                    step={TUNING_STEPS[step]}
-                    value={values[TUNING_STEPS[step].field]}
-                    onChange={setValue(TUNING_STEPS[step].field)}
-                    onApply={apply}
-                  />
-                )}
-                {step === 'complete' && (
-                  <Page18ReporterOptimised
-                    values={values}
-                    onComplete={() => {
-                      setHandCue({ targetId: 'complete-commissioning', sequence: 'tap' })
-                      window.setTimeout(() => { setHandCue(null); onExit?.() }, 440)
-                    }}
-                  />
-                )}
+                {stepContent}
               </section>
             </div>
           </LogicalScreenScaler>
@@ -465,9 +537,6 @@ export default function LP12TabletTuningScene({ onExit }) {
 
       <BackButton onBack={goBack} />
 
-      <div className="lp12-rotate-prompt">
-        <p>Rotate your device to landscape to continue the LP12 tuning sequence.</p>
-      </div>
     </main>
   )
 }
