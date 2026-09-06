@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { detent } from '../lib/sfx'
 
 /**
  * PAGE 11 — Set Mount Height.
@@ -22,17 +21,7 @@ export default function Page11SetMountHeight({
   // 0 at the bottom of the track, 1 at the top.
   const t = (value - min) / (max - min)
 
-  /* One click per notch of height, the same mechanism the assembly steps and
-     the reporter sliders use. Guarded on an actual change so holding the knob
-     still, or pushing past either end of the range, stays silent; thinned to
-     the ratchet's own spacing by the sound module, so a fast drag winds rather
-     than buzzes. */
-  const change = useCallback((e) => {
-    const next = Number(e.target.value)
-    if (next === value) return
-    detent()
-    onChange(next)
-  }, [onChange, value])
+  const change = useCallback((e) => onChange(Number(e.target.value)), [onChange])
 
   return (
     <section className="fm-page fm-studio p11" aria-label="Set mount height">

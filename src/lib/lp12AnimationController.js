@@ -36,18 +36,7 @@ export function createLP12AnimationController({ actions, mixer }) {
    * carry on. It warns rather than failing silently, because a stalled clock
    * is a real defect worth seeing in the console even when it is survivable.
    */
-  /**
-   * `onStart` is handed the clip's real playback length in seconds, at the
-   * instant the clip begins.
-   *
-   * The gear-click run is timed off this. Passing the duration out from here
-   * rather than looking it up at the call site is what keeps the two from
-   * drifting: `expected` already accounts for timeScale — reduced motion plays
-   * everything at 2x — so a caller cannot accidentally time a sound to the
-   * unscaled clip, and there is no second copy of the arithmetic to fall out of
-   * step with this one.
-   */
-  function playOnce(name, { timeScale = 1, onStart } = {}) {
+  function playOnce(name, { timeScale = 1 } = {}) {
     const action = actions[name]
     if (!action) {
       // s36 / rule: never swallow a missing clip.
@@ -79,9 +68,6 @@ export function createLP12AnimationController({ actions, mixer }) {
 
       const onFinished = (e) => { if (e.action === action) settle(null) }
       mixer.addEventListener('finished', onFinished)
-      // Before play(), so a listener that schedules audio is lined up with the
-      // clip's first frame rather than a frame behind it.
-      if (onStart) { try { onStart(expected) } catch { /* never block the clip */ } }
       action.play()
 
       const startedAt = performance.now()
