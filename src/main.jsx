@@ -3,6 +3,14 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import * as THREE from 'three'
 import { useGLTF } from '@react-three/drei'
+import { unlockAudio } from './lib/sfx'
+
+/* Arm the gear click on the first tap or key anywhere in the document.
+   Browsers will not start an AudioContext outside a user gesture, and doing it
+   here means the buffer is fetched and decoded long before the first part is
+   installed — otherwise the opening click of the first assembly step is the one
+   that gets swallowed while the sample loads. */
+unlockAudio()
 
 // Draco decodes locally, not from a CDN.
 //

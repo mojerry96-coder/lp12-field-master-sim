@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSim } from './store'
 import InstallShell from './components/InstallShell'
 import Page04PoleOverview from './pages/Page04PoleOverview'
@@ -10,6 +10,7 @@ import Page14InstallationComplete from './pages/Page14InstallationComplete'
 import LP12BuildCanvas from './components/LP12BuildCanvas'
 import BackButton from './components/BackButton'
 import { createOrbitInput } from './lib/constrainedOrbit'
+import { ratchet } from './lib/sfx'
 import {
   STAGES, stageIndex, stageById, COMPLETED_PART_BY_STAGE, STAGE_CAMERA,
   PART_LABELS,
@@ -120,6 +121,10 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
   const [notice, setNotice] = useState(null)
   /* The green power-on confirmation shown when the signal cables land. */
   const [powerOn, setPowerOn] = useState(false)
+
+  /* The running gear-click, so it can be called off if the clip does not
+     finish the way it started. */
+  const sound = useRef(null)
   // The Blender look, fetched once. SiteLighting rebuilds the rig and the view
   // transform from it, so the two ends cannot drift apart the way a rig
   // restated in JSX does.
@@ -213,8 +218,14 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
     try {
       const controller = useSim.getState().controller
       if (!controller) throw new Error('Animation controller not ready')
-      await controller.playOnce(stage.clip,
-        { timeScale: useSim.getState().reducedMotion ? 2 : 1 })
+      /* The part being wound into place, for exactly as long as it takes.
+         `onStart` fires on the clip's first frame and is handed its real
+         playback length, so the run cannot start early, end late, or ignore
+         that reduced motion plays the whole thing at double speed. */
+      await controller.playOnce(stage.clip, {
+        timeScale: useSim.getState().reducedMotion ? 2 : 1,
+        onStart: (seconds) => { sound.current = ratchet(seconds) },
+      })
       // Both halves of "this step is done": the title, for the review, and the
       // clip, which is what the model derives the installed hardware from.
       // Without the second the part is only in place until the next remount.
@@ -249,6 +260,12 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
         ? 'The model is still getting ready — try that again in a moment.'
         : 'That step could not be completed. Try it again.')
     } finally {
+      /* A clip that ends early — the controller's stall watchdog, a thrown
+         step — leaves the rest of the run already scheduled on the audio
+         clock, where nothing on the main thread can call it back. Stopping it
+         here is what keeps a ratchet from carrying on over a still model. */
+      sound.current?.stop()
+      sound.current = null
       setBusy(false)
     }
   }, [busy, stageId, stage, onComplete])

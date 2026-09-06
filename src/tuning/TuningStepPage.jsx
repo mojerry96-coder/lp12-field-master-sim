@@ -1,4 +1,5 @@
 import { useCallback, useId } from 'react'
+import { detent } from '../lib/sfx'
 
 /**
  * The tuning step shell — PAGES 15-17.
@@ -100,12 +101,33 @@ export default function TuningStepPage({ step, value, onChange, onApply }) {
       ? 'close'
       : 'off'
 
+  /**
+   * The control's one exit, so the gear click cannot get out of step with the
+   * value.
+   *
+   * Every route into the setting comes through here — the slider drag, the
+   * arrow keys, Home/End, and the two nudge buttons below — so there is one
+   * place that knows a detent was crossed, and it fires only when the number
+   * actually changed. Dragging within a step, or pushing against either end of
+   * the range, moves nothing and therefore says nothing.
+   *
+   * The rate limiting is the sound module's: measurement interval is 160 steps
+   * wide and a fast sweep would otherwise ask for a click every few
+   * milliseconds. Thinned to the mechanism's own spacing, that same sweep
+   * ratchets.
+   */
+  const commit = useCallback((next) => {
+    if (next === value) return
+    detent()
+    onChange(next)
+  }, [onChange, value])
+
   const nudgeBy = useCallback((delta) => {
     const next = Math.min(l.max, Math.max(l.min, value + delta))
     // Snap back onto the step grid: 1.2 + 0.1 is 1.3000000000000003, and a
     // value a millionth off the grid never equals its target.
-    onChange(Number(next.toFixed(step.decimals)))
-  }, [onChange, value, l.min, l.max, step.decimals])
+    commit(Number(next.toFixed(step.decimals)))
+  }, [commit, value, l.min, l.max, step.decimals])
 
   return (
     <div className="ts">
@@ -139,7 +161,7 @@ export default function TuningStepPage({ step, value, onChange, onApply }) {
               max={l.max}
               step={l.step}
               value={value}
-              onChange={(e) => onChange(Number(e.target.value))}
+              onChange={(e) => commit(Number(e.target.value))}
               aria-label={`${step.title} in ${step.unitLong}`}
               aria-valuetext={`${value.toFixed(step.decimals)} ${step.unitLong}`}
             />

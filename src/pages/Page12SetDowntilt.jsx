@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import CoverageMiniViewport from '../components/CoverageMiniViewport'
+import { detent } from '../lib/sfx'
 
 /**
  * PAGE 12 — Set Downtilt + Live Coverage Mini View.
@@ -33,7 +34,15 @@ export default function Page12SetDowntilt({
   const done = useRef(false)
   const dialRef = useRef(null)
 
-  const change = useCallback((e) => onChange(Number(e.target.value)), [onChange])
+  /* The dial has two ways in — the transparent range input for the keyboard,
+     and the angular pointer drag below — so both go through this, and the
+     needle cannot move a degree without a click. */
+  const change = useCallback((e) => {
+    const next = Number(e.target.value)
+    if (next === value) return
+    detent()
+    onChange(next)
+  }, [onChange, value])
 
   /**
    * Turning the dial.
@@ -68,7 +77,7 @@ export default function Page12SetDowntilt({
 
   const turnTo = useCallback((e) => {
     const next = valueFromPointer(e)
-    if (next !== null && next !== value) onChange(next)
+    if (next !== null && next !== value) { detent(); onChange(next) }
   }, [valueFromPointer, onChange, value])
 
   const onPointerDown = useCallback((e) => {
