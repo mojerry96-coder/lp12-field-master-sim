@@ -170,6 +170,11 @@
   align-items: center;
   gap: 6px;
   padding: 9px 15px 9px 12px;
+  /* The one control on every screen, and at 9px of padding on a 13px line it
+     stood 34px tall — under the 44px a thumb needs, and the miss lands on
+     whatever it is floating over. The box grows; the glass does not, so the
+     pill still reads at the size it was drawn. */
+  min-height: 44px;
   border-radius: 999px;
   font: 600 13px/1 var(--fm-font, "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif);
   letter-spacing: 0.01em;

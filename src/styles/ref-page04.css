@@ -295,7 +295,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #1478FF;
+  /* #1478FF measures 4.07:1 on the panel's white — under AA for text this
+     size, and this line sits at 13px on a phone. Same hue, darkened until it
+     clears 4.5. */
+  color: #0F63DB;
   font-size: clamp(13px, 1.15vw, 17px);
   font-weight: 550;
   letter-spacing: -0.015em;
@@ -382,6 +385,34 @@
       rgba(255, 255, 255, 0.97) 0%,
       rgba(255, 255, 255, 0.91) 100%);
   }
-  .p04r-column { left: 50%; transform: translateX(-50%); top: 1%; height: 58% }
+  /* THE COLUMN STOPS BEING PLACED BY THE ARTBOARD'S FRACTIONS.
+     `width: 26.1%` and `height: 58%` are the specification's 490 x 875 box
+     inside a 1672-wide artboard, and at 390 they are a 102 x 490 box. The
+     cutout is 0.50:1, so `contain` fitted it to the 102 of width and drew the
+     pole 102 x 204 — a thumbnail at the top of a box two and a half times its
+     height, with the empty remainder of that box reading as a gap between the
+     pole and the panel describing it. The pole is the subject of this page.
+
+     So it takes the room above the panel as a flex item and fills it. Its base
+     sits on the panel's top edge rather than floating above it, which is also
+     what the wide layout does — there the panel is a left-hand column and the
+     pole stands beside it, full height. */
+  .p04r {
+    justify-content: flex-end;
+    gap: clamp(10px, 2.6vw, 16px);
+    /* Clear of the brand at top-left and Back at top-right. */
+    padding-top: 62px;
+  }
+  .p04r-column {
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
+    flex: 1;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    object-position: center bottom;
+  }
   .p04r-guide { display: none }
 }

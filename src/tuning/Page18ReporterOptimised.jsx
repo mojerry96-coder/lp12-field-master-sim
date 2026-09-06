@@ -1,4 +1,6 @@
-import { COMPLETION_METRICS, TUNING_LIMITS } from './tuning-config'
+import {
+  deriveIntervalReadings, deriveTriggerReadings, TUNING_LIMITS,
+} from './tuning-config'
 
 /**
  * PAGE 18 — Reporter Optimised.
@@ -43,10 +45,30 @@ export default function Page18ReporterOptimised({ values, onComplete }) {
   ]
   const allOk = settings.every((s) => s.ok)
 
+  /**
+   * What the three decisions actually bought — derived, not recited.
+   *
+   * These three tiles printed COMPLETION_METRICS straight out of the config,
+   * which is the set of figures the guide approves FOR A REPORTER AT TARGET.
+   * They therefore read 93% / 4.1 %/h / 8 ms whatever the learner had set, so a
+   * run with all three settings wrong — the amber rows directly above these
+   * tiles — still showed the ideal outcome underneath them. The page contra-
+   * dicted itself, and the half a learner would believe is the half with the
+   * big numbers.
+   *
+   * tuning-config says as much about its own constants: they are "the reference
+   * each derivation is checked against ... no longer rendered directly: a card
+   * that always printed the same number taught the learner that the panel was
+   * decoration". The derivations were already written and already reproduce
+   * each approved figure exactly at target, so this is a change of source
+   * rather than of arithmetic — an optimised reporter still reads 93 / 4.1 / 8.
+   */
+  const fromInterval = deriveIntervalReadings(values.intervalMs)
+  const fromTrigger = deriveTriggerReadings(values.timeToTriggerMs)
   const results = [
-    { value: COMPLETION_METRICS.handoverStabilityPercent, unit: '%', label: 'Stability' },
-    { value: COMPLETION_METRICS.batteryCostPercentPerHour, unit: '%/h', label: 'Battery' },
-    { value: COMPLETION_METRICS.interruptionMs, unit: 'ms', label: 'Interruption' },
+    { value: fromTrigger.networkHealth, unit: '%', label: 'Stability' },
+    { value: fromInterval.batteryCostPerHour, unit: '%/h', label: 'Battery' },
+    { value: fromTrigger.interruptionMs, unit: 'ms', label: 'Interruption' },
   ]
 
   return (

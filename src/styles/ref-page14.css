@@ -73,7 +73,8 @@
 
 .p14r-tagline {
   margin: clamp(10px, 1.2vw, 18px) 0 0;
-  font-size: clamp(10px, 0.85vw, 13px);
+  /* See the note on .p01r-tagline: 11 is this project's readable floor. */
+  font-size: clamp(11px, 0.85vw, 13px);
   font-weight: 600;
   line-height: 1.66;
   letter-spacing: 0.2em;

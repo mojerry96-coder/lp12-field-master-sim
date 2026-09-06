@@ -364,5 +364,45 @@
   .cdb-grid { flex: none }
   .cdb-issue p { flex: none }
   .cdb-issue { min-height: auto }
-  .fmref .cdb-panel { gap: 14px }
+  .fmref .cdb-panel {
+    gap: 14px;
+    /* Clear of Back, which owns the top-right corner and was sitting on the
+       heading. On a wide screen the panel is inset from the page edge and the
+       control has its own corner to itself. */
+    padding-top: 62px;
+  }
+
+  /* THE ACTIONS STAY ON SCREEN.
+
+     With four faulted decisions the panel's content is 1283px against 822 of
+     room, so it scrolls — which is right, and the note above says so. What was
+     wrong is what scrolled: the footer went with everything else and left
+     Retune and Commission 269px below the fold, with nothing to say the page
+     had a way on at all. The one thing a learner must always be able to reach
+     is the pair of buttons that end the screen.
+
+     Sticky against the panel, which is the scroll container. The issue cards
+     run under it, so it carries its own ground rather than the panel's glass —
+     over a moving city, a transparent bar with cards sliding through it reads
+     as a rendering fault. */
+  /* The panel gives up its bottom padding so the bar can own that edge; the
+     bar carries the same measurement as its own padding, so the spacing is
+     unchanged and `bottom: 0` sticks flush instead of 32px short of it — which
+     is what a negative bottom margin produced, leaving a strip of scrolling
+     card visible underneath the actions. */
+  .fmref .cdb-panel { padding-bottom: 0 }
+  .cdb-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 0 calc(-1 * clamp(20px, 2.6vw, 40px));
+    padding: 14px clamp(20px, 2.6vw, 40px) clamp(18px, 2.1vw, 32px);
+    /* Opaque, not glass. The cards scroll THROUGH this bar, and even a 0.97
+       top stop showed a second Adjust button ghosting under Retune settings.
+       The "there is more above" cue is a shadow cast upward rather than a fade
+       through the bar itself, so nothing shows through at any scroll position. */
+    background: rgb(250, 252, 254);
+    box-shadow: 0 -14px 18px -12px rgba(24, 48, 84, 0.28);
+  }
+  .fmref .cdb-commission, .fmref .cdb-retune { height: 54px; font-size: 17px }
 }

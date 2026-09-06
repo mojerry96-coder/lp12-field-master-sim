@@ -116,7 +116,9 @@
 
 .p01r-tagline {
   margin: clamp(10px, 1.3vw, 18px) 0 0;
-  font-size: clamp(10px, 1.05vw, 16px);
+  /* 11, not 10: at 390 the vw term bottoms out and this line — already
+     letterspaced 0.22em and uppercase — was the smallest text in the run. */
+  font-size: clamp(11px, 1.05vw, 16px);
   font-weight: 600;
   line-height: 1.62;
   letter-spacing: 0.22em;

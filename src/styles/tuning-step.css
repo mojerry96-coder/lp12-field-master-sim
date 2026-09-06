@@ -351,6 +351,12 @@
 
    The same controls, without the tablet around them.
 
+   Every floor below is 11px rather than 10. A 2.8vw middle term resolves to
+   10.92px on a 390px screen, so the whole set of micro-labels — the scale
+   stops, the tile captions, the result captions — landed just under the size
+   this project treats as the readable minimum. They are also the labels that
+   say what a number MEANS, which is the last text to shrink.
+
    Everything above is authored against the device's 1366 x 1024 logical
    screen — a 52px title, a 560px value block, four tiles across — because in
    landscape it is drawn inside a photographed aperture and scaled as one
@@ -408,12 +414,12 @@
   gap: clamp(10px, 2.8vw, 14px);
 }
 .lp12-portrait .ts-tile { padding: clamp(12px, 3.4vw, 16px) }
-.lp12-portrait .ts-tile-head { font-size: clamp(10px, 2.9vw, 12px) }
+.lp12-portrait .ts-tile-head { font-size: clamp(11px, 3vw, 12px) }
 .lp12-portrait .ts-tile-value { font-size: clamp(20px, 6vw, 26px) }
-.lp12-portrait .ts-tile-state { font-size: clamp(10px, 2.8vw, 12px) }
+.lp12-portrait .ts-tile-state { font-size: clamp(11px, 3vw, 12px) }
 
 .lp12-portrait .ts-stops { height: 20px; margin-top: 10px }
-.lp12-portrait .ts-stops span { font-size: clamp(10px, 2.8vw, 13px) }
+.lp12-portrait .ts-stops span { font-size: clamp(11px, 3vw, 13px) }
 .lp12-portrait .ts-hint { font-size: clamp(11px, 3vw, 13px) }
 
 .lp12-portrait .ts-apply {
@@ -443,7 +449,7 @@
   gap: clamp(8px, 2.4vw, 12px);
 }
 .lp12-portrait .p18-result strong { font-size: clamp(18px, 5.4vw, 24px) }
-.lp12-portrait .p18-result span { font-size: clamp(10px, 2.8vw, 12px) }
+.lp12-portrait .p18-result span { font-size: clamp(11px, 3vw, 12px) }
 .lp12-portrait .p18-cta {
   position: relative;
   left: auto;
