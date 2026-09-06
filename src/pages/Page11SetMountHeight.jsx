@@ -1,4 +1,5 @@
 import { useCallback } from 'react'
+import { detent } from '../lib/sfx'
 
 /**
  * PAGE 11 — Set Mount Height.
@@ -21,7 +22,18 @@ export default function Page11SetMountHeight({
   // 0 at the bottom of the track, 1 at the top.
   const t = (value - min) / (max - min)
 
-  const change = useCallback((e) => onChange(Number(e.target.value)), [onChange])
+  /* One click per half-metre of height — the same detent the tuning sliders
+     use, since it is the same gesture on the same kind of control.
+
+     Guarded on an actual change, so holding the knob still between steps, or
+     pushing it against either end of the range, stays silent. Fast drags are
+     thinned to the mechanism's own spacing by the sound module. */
+  const change = useCallback((e) => {
+    const next = Number(e.target.value)
+    if (next === value) return
+    detent()
+    onChange(next)
+  }, [onChange, value])
 
   return (
     <section className="fm-page fm-studio p11" aria-label="Set mount height">
