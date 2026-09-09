@@ -96,6 +96,13 @@ export const ASSETS = [
     note: 'LP12 pole, components, 8 clips, cable-flex morph targets' },
   { id: 'environment', url: '/models/awolowo_lowpoly_env.glb', kind: KIND.gltf, priority: P2, bytes: 845_000,
     note: 'Awolowo Way environment, Draco compressed' },
+  /* The Network Coverage page's own city, and only that page's — see
+     SiteEnvironment. It is fetched a band later than the environment above
+     because nothing needs it until the install is finished, and it is six
+     times the weight: holding it at P2 would put five megabytes in front of
+     the first scene the learner ever sees. */
+  { id: 'coverage-environment', url: '/models/signal_env.glb', kind: KIND.gltf, priority: P3,
+    bytes: 5_400_000, note: 'Signal environment — Network Coverage page only' },
   { id: 'camera-studio', url: '/models/camera_studio.json', kind: KIND.json, priority: P2, bytes: 4_200 },
   { id: 'camera-flow', url: '/models/camera_flow.json', kind: KIND.json, priority: P2, bytes: 4_400 },
   ...['pole-bands', 'mounting-rail', 'pivot-bracket', 'antenna-unit', 'fastener-set', 'connector-set']

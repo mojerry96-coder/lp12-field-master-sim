@@ -6,6 +6,17 @@ import * as THREE from 'three'
 export const ENV_MODEL_URL = urlFor('environment')
 
 /**
+ * The Network Coverage page's own city.
+ *
+ * Exported from signal.blend, rebased on the pole exactly as the model above
+ * is rebased on LP12_INSTALL_ANCHOR, so it drops in at the origin with no
+ * transform and the LP12 stands where it always did. It carries the same
+ * ENV_Ground_merged / ENV_Roads_merged footprint nodes the camera director
+ * fits the coverage framing to.
+ */
+export const COVERAGE_ENV_MODEL_URL = urlFor('coverage-environment')
+
+/**
  * The low-poly Awolowo Way environment, standing around the LP12.
  *
  * The GLB is exported rebased on LP12_INSTALL_ANCHOR, so it drops in at the
@@ -31,8 +42,8 @@ export const ENV_MODEL_URL = urlFor('environment')
  * it would drop city-sized shadows across the antenna the learner is working
  * on, and receiving would fight the ContactShadows already grounding the pole.
  */
-export default function SiteEnvironment({ visible = true }) {
-  const { scene } = useGLTF(ENV_MODEL_URL)
+export default function SiteEnvironment({ visible = true, url = ENV_MODEL_URL }) {
+  const { scene } = useGLTF(url)
 
   const prepared = useMemo(() => {
     const strip = []
@@ -57,3 +68,9 @@ export default function SiteEnvironment({ visible = true }) {
 }
 
 useGLTF.preload(ENV_MODEL_URL)
+/* The coverage city is NOT preloaded here. This module is imported by the
+   assembly canvas, the corridor test and the downtilt mini-viewport, so a
+   preload at import time would pull five megabytes on the first page that
+   touches any of them. It loads inside its own Suspense boundary when the
+   coverage page asks for it, and the manifest fetches it at P3 during the
+   install so it is usually warm by then. */

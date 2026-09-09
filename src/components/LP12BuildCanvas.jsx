@@ -5,7 +5,7 @@ import * as THREE from 'three'
 import StudioEnvironment, { STUDIO_BG } from './StudioEnvironment'
 import SiteLighting from './SiteLighting'
 import PartCallouts, { CalloutBridge } from './PartCallouts'
-import SiteEnvironment from './SiteEnvironment'
+import SiteEnvironment, { COVERAGE_ENV_MODEL_URL } from './SiteEnvironment'
 import ComponentHighlight from './ComponentHighlight'
 import { STAGE_TO_VIEW } from '../lib/nodeAliases'
 import { STAGE_CONFIG, REQUIRED_NODES } from '../lib/stageConfig'
@@ -232,8 +232,22 @@ function frameEnvironment(scene, anchor, aspect, domeRadiusM = 0) {
   const tanV = Math.tan(vHalf)
   const tanH = Math.tan(hHalf)
 
-  const tgt = box.getCenter(new THREE.Vector3())
-  tgt.y = box.min.y
+  /**
+   * Aim at the POLE, not at the middle of the city slab.
+   *
+   * This used to be `box.getCenter()`, and that worked only by luck: the
+   * Awolowo slab's centre measures 18 m from the LP12, which at a viewing
+   * distance of a few hundred metres is nothing. The Signal city used on this
+   * page is not centred on its pole — its slab runs 202 m south of the LP12 and
+   * only 80 m north, putting the centre 61 m away — and aiming there pushed the
+   * subject off frame and clipped the coverage dome against the edge.
+   *
+   * The subject of this page is the dome standing on the LP12, which both
+   * models are exported rebased upon, so the origin is the pole in either one.
+   * The box is still what sets the DISTANCE below; it is no longer what sets
+   * the aim.
+   */
+  const tgt = new THREE.Vector3(0, box.min.y, 0)
 
   // Bearing and elevation both from the rule; the anchor is no longer consulted
   // for either, so this framing is stable whatever CAM_10 is authored at.
@@ -1044,7 +1058,14 @@ export default function LP12BuildCanvas(props) {
             city is the point. */}
         {props.showEnvironment && (
           <Suspense fallback={null}>
-            <SiteEnvironment />
+            {/* Network Coverage gets its own city and nothing else does.
+                `showEnvironment` is also on for the completion stage, which
+                keeps the original Awolowo model — the swap is this page's, not
+                the workspace's. Both are exported rebased on the pole, so this
+                is a change of model and not of placement: the LP12 stands at
+                the origin either way. */}
+            <SiteEnvironment url={props.stage === 'coverage'
+              ? COVERAGE_ENV_MODEL_URL : undefined} />
           </Suspense>
         )}
         {/* Traffic is off, matching the Blender scene, which builds with
