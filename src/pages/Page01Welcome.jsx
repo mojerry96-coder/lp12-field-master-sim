@@ -30,7 +30,7 @@ import '../styles/ref-page01.css'
  * whichever happens second.
  */
 
-export default function Page01Welcome({ reducedMotion, onBegin }) {
+export default function Page01Welcome({ reducedMotion, entering = false, onBegin }) {
   const [progress, setProgress] = useState(0)
   const [waiting, setWaiting] = useState(false)
   const assetsReady = useRef(false)
@@ -60,7 +60,7 @@ export default function Page01Welcome({ reducedMotion, onBegin }) {
   }
 
   return (
-    <ReferenceStage className={`p01r${reducedMotion ? ' is-reduced' : ''}`}
+    <ReferenceStage className={`p01r${reducedMotion ? ' is-reduced' : ''}${entering ? ' is-entering' : ''}`}
                     label="Field Master — LP12 Small-Cell Installation">
       <img className="fmref-plate p01r-plate" src={urlFor('landing-plate')}
            alt="An LP12 small-cell antenna on a lighting column above Awolowo Way, Ikeja" />
@@ -71,12 +71,6 @@ export default function Page01Welcome({ reducedMotion, onBegin }) {
           the copy and its CTA in the middle, the counter bottom-left and the
           footer bottom-right — which is a header, a body and a footer, and
           says so now. That is what lets the whole thing reflow. */}
-      <header className="p01r-top">
-        <div className="fm-brand p01r-brand">
-          <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
-        </div>
-        <p className="p01r-campaign">Real skills<br />greater<br />impact</p>
-      </header>
 
       <main className="p01r-main">
         <div className="p01r-copy">
@@ -109,8 +103,8 @@ export default function Page01Welcome({ reducedMotion, onBegin }) {
           <span>01 / 09</span>
           <i className="is-on" /><i /><i /><i /><i /><i /><i /><i />
         </div>
-        <p className="p01r-footer">Mobile networks<br />stronger communities</p>
       </footer>
+
     </ReferenceStage>
   )
 }

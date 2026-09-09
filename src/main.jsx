@@ -32,6 +32,7 @@ THREE.Cache.enabled = true
 import './index.css'
 import './styles/install.css'
 import './styles/opener.css'
+import './styles/miva-opening.css'
 // The Apple-glass redesign. Tokens first — everything below reads from them.
 import './styles/tokens.css'
 import './styles/field-master.css'

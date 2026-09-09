@@ -201,10 +201,6 @@ export default function CorridorDebrief({
         </footer>
       </section>
 
-      <div className="cdb-wordmark" aria-hidden="true">
-        <strong>FIELD</strong>{' '}<span>MASTER</span>
-        <small>LP12 Small-Cell Installation</small>
-      </div>
     </ReferenceStage>
   )
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { PART_LABELS } from '../lib/installationStages'
+import { pickup } from '../lib/sfx'
 
 /**
  * The assembly workspace — PAGES 05-10.
@@ -71,6 +72,8 @@ export default function AssemblyStagePage({
   const onDragStart = useCallback((id, e) => {
     if (busy) return
     setDragging(id)
+    // The drag has genuinely begun: one light pop, never on hover or move.
+    pickup()
     // A payload is required or Safari cancels the drag before it starts.
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', id)
@@ -134,7 +137,7 @@ export default function AssemblyStagePage({
             aria-label={`${PART_LABELS[id] || id}, component ${order.indexOf(id) + 1} of ${order.length}`}
             onDragStart={(e) => onDragStart(id, e)}
             onDragEnd={() => setDragging(null)}
-            onClick={() => onAttempt(id)}
+            onClick={() => { pickup(); onAttempt(id) }}
           >
             <img src={`/lp12/parts/${id}.webp`} alt="" width={100} height={100}
                  draggable={false} decoding="async" />

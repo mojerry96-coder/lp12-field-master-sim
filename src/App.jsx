@@ -11,6 +11,8 @@ import LP12TabletTuningScene from './tuning/LP12TabletTuningScene'
 import CanvasDimLayer from './components/CanvasDimLayer'
 import { STAGE_CONFIG, detectPerformanceTier, prefersReducedMotion } from './lib/stageConfig'
 import Page01Welcome from './pages/Page01Welcome'
+import MivaOpening from './opening/MivaOpening'
+import MivaCornerMark from './components/MivaCornerMark'
 import Page02MissionBriefing from './pages/Page02MissionBriefing'
 import StageGate from './components/StageGate'
 import BackButton from './components/BackButton'
@@ -48,6 +50,12 @@ export default function App() {
   const controlsEnabled = selectControlsEnabled(s)
 
   const [reviewOpen, setReviewOpen] = useState(false)
+
+  /* The institutional opener owns the first ~7 seconds over the welcome page.
+     Stepping back from the briefing clears openerDone, so it replays there
+     too — skippable, exactly as it is on a restart. */
+  const [openingDone, setOpeningDone] = useState(false)
+  useEffect(() => { if (!s.openerDone) setOpeningDone(false) }, [s.openerDone])
 
   /**
    * The city is context on Page 04 and a distraction from Page 05 onward, so
@@ -124,10 +132,20 @@ export default function App() {
   // learner nothing — it happens during loading that was going to happen.
   if (!s.openerDone) {
     return (
-      <Page01Welcome
-        reducedMotion={s.reducedMotion}
-        onBegin={useSim.getState().openerFinished}
-      />
+      <>
+        <Page01Welcome
+          reducedMotion={s.reducedMotion}
+          entering={openingDone}
+          onBegin={useSim.getState().openerFinished}
+        />
+        {!openingDone && (
+          <MivaOpening
+            reducedMotion={s.reducedMotion}
+            onDone={() => setOpeningDone(true)}
+          />
+        )}
+        <MivaCornerMark onLight={false} />
+      </>
     )
   }
 
@@ -139,6 +157,7 @@ export default function App() {
           onRestart={useSim.getState().restart}
         />
         {reviewOpen && <PerformanceReview onClose={() => setReviewOpen(false)} />}
+        <MivaCornerMark />
       </>
     )
   }
@@ -249,6 +268,10 @@ export default function App() {
           <button className="ghost" onClick={() => window.location.reload()}>Retry</button>
         </div>
       )}
+      <MivaCornerMark
+        oppositeBack
+        onLight={s.mode !== 'tuning'}
+      />
     </main>
   )
 }

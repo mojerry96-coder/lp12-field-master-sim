@@ -25,16 +25,6 @@
   transform: scale(1.012);
 }
 
-/* §5's readability wash. Held off the left third so the glass panel is not
-   sitting on flat white, and strongest behind the pole. */
-.hybrid-simulation.is-overview .background-focus-overlay {
-  background:
-    radial-gradient(ellipse at 74% 48%,
-      rgba(255, 255, 255, 0.73) 0%,
-      rgba(255, 255, 255, 0.58) 39%,
-      rgba(255, 255, 255, 0.27) 68%,
-      rgba(255, 255, 255, 0.06) 100%);
-}
 
 /* §26/§27: the isolation the Begin Installation transition fades UP, so the
    pole is never left floating on nothing between the two environments. */
@@ -90,71 +80,14 @@
   font-size: clamp(13px, 1.2vw, 18px);
 }
 
-/* ------------------------------------------------------------- the column
-
-   §21: centre x 1168, top 29, bottom 901, inside a 490 x 875 box. The cutout
-   is 0.50:1, so fitting the 872px height gives 436px of width and the left
-   edge falls at 1168 - 218.
-
-   The live model is held at zero opacity underneath while this is on screen —
-   not unmounted, because it is what reports the model ready and what the
-   camera is already framing. On Begin Installation the two swap: this fades
-   out with the rest of the overview UI, the model fades in, and the camera is
-   moving in on the assembly by the time either has finished. */
-.p04r-column {
-  /* The specification's centre x 1168 of 1672 and top 29 of 941, as fractions,
-     so the cutout tracks the live column behind it — the camera bias that
-     frames the 3D pole is itself a fraction of frame width, so both move
-     together at any window size. */
-  position: absolute;
-  left: 56.8%;
-  top: 3.1%;
-  width: 26.1%;
-  height: 92.7%;
-  object-fit: contain;
-  object-position: center top;
-  user-select: none;
-  pointer-events: none;
-  /* §21 wants the pole "sharper than the environment, slightly more contrasty
-     than the city". It is not, on its own: the cutout is bright galvanised
-     silver shot on a white studio, and §5 puts the strongest part of the
-     readability wash — 73% white, centred at 74%/48% — directly behind it. The
-     two are the same value and the column vanished into the plate. Pulling it
-     down and adding contrast separates it, and the shadow gives it somewhere
-     to stand rather than floating on the wash. */
-  filter:
-    brightness(0.93)
-    contrast(1.14)
-    saturate(1.06)
-    drop-shadow(0 20px 38px rgba(23, 48, 82, 0.20));
-  transition: opacity 300ms ease;
-}
-
-/* THE SWAP, STAGGERED — and this is the whole point of the delay.
- *
- * The cutout and the live model are not the same object: the GLB has no lamp
- * arms, it is thinner, and its base sits higher in frame. Cross-fading one
- * into the other showed BOTH at once for a third of a second, two poles of
- * different widths dissolving through each other — the mispositioned image
- * this transition was accused of, and fairly.
- *
- * So they never overlap. The cutout leaves first, the studio ground comes up
- * under it, and the live column only starts fading in once the cutout has
- * gone. The white studio does the work a cross-dissolve could not: it is a
- * wipe the eye reads as the street being taken away, so the swap happens
- * inside it rather than in front of the learner. */
+/* The live model is the only pole on this page now — no cutout, no swap —
+   so the viewport is visible from the first frame. */
 .p04-viewport {
-  opacity: 0;
-  transition: opacity 460ms cubic-bezier(0.22, 1, 0.36, 1) 340ms;
-}
-.p04.is-starting .p04-viewport { opacity: 1 }
-.p04.is-starting .p04r-column {
-  opacity: 0;
-  transition: opacity 280ms ease;
+  opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .p04r-column, .p04-viewport { transition: none }
+  .p04-viewport { transition: none }
 }
 
 /* --------------------------------------------------- the inspection guide
@@ -385,34 +318,7 @@
       rgba(255, 255, 255, 0.97) 0%,
       rgba(255, 255, 255, 0.91) 100%);
   }
-  /* THE COLUMN STOPS BEING PLACED BY THE ARTBOARD'S FRACTIONS.
-     `width: 26.1%` and `height: 58%` are the specification's 490 x 875 box
-     inside a 1672-wide artboard, and at 390 they are a 102 x 490 box. The
-     cutout is 0.50:1, so `contain` fitted it to the 102 of width and drew the
-     pole 102 x 204 — a thumbnail at the top of a box two and a half times its
-     height, with the empty remainder of that box reading as a gap between the
-     pole and the panel describing it. The pole is the subject of this page.
-
-     So it takes the room above the panel as a flex item and fills it. Its base
-     sits on the panel's top edge rather than floating above it, which is also
-     what the wide layout does — there the panel is a left-hand column and the
-     pole stands beside it, full height. */
-  .p04r {
-    justify-content: flex-end;
-    gap: clamp(10px, 2.6vw, 16px);
-    /* Clear of the brand at top-left and Back at top-right. */
-    padding-top: 62px;
-  }
-  .p04r-column {
-    position: static;
-    left: auto;
-    top: auto;
-    transform: none;
-    flex: 1;
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    object-position: center bottom;
-  }
+  /* Clear of the brand at top-left and Back at top-right. */
+  .p04r { padding-top: 62px }
   .p04r-guide { display: none }
 }

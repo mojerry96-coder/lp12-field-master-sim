@@ -1,5 +1,7 @@
 import { useCallback, useId } from 'react'
 import { detent } from '../lib/sfx'
+import useTuningAudio from './useTuningAudio'
+
 
 /**
  * The tuning step shell — PAGES 15-17.
@@ -75,6 +77,9 @@ export default function TuningStepPage({ step, value, onChange, onApply }) {
   const l = step.limits
   const id = useId()
   const tiles = step.tiles(value)
+  // Audio-only proximity feedback. Reads the step's own limits; writes nothing.
+  const audio = useTuningAudio(l)
+
 
   const span = l.max - l.min
   const progress = ((value - l.min) / span) * 100
@@ -120,7 +125,10 @@ export default function TuningStepPage({ step, value, onChange, onApply }) {
     if (next === value) return
     detent()
     onChange(next)
-  }, [onChange, value])
+    // Sound only: describes the value just committed, never changes it.
+    audio.onValueChange(next)
+  }, [onChange, value, audio])
+
 
   const nudgeBy = useCallback((delta) => {
     const next = Math.min(l.max, Math.max(l.min, value + delta))
@@ -162,6 +170,11 @@ export default function TuningStepPage({ step, value, onChange, onApply }) {
               step={l.step}
               value={value}
               onChange={(e) => commit(Number(e.target.value))}
+              onPointerDown={() => audio.onPointerDown(value)}
+              onPointerUp={audio.onPointerUp}
+              onPointerCancel={audio.onPointerUp}
+              onBlur={audio.onPointerUp}
+
               aria-label={`${step.title} in ${step.unitLong}`}
               aria-valuetext={`${value.toFixed(step.decimals)} ${step.unitLong}`}
             />

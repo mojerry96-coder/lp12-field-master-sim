@@ -39,9 +39,6 @@ export default function Page19CommissioningComplete({ onReview, onRestart }) {
       <div className="p19r-wash" aria-hidden="true" />
 
       <section className="fm-glass p19r-card">
-        <div className="fm-brand p19r-brand">
-          <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
-        </div>
 
         <h1 className="p19r-title">Commissioning<br />complete</h1>
 

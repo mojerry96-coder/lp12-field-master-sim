@@ -48,8 +48,8 @@
 .fm-glass {
   background: linear-gradient(135deg, var(--fm-glass-fill), var(--fm-glass-fill-2));
   border: 1px solid var(--fm-glass-line);
-  backdrop-filter: blur(24px) saturate(145%);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  backdrop-filter: blur(34px) saturate(150%);
+  -webkit-backdrop-filter: blur(34px) saturate(150%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
     0 18px 54px rgba(40, 70, 120, 0.10);
@@ -63,11 +63,11 @@
   gap: 16px;
   min-height: 64px;
   padding: 0 30px 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(24px) saturate(145%);
-  -webkit-backdrop-filter: blur(24px) saturate(145%);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(34px) saturate(150%);
+  -webkit-backdrop-filter: blur(34px) saturate(150%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
     0 18px 54px rgba(40, 70, 120, 0.10);
@@ -79,7 +79,7 @@
   cursor: pointer;
   transition: transform 0.18s var(--fm-ease), background 0.18s var(--fm-ease);
 }
-.fm-btn:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.42); }
+.fm-btn:hover { transform: translateY(-1px); background: rgba(255, 255, 255, 0.92); }
 .fm-btn:active { transform: translateY(0); }
 .fm-btn:focus-visible { outline: 2px solid var(--fm-blue); outline-offset: 3px; }
 .fm-btn[disabled] { cursor: default; transform: none; opacity: 0.72; }
@@ -236,4 +236,33 @@
 @media (prefers-reduced-motion: reduce) {
   /* The arrival still happens, it just stops travelling. */
   .fm-page, .fmref-viewport { animation-name: fm-fade !important }
+}
+
+/* ---------------------------------------------------------- corner mark
+
+ * The MIVA mark pinned to a clear upper corner of every simulation screen. Fixed,
+ * so it is out of flow and shifts no layout; pointer-events off, so it can
+ * never catch a drag or a click; z-index under the stage gate (60) and well
+ * under the cinematic opener (200), which keeps the opening to itself.
+ */
+.miva-corner-mark {
+  position: fixed;
+  top: var(--fm-safe-y, 24px);
+  right: var(--fm-safe-x, 24px);
+  width: clamp(84px, 8vw, 110px);
+  height: auto;
+  opacity: 0.9;
+  pointer-events: none;
+  user-select: none;
+  z-index: 25;
+  animation: fm-fade 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.miva-corner-mark.is-left {
+  right: auto;
+  left: var(--fm-safe-x, 24px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .miva-corner-mark { animation: none }
 }

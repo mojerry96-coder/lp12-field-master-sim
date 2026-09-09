@@ -1,0 +1,206 @@
+/* MIVA institutional opener.
+   One clock: every animation below starts at t=0 with its own delay, so the
+   timestamps in this file are the timeline in the brief, read literally. */
+
+.mivo {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  overflow: hidden;
+  pointer-events: none;
+  animation: mivo-layer 7200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes mivo-layer {
+  0%, 90.2% { opacity: 1 }          /* 0 - 6.50s */
+  100% { opacity: 0 }               /* 7.20s */
+}
+
+/* Deep navy ground. */
+.mivo-ground {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 48%,
+    #10294A 0%, #07152A 46%, #030A14 100%);
+}
+
+/* 0 - 0.8s: a faint central blue atmosphere rises out of near-black. */
+.mivo-glow {
+  position: absolute;
+  inset: -15%;
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 48%,
+    rgba(20, 120, 255, 0.22) 0%, rgba(12, 48, 120, 0.14) 40%, rgba(3, 10, 20, 0) 70%);
+  animation: mivo-glow 7200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes mivo-glow {
+  0% { opacity: 0 }
+  11.1% { opacity: 1 }              /* 0.80s */
+  55.5% { opacity: 1 }              /* 4.00s */
+  80.5% { opacity: 0 }              /* 5.80s */
+  100% { opacity: 0 }
+}
+
+/* 4.0 - 6.5s: the environment emerges, blurred, and resolves. */
+.mivo-plate {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+  opacity: 0;
+  filter: blur(26px) brightness(0.62) saturate(0.9);
+  transform: scale(1.06);
+  animation: mivo-plate 7200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes mivo-plate {
+  0%, 55.5% { opacity: 0; filter: blur(26px) brightness(0.62) saturate(0.9); transform: scale(1.06) }
+  80.5% { opacity: 1; filter: blur(10px) brightness(0.86) saturate(0.96); transform: scale(1.02) }
+  90.2%, 100% { opacity: 1; filter: blur(0) brightness(1) saturate(1); transform: scale(1) }
+}
+
+/* Almost imperceptible drifting grain over the hold. */
+.mivo-grain {
+  position: absolute;
+  inset: -40px;
+  opacity: 0;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.20) 1px, transparent 1.4px),
+    radial-gradient(rgba(120, 180, 255, 0.16) 1px, transparent 1.4px);
+  background-size: 220px 220px, 340px 340px;
+  animation:
+    mivo-grain-in 7200ms linear forwards,
+    mivo-grain-drift 18s linear infinite;
+}
+@keyframes mivo-grain-in {
+  0%, 27.7% { opacity: 0 }
+  38% { opacity: 0.5 }
+  70% { opacity: 0.35 }
+  80.5%, 100% { opacity: 0 }
+}
+@keyframes mivo-grain-drift {
+  from { background-position: 0 0, 0 0 }
+  to { background-position: 120px -80px, -140px 90px }
+}
+
+/* 0.8 - 2.2s: a thin blue light crosses the centre. */
+.mivo-sweep {
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  opacity: 0;
+  background: linear-gradient(90deg,
+    rgba(20, 120, 255, 0) 0%,
+    rgba(120, 190, 255, 0.85) 45%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(120, 190, 255, 0.85) 55%,
+    rgba(20, 120, 255, 0) 100%);
+  box-shadow: 0 0 26px rgba(20, 120, 255, 0.55);
+  transform: translateX(-38%) scaleX(0.55);
+  animation: mivo-sweep 7200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes mivo-sweep {
+  0%, 11.1% { opacity: 0; transform: translateX(-38%) scaleX(0.55) }
+  16% { opacity: 0.9 }
+  26% { opacity: 0.55; transform: translateX(20%) scaleX(1) }
+  30.5% { opacity: 0; transform: translateX(38%) scaleX(1) }  /* 2.20s */
+  100% { opacity: 0 }
+}
+
+/* The soft bloom the wordmark sits in. */
+.mivo-bloom {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: min(1100px, 78vw);
+  height: min(320px, 30vh);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  background: radial-gradient(ellipse at 50% 50%,
+    rgba(20, 120, 255, 0.30) 0%, rgba(20, 120, 255, 0.10) 45%, rgba(20, 120, 255, 0) 72%);
+  animation: mivo-bloom 7200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes mivo-bloom {
+  0%, 13.8% { opacity: 0 }
+  33.3% { opacity: 1 }              /* 2.40s */
+  56.9% { opacity: 1 }              /* 4.10s */
+  73.6%, 100% { opacity: 0 }        /* 5.30s */
+}
+
+/* 1.0 - 2.4s reveal, 4.1 - 5.3s dissolve. */
+.miva-opening-title {
+  font-family: "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: clamp(34px, 4vw, 64px);
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  color: rgba(255, 255, 255, 0.94);
+}
+.miva-opening-title strong {
+  color: #1478FF;
+  font-weight: 750;
+}
+
+.mivo-title {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: 92vw;
+  text-align: center;
+  white-space: nowrap;
+  opacity: 0;
+  filter: blur(14px);
+  animation: mivo-title 7200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes mivo-title {
+  0%, 13.8% { opacity: 0; filter: blur(14px) }        /* 1.00s */
+  22% { opacity: 0.55; filter: blur(6px) }
+  33.3% { opacity: 1; filter: blur(0) }               /* 2.40s */
+  56.9% { opacity: 1; filter: blur(0) }               /* 4.10s */
+  73.6% { opacity: 0; filter: blur(5px) }             /* 5.30s */
+  100% { opacity: 0; filter: blur(5px) }
+}
+
+/* Reduced motion: a static title, held, then a straight crossfade. */
+.mivo.is-reduced,
+.mivo.is-reduced .mivo-glow,
+.mivo.is-reduced .mivo-plate,
+.mivo.is-reduced .mivo-title,
+.mivo.is-reduced .mivo-bloom,
+.mivo.is-reduced .mivo-sweep,
+.mivo.is-reduced .mivo-grain {
+  animation: none;
+}
+.mivo.is-reduced { animation: mivo-reduced-layer 1600ms linear forwards }
+@keyframes mivo-reduced-layer {
+  0%, 56% { opacity: 1 }
+  100% { opacity: 0 }
+}
+.mivo.is-reduced .mivo-glow { opacity: 1 }
+.mivo.is-reduced .mivo-bloom { opacity: 1 }
+.mivo.is-reduced .mivo-title { opacity: 1; filter: none }
+.mivo.is-reduced .mivo-sweep,
+.mivo.is-reduced .mivo-grain,
+.mivo.is-reduced .mivo-plate { opacity: 0 }
+
+/* The welcome page's own entrance, 6.5 - 7.2s of the same clock. */
+.p01r.is-entering .p01r-main,
+.p01r.is-entering .p01r-top,
+.p01r.is-entering .p01r-bottom {
+  animation: mivo-ui-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes mivo-ui-enter {
+  from { opacity: 0; transform: translateY(10px) }
+  to { opacity: 1; transform: none }
+}
+@media (prefers-reduced-motion: reduce) {
+  @keyframes mivo-ui-enter {
+    from { opacity: 0 }
+    to { opacity: 1 }
+  }
+}

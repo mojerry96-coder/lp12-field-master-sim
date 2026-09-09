@@ -38,10 +38,6 @@ export default function Page02MissionBriefing({ reducedMotion, onBegin, busy = f
 
       <ReferenceStage className={`p02r${reducedMotion ? ' is-reduced' : ''}`}
                       label="Field assignment" transparent>
-        <div className="fm-brand p02r-brand">
-          <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
-        </div>
-
         <section className="fm-glass p02r-panel">
           <p className="p02r-eyebrow">Field assignment</p>
           <h1 className="p02r-site">Awolowo Way</h1>

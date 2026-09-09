@@ -10,6 +10,7 @@ import Page14InstallationComplete from './pages/Page14InstallationComplete'
 import LP12BuildCanvas from './components/LP12BuildCanvas'
 import BackButton from './components/BackButton'
 import { createOrbitInput } from './lib/constrainedOrbit'
+import { preloadInstallSfx, placeCorrect, placeIncorrect } from './lib/sfx'
 import {
   STAGES, stageIndex, stageById, COMPLETED_PART_BY_STAGE, STAGE_CAMERA,
   PART_LABELS,
@@ -286,9 +287,13 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
     return () => clearTimeout(t)
   }, [refusal])
 
+  // The three placement cues are decoded when the workspace opens, so the
+  // first drop is not the thing that goes to the network for its own sound.
+  useEffect(() => { preloadInstallSfx() }, [])
+
   const attemptPart = useCallback((id) => {
     if (busy) return
-    if (id === stage.activePart) { runStage(); return }
+    if (id === stage.activePart) { placeCorrect(); runStage(); return }
     /**
      * The refusal says the attempt was wrong. It does not say what is right.
      *
@@ -311,6 +316,8 @@ export default function InstallationPage({ studio, flow, onExit, onComplete }) {
     const reason = installed.includes(id)
       ? `${PART_LABELS[id]} is already installed.`
       : 'That component cannot go on yet — what it mounts to is not in place.'
+    // Audio leads the message: the refusal should read as a physical event.
+    placeIncorrect()
     useSim.getState().noteWrongAttempt()
     // A counter, not a bare string: the same refusal twice running is the same
     // value, and the dismissal timer above would never re-arm.

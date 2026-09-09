@@ -12,10 +12,28 @@
 .cdb {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  /* One full-height row, so the panel's `max-height: 100%` has a real height
+     to measure against. Left as an auto row it resolved against its own
+     content, so on a short screen the panel took only two thirds of the room
+     available and scrolled its own footer out of reach. */
+  grid-template-rows: minmax(0, 1fr);
   align-items: center;
   gap: clamp(14px, 1.7vw, 28px);
   padding: clamp(14px, 1.9vw, 31px);
 }
+
+.fmref .cdb-panel { align-self: stretch }
+
+
+/* The DOM order is left card, status card, panel — the status aside is
+   written before the panel. Without an explicit column for each, the status
+   card took the flexible middle track and the panel was pushed into the last
+   `auto` track, where it kept asking for its full 891px: below about 1600 the
+   row overflowed and the centred panel sat straight on top of the status
+   card's rows. Naming the columns puts each piece back where the kit has it. */
+.fmref .cdb-left { grid-column: 1 }
+.fmref .cdb-panel { grid-column: 2 }
+.fmref .cdb-status { grid-column: 3 }
 
 .fmref .cdb-left {
   align-self: start;
@@ -26,6 +44,7 @@
   flex-direction: column;
   gap: clamp(11px, 1.1vw, 16px);
 }
+
 
 .cdb-left-head { display: flex; align-items: center; gap: 14px }
 
@@ -180,7 +199,7 @@
   gap: 16px;
   padding: clamp(11px, 1.1vw, 16px) clamp(15px, 1.5vw, 22px);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.85);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
 }
 .cdb-correct > span:first-child { flex: 1; font-size: clamp(14px, 1.25vw, 19px); color: var(--fm-text) }
@@ -209,20 +228,33 @@
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-auto-rows: 1fr;
+  /* minmax(min-content, 1fr), not 1fr: a plain 1fr row can be squeezed below
+     the card's content when the panel runs out of height, and the paragraph
+     and Adjust button spilled onto the card underneath. min-content makes the
+     cards size to their content and the panel's overflow: auto scrolls
+     instead of overlapping. */
+  grid-auto-rows: minmax(min-content, 1fr);
   gap: 18px;
 }
 
 .cdb-issue {
-  min-height: 0;
+  /* min-content floor for the same reason as the grid rows above. */
+  min-height: min-content;
   padding: clamp(14px, 1.4vw, 20px) clamp(15px, 1.5vw, 22px);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.85);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.78);
   display: flex;
   flex-direction: column;
 }
-.cdb-issue header { display: flex; align-items: center; gap: 12px }
+.cdb-issue header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* A long label or value wraps to a second line rather than overlapping. */
+  flex-wrap: wrap;
+}
+.cdb-issue h4 { min-width: 0 }
 .cdb-issue-icon {
   flex: none;
   width: 38px;
@@ -243,6 +275,7 @@
   color: var(--fm-navy);
 }
 .cdb-issue header b {
+  flex: none;
   font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.015em;
@@ -263,16 +296,21 @@
 .cdb-adjust {
   align-self: flex-start;
   margin-top: 12px;
-  height: 42px;
-  padding: 0 20px;
+  min-height: 42px;
+  padding: 10px 26px;
   border: 0;
   border-radius: 999px;
   cursor: pointer;
-  font: 600 15px/1 var(--fm-font);
+  font: 600 15px/1.35 var(--fm-font);
+  letter-spacing: -0.01em;
   color: #fff;
   background: linear-gradient(180deg, #318CFF, #116FFF);
   box-shadow: 0 8px 20px rgba(19, 111, 255, 0.24);
   text-transform: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 .cdb-adjust:hover { transform: translateY(-1px) }
 .cdb-adjust:focus-visible { outline: 3px solid rgba(20, 120, 255, 0.3); outline-offset: 2px }
@@ -288,8 +326,25 @@
   border-top: 1px solid var(--fm-hairline);
 }
 /* The kit: these are not equally prominent. Retune carries the one blue. */
-.fmref .cdb-commission { height: 62px; padding: 0 30px; font-size: 18px }
-.fmref .cdb-retune { height: 62px; padding: 0 28px; font-size: 19px }
+.fmref .cdb-commission {
+  min-height: 54px;
+  padding: 10px 34px;
+  font-size: 18px;
+  line-height: 1.3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.fmref .cdb-retune {
+  min-height: 54px;
+  padding: 10px 32px;
+  font-size: 19px;
+  line-height: 1.3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
 
 /* --------------------------------------------------------- the wordmark */
 
@@ -342,7 +397,41 @@
 @media (max-width: 1100px) {
   .cdb { grid-template-columns: minmax(0, 1fr) }
   .fmref .cdb-left, .fmref .cdb-status { display: none }
+  .fmref .cdb-panel { grid-column: 1 }
 }
+
+/* ------------------------------------------------------------ short screens
+
+   On a 1280x720 or 1536x864 laptop the panel's content is taller than the
+   room it has, so it scrolls — which is correct — but the action row scrolled
+   away with it and the learner had no visible way off the screen. The bar
+   sticks to the panel's bottom edge exactly as it already does on phones, and
+   the padding and gaps give up their room before any type does. */
+
+@media (max-height: 900px) {
+  .cdb { padding: clamp(12px, 1.4vw, 22px); gap: clamp(12px, 1.4vw, 20px) }
+  .fmref .cdb-panel { gap: 12px; padding-top: clamp(18px, 2vw, 26px); padding-bottom: 0 }
+  .cdb-head p { margin-top: 6px }
+  .cdb-grid { gap: 14px }
+  .cdb-issue { padding: 12px 16px }
+  .cdb-issue p { margin-top: 9px }
+  .fmref .cdb-issue-chip { margin-top: 8px }
+  .cdb-adjust { margin-top: 10px; min-height: 38px; padding: 8px 20px; font-size: 14px }
+
+  .cdb-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin: 0 calc(-1 * clamp(20px, 2.6vw, 40px));
+    padding: 12px clamp(20px, 2.6vw, 40px) clamp(14px, 1.8vw, 24px);
+    /* Opaque: the issue cards scroll straight through this bar, and over a
+       moving corridor anything translucent reads as a rendering fault. */
+    background: rgb(250, 252, 254);
+    box-shadow: 0 -14px 18px -12px rgba(24, 48, 84, 0.28);
+  }
+  .fmref .cdb-commission, .fmref .cdb-retune { min-height: 46px; font-size: 16px }
+}
+
 
 @media (max-width: 760px) {
   .cdb { padding: 10px }

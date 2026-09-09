@@ -1,6 +1,6 @@
 import { urlFor } from '../lib/assetManifest'
 import ReferenceStage from '../reference/ReferenceStage'
-import { ArrowRight, PinIcon } from '../reference/RefIcons'
+import { ArrowRight } from '../reference/RefIcons'
 import '../styles/ref-page14.css'
 
 /**
@@ -36,23 +36,9 @@ export default function Page14InstallationComplete({
 }) {
   return (
     <ReferenceStage className="p14r" label="Installation complete">
-      <div className="fm-brand p14r-brand">
-        <strong>MIVA</strong><span>OPEN UNIVERSITY</span>
-      </div>
 
       {/* One column, so the grid has two children and can become two rows. */}
       <div className="p14r-side">
-      <div className="p14r-copy">
-        <h1 className="p14r-title"><span>FIELD</span> <span>MASTER</span></h1>
-        <p className="p14r-sub">LP12 Small-Cell Installation</p>
-        <p className="p14r-where">
-          <PinIcon size={20} />
-          <span>Awolowo Way<i /> · <i />Ikeja, Lagos</span>
-        </p>
-        <div className="p14r-rule" aria-hidden="true"><i /><b /></div>
-        <p className="p14r-tagline">Practice today.<br />A more connected tomorrow.</p>
-      </div>
-
       <section className="fm-glass p14r-card">
         <h2 className="p14r-card-title">Installation<br />complete</h2>
         <p className="p14r-card-sub">LP12 commissioned successfully.</p>

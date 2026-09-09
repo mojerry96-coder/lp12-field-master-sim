@@ -94,10 +94,13 @@
 }
 
 .revr-cell {
+  min-width: 0;
   min-height: 0;
+  max-width: 100%;
   padding: 20px 30px 20px 0;
   overflow: hidden;
 }
+
 .revr-cell--right { padding-left: 34px; padding-right: 0; border-left: 1px solid var(--fm-hairline) }
 .revr-cell--bottom { border-top: 1px solid var(--fm-hairline) }
 
@@ -220,7 +223,52 @@
 }
 .fmref .revr-again { width: 240px; height: 66px; padding: 0 26px; font-size: 20px }
 
+/* ------------------------------------------------------------ short screens
+
+   The panel is a fixed 934 x 830 box clamped to 94vh, and every cell clips.
+   On a 1366x768 or 1280x720 laptop that clip was silently eating content —
+   the last penalty row, two installation steps, and the bottom half of the
+   configuration list all disappeared with nothing to say they existed.
+
+   Nothing is redesigned here: the 2 x 2 stays, the type stays legible, and
+   the room is found where the kit has the most slack — padding, gaps and row
+   spacing first, then a small step down in type. A cell that still cannot fit
+   scrolls itself rather than hiding its tail. */
+
+@media (max-height: 800px) {
+  .fmref .revr-panel { padding: 22px 26px 18px }
+
+  .revr-head { gap: 14px; padding-bottom: 14px }
+  .revr-head h2 { font-size: 30px }
+  .revr-score strong { font-size: 34px }
+  .revr-score > span:first-of-type { font-size: 19px }
+  .fmref .revr-score .fm-chip { min-height: 30px }
+  .revr-close { width: 34px; height: 34px }
+
+  .revr-cell { padding: 12px 22px 12px 0; overflow: auto; scrollbar-width: thin }
+  .revr-cell--right { padding-left: 24px; padding-right: 0 }
+  .revr-cell h3 { margin-bottom: 8px; font-size: 13px }
+  .revr-mark { width: 26px; height: 26px }
+
+  .revr-rows li { padding: 3px 0; font-size: 15px }
+  .revr-total-line { margin-top: 6px }
+  .revr-total { margin-top: 7px; font-size: 18px }
+
+  .revr-steps li { padding: 4px 0; font-size: 16px }
+
+  .revr-config li { padding: 5px 0; font-size: 15px; gap: 10px }
+  .fmref .revr-config .fm-chip { min-height: 24px; font-size: 10px }
+
+  .revr-corridor p, .revr-empty { font-size: 15px }
+  .revr-corridor b { font-size: 18px }
+
+  .revr-foot { padding-top: 14px; gap: 18px }
+  .revr-tagline { font-size: 11px; line-height: 1.6 }
+  .fmref .revr-again { width: 210px; height: 54px; font-size: 18px }
+}
+
 /* ------------------------------------------------------------ narrow screens
+
 
    This panel was the one screen the fluid pass missed: it is a dialog rather
    than a ReferenceStage, so it kept a fixed 2 x 2 grid inside a 934 x 830 box.

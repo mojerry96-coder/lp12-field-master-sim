@@ -355,8 +355,6 @@ export default function NetworkTestViewport({ settings, progress }) {
         <InstalledLP12 height={settings.mountHeight} downtilt={settings.downtilt} />
       </Suspense>
 
-      <CoverageDome quality={quality} height={antennaHeight}
-                    downtilt={settings.downtilt} reducedMotion={reducedMotion} />
       <TransmissionWaves height={antennaHeight} radius={domeRadius(quality)}
                          reducedMotion={reducedMotion} />
 

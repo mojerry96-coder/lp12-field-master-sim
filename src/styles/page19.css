@@ -89,7 +89,7 @@
   height: 74px;
   border-radius: 50%;
   color: #8CA6C8;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.85);
   box-shadow:
     inset 0 0 0 2px rgba(140, 166, 200, 0.5),
     0 0 26px rgba(120, 160, 220, 0.24);
@@ -119,7 +119,7 @@
 .p19-action { width: 100%; justify-content: flex-start }
 /* Restarting is the quieter of the two: the learner has just finished, and the
    thing worth doing first is looking at how it went. */
-.p19-restart { background: rgba(255, 255, 255, 0.18); color: #46587A }
+.p19-restart { background: rgba(255, 255, 255, 0.8); color: #46587A }
 .p19-restart .fm-btn-glyph {
   background: linear-gradient(135deg, rgba(120, 145, 180, 0.18), rgba(120, 145, 180, 0.08));
   color: #46587A;
