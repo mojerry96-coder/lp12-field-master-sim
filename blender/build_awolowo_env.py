@@ -2440,6 +2440,29 @@ def report():
     return tris
 
 
+# ------------------------------------------------------- landmarks + texture
+#
+# Both of these live in their own modules. The landmarks are bought FBX assets
+# rather than parametric geometry, and the texture pass has to run after every
+# building mesh exists, so neither belongs inline with the builders above.
+
+
+def build_landmarks():
+    """Import and place the office and hospital."""
+    import env_landmarks
+    env_landmarks.apply()
+
+
+def apply_building_textures():
+    """Wire the generated PBR set onto the building materials.
+
+    Runs last because it UV-projects every mesh already wearing a building
+    material -- including the ones detail_facades() and roofscape() add.
+    """
+    import env_building_textures
+    env_building_textures.apply()
+
+
 # --------------------------------------------------------------------- main
 
 def main():
@@ -2461,6 +2484,7 @@ def main():
     build_secondary()
     check_camera_sightlines()
     build_plots()
+    build_landmarks()
     build_vegetation()
     build_street_furniture()
     build_vehicles()
@@ -2470,6 +2494,7 @@ def main():
     INSTALL_FRAMES[0] = place_lp12_animated(anchor) or 0
     build_cameras(dome)
     build_lighting()
+    apply_building_textures()
     configure_render()
     write_look_manifest()
 
